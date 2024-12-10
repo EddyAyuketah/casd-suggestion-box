@@ -1,165 +1,107 @@
+import React, { useState } from "react";
+import Dropdown from "./Dropdown";
+import "./Sidebar.css";
 
+const Sidebar = ({ onApplyFilters }) => {
+    const [selection, setSelection] = useState("Fist");
+    const [filters, setFilters] = useState({
+        process: [], // Maps to PROCESS in the JSON
+        fab: "", // Maps to FACILITY in the JSON
+        fist: [], // Maps to FIST_P in the JSON
+        status: [], // Maps to TARGET_ML in the JSON
+    });
 
-import React, { useState, useEffect } from "react";
-import "./MainContent.css";
+    const handleRadioChange = (e) => {
+        const value = e.target.value;
+        setSelection(value);
 
-const MainContent = ({ filters }) => {
-    const [data, setData] = useState([]);
-    const [filteredData, setFilteredData] = useState([]);
-
-
-
-    const fetchData = async () => {
-        try {
-            const response = await fetch("/classification_data.json");
-            if (!response.ok) throw new Error("Failed to load JSON data");
-    
-            const jsonData = await response.json();
-    
-            const structuredData = jsonData.map((item) => ({
-                PROCESS: item.PROCESS || "N/A",
-                FACILITY: item.FACILITY || "N/A",
-                FIST_P: item.FIST_P || "N/A",
-                CEID: item.CEID || "N/A",
-                ENTITY_UP_VS_TOTAL: item.ENTITY_UP_VS_TOTAL || "N/A",
-                WSE_CS: item.WSE_CS || "N/A",
-                WSE_CW: item.WSE_CW || "N/A",
-                SPL_INPUT: item.SPL_INPUT ? item.SPL_INPUT.split("Help needed?")[0].trim() : "N/A",
-                TARGET_ML: item.TARGET_ML || "N/A",
-                LIMITER_SPL: item.LIMITER_SPL || "N/A",
-            }));
-    
-            console.log("Structured Data:", structuredData); // Debug structured data
-            setData(structuredData);
-            setFilteredData(structuredData);
-        } catch (err) {
-            console.error("Error loading data:", err);
+        if (value === "Area") {
+            alert("Coming soon");
         }
-    };
-    
 
-    /*
-
-    const fetchData = async () => {
-        const staticData = [
-            {
-                PROCESS: "1274",
-                FACILITY: "F42",
-                FIST_P: "BE-LL",
-                CEID: "VFNdi",
-                ENTITY_UP_VS_TOTAL: "10/12 [8.5]",
-                WSE_CS: "7564 [7000]",
-                WSE_CW: "5231 [7000]",
-                SPL_INPUT: "Tools required to hit REV_CAP: 18",
-                TARGET_ML: "Limiter",
-                LIMITER_SPL: "Limiter",
-            },
-            {
-                PROCESS: "1273",
-                FACILITY: "F28",
-                FIST_P: "FIN",
-                CEID: "AB123",
-                ENTITY_UP_VS_TOTAL: "8/10 [7.2]",
-                WSE_CS: "6784 [7000]",
-                WSE_CW: "4900 [7000]",
-                SPL_INPUT: "Staffing % current shift: 90%",
-                TARGET_ML: "Recovery",
-                LIMITER_SPL: "Not Limiter",
-            },
-        ];
-        setData(staticData);
-        setFilteredData(staticData);
+        setFilters((prev) => ({
+            ...prev,
+            fist: value === "Fist" ? prev.fist : [],
+        }));
     };
 
-    */
+    const updateFilter = (key, value) => {
+        setFilters((prev) => ({ ...prev, [key]: value }));
+    };
 
-
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        if (!filters) {
-            setFilteredData(data);
-            return;
-        }
-
-        let updatedData = [...data];
-
-        if (filters.process.length > 0) {
-            updatedData = updatedData.filter((row) =>
-                filters.process.includes(row.PROCESS)
-            );
-        }
-
-        if (filters.fab) {
-            updatedData = updatedData.filter((row) => row.FACILITY === filters.fab);
-        }
-
-        if (filters.fist.length > 0 && !filters.fist.includes("ALL")) {
-            updatedData = updatedData.filter((row) =>
-                filters.fist.includes(row.FIST_P)
-            );
-        }
-
-        if (filters.status.length > 0 && !filters.status.includes("ALL")) {
-            updatedData = updatedData.filter((row) =>
-                filters.status.includes(row.TARGET_ML)
-            );
-        }
-
-        setFilteredData(updatedData);
-    }, [filters, data]);
+    const applyFilters = () => {
+        onApplyFilters(filters);
+    };
 
     return (
-        <div className="main-content">
-            <div className="table-wrapper">
-                {filteredData.length > 0 ? (
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Process</th>
-                                <th>Segment</th>
-                                <th>CEID</th>
-                                <th>Avail/Treq</th>
-                                <th>WSE_CS</th>
-                                <th>WSE_CW</th>
-                                <th>User Input</th>
-                                <th>TARGET_ML</th>
-                                <th>ML Decision</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredData.map((row, index) => (
-                                <tr key={index}>
-                                    <td>{row.PROCESS}</td>
-                                    <td>{row.FIST_P}</td>
-                                    <td>{row.CEID}</td>
-                                    <td>{row.ENTITY_UP_VS_TOTAL}</td>
-                                    <td>{row.WSE_CS}</td>
-                                    <td>{row.WSE_CW}</td>
-                                    <td>{row.SPL_INPUT}</td>
-                                    <td>{row.TARGET_ML}</td>
-                                    <td>{row.LIMITER_SPL}</td>
-                                    <td>
-                                        <button
-                                            className="edit-button"
-                                            onClick={() => console.log("Edit row:", row)}
-                                        >
-                                            ✏️
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                ) : (
-                    <p>No data available. Adjust filters and try again.</p>
-                )}
+        <div className="sidebar">
+            <h2>Filters</h2>
+            <div className="radio-group">
+                <label>
+                    <input
+                        type="radio"
+                        name="filterType"
+                        value="Fist"
+                        checked={selection === "Fist"}
+                        onChange={handleRadioChange}
+                    />
+                    Fist
+                </label>
+                <label>
+                    <input
+                        type="radio"
+                        name="filterType"
+                        value="Area"
+                        checked={selection === "Area"}
+                        onChange={handleRadioChange}
+                    />
+                    Area
+                </label>
             </div>
+            {selection === "Fist" && (
+                <>
+                    <Dropdown
+                        label="Process"
+                        options={["1272", "1273", "1274", "1275"]}
+                        isMultiSelect={true}
+                        onSelect={(selected) => updateFilter("process", selected)}
+                    />
+                    <Dropdown
+                        label="Fab"
+                        options={["F28", "F42"]}
+                        isMultiSelect={false}
+                        onSelect={(selected) => updateFilter("fab", selected)}
+                    />
+                    <Dropdown
+                        label="Fist"
+                        options={[
+                            "ALL",
+                            "BE-LL",
+                            "BE-UL",
+                            "CON",
+                            "FIN",
+                            "GATE",
+                            "PCT",
+                            "PLY-ESD",
+                            "SSAFI-M1",
+                            "SSAFI-M0"
+                        ]}
+                        isMultiSelect={true}
+                        onSelect={(selected) => updateFilter("fist", selected)}
+                    />
+                    <Dropdown
+                        label="Status"
+                        options={["ALL", "Limiter", "Not Limiter", "Recovery", "Watch"]}
+                        isMultiSelect={true}
+                        onSelect={(selected) => updateFilter("status", selected)}
+                    />
+                </>
+            )}
+            <button className="apply-filters-button" onClick={applyFilters}>
+                Apply Filters
+            </button>
         </div>
     );
 };
 
-export default MainContent;
+export default Sidebar;
