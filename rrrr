@@ -1,194 +1,121 @@
-import React, { useState, useEffect } from "react";
-import "./MainContent.css";
+/**
+ * This module handles data fetching for the Tool Analytics Dashboard.
+ * It includes functions to fetch real data from an API and fallback to mock data if needed.
+ */
+import type { ToolData } from "@/types/tool"
+import { generateMockData } from "./mockData"
+import sql from "mssql";
 
-const MainContent = ({ filters }) => {
-    const [data, setData] = useState([]);
-    const [filteredData, setFilteredData] = useState([]);
-    const [editingRowIndex, setEditingRowIndex] = useState(null);
-    const [editedRow, setEditedRow] = useState({});
+// Utility function for delay
+/**
+ * Utility function to create a delay
+ * @param ms - The number of milliseconds to delay
+ * @returns A promise that resolves after the specified delay
+ */
 
-    const fetchData = async () => {
-        try {
-            const response = await fetch("/classification_data.json");
-            if (!response.ok) throw new Error("Failed to load JSON data");
 
-            const jsonData = await response.json();
+const config = {
+  user: "COS_DB_rw",
+  password: "mOkUgTq942jQ16r",
+  server: "sql3561-fm1-in.amr.corp.intel.com,3181", // or is it supposed to  'localhost', '192.168.1.100'
+  database: "COS_DB",
+  options: {
+    encrypt: true, // Use encryption if required
+    trustServerCertificate: true, // Set to true if using self-signed certificates
+  },
 
-            const structuredData = jsonData.map((item) => ({
-                PROCESS: item.PROCESS || "N/A",
-                FACILITY: item.FACILITY || "N/A",
-                FIST_P: item.FIST_P || "N/A",
-                CEID: item.CEID || "N/A",
-                ENTITY_UP_VS_TOTAL: item.ENTITY_UP_VS_TOTAL || "N/A",
-                WSE_CS: item.WSE_CS || "N/A",
-                WSE_CW: item.WSE_CW || "N/A",
-                SPL_INPUT: item.SPL_INPUT
-                    ? item.SPL_INPUT.split("Help needed?")[0].trim()
-                    : "N/A",
-                TARGET_ML: item.TARGET_ML || "N/A",
-                LIMITER_SPL: item.LIMITER_SPL || "N/A",
-            }));
-
-            setData(structuredData);
-            setFilteredData(structuredData);
-        } catch (err) {
-            console.error("Error loading data:", err);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        if (!filters) {
-            setFilteredData(data);
-            return;
-        }
-
-        let updatedData = [...data];
-
-        // Process filtering (supports individual and combined entries)
-        if (filters.process.length > 0) {
-            updatedData = updatedData.filter((row) =>
-                filters.process.some((process) =>
-                    row.PROCESS.split(";").includes(process)
-                )
-            );
-        }
-
-        // Facility (Fab) filtering
-        if (filters.fab) {
-            updatedData = updatedData.filter((row) => row.FACILITY === filters.fab);
-        }
-
-        // Fist filtering (supports "ALL")
-        if (filters.fist.length > 0 && !filters.fist.includes("ALL")) {
-            updatedData = updatedData.filter((row) =>
-                filters.fist.includes(row.FIST_P)
-            );
-        }
-
-        // Status filtering (supports "ALL")
-        if (filters.status.length > 0 && !filters.status.includes("ALL")) {
-            updatedData = updatedData.filter((row) =>
-                filters.status.includes(row.TARGET_ML)
-            );
-        }
-
-        setFilteredData(updatedData);
-    }, [filters, data]);
-
-    const handleEditClick = (index) => {
-        setEditingRowIndex(index);
-        setEditedRow({ ...filteredData[index] });
-    };
-
-    const handleInputChange = (key, value) => {
-        setEditedRow((prev) => ({
-            ...prev,
-            [key]: value,
-        }));
-    };
-
-    const saveEdit = () => {
-        const updatedData = [...filteredData];
-        updatedData[editingRowIndex] = editedRow;
-        setFilteredData(updatedData);
-
-        // Update the original data as well
-        const updatedOriginalData = [...data];
-        const originalIndex = data.findIndex(
-            (row) => row.CEID === editedRow.CEID && row.PROCESS === editedRow.PROCESS
-        );
-        if (originalIndex !== -1) {
-            updatedOriginalData[originalIndex] = editedRow;
-        }
-        setData(updatedOriginalData);
-
-        setEditingRowIndex(null);
-        setEditedRow({});
-    };
-
-    const cancelEdit = () => {
-        setEditingRowIndex(null);
-        setEditedRow({});
-    };
-
-    return (
-        <div className="main-content">
-            <div className="table-wrapper">
-                {filteredData.length > 0 ? (
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th style={{ width: "80px" }}>Process</th>
-                                <th style={{ width: "100px" }}>Segment</th>
-                                <th style={{ width: "120px" }}>CEID</th>
-                                <th style={{ width: "100px" }}>Avail/Treq</th>
-                                <th style={{ width: "80px" }}>WSE_CS</th>
-                                <th style={{ width: "80px" }}>WSE_CW</th>
-                                <th style={{ width: "400px" }}>User Input</th>
-                                <th style={{ width: "100px" }}>TARGET_ML</th>
-                                <th style={{ width: "120px" }}>ML Decision</th>
-                                <th style={{ width: "60px" }}>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredData.map((row, index) => (
-                                editingRowIndex === index ? (
-                                    <tr key={index}>
-                                        {Object.keys(row).map((key, idx) => (
-                                            <td key={idx}>
-                                                <input
-                                                    type="text"
-                                                    value={editedRow[key] || ""}
-                                                    onChange={(e) =>
-                                                        handleInputChange(key, e.target.value)
-                                                    }
-                                                />
-                                            </td>
-                                        ))}
-                                        <td>
-                                            <button onClick={saveEdit}>Save</button>
-                                            <button onClick={cancelEdit}>Cancel</button>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    <tr
-                                        key={index}
-                                        className={
-                                            row.LIMITER_SPL === "Limiter" ? "limiter" : ""
-                                        }
-                                    >
-                                        <td>{row.PROCESS}</td>
-                                        <td>{row.FIST_P}</td>
-                                        <td>{row.CEID}</td>
-                                        <td>{row.ENTITY_UP_VS_TOTAL}</td>
-                                        <td>{row.WSE_CS}</td>
-                                        <td>{row.WSE_CW}</td>
-                                        <td>{row.SPL_INPUT}</td>
-                                        <td>{row.TARGET_ML}</td>
-                                        <td>{row.LIMITER_SPL}</td>
-                                        <td>
-                                            <button
-                                                className="edit-button"
-                                                onClick={() => handleEditClick(index)}
-                                            >
-                                                ✏️
-                                            </button>
-                                        </td>
-                                    </tr>
-                                )
-                            ))}
-                        </tbody>
-                    </table>
-                ) : (
-                    <p>No data available. Adjust filters and try again.</p>
-                )}
-            </div>
-        </div>
-    );
 };
+let poolPromise;
 
-export default MainContent;
+if (!global.poolPromise) {
+  global.poolPromise = sql.connect(config)
+    .then(pool => {
+      console.log("Connected to SQL Server");
+      return pool;
+    })
+    .catch(err => {
+      console.error("Database connection failed", err);
+      throw err;
+    });
+}
+
+export default async function getDbPool() {
+  return await global.poolPromise;
+}
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Attempts to fetch real data from the API with retry mechanism
+ * @param retries - The number of retry attempts (default: 3)
+ * @returns A promise that resolves to an array of ToolData
+ * @throws An error if all retry attempts fail
+ */
+async function fetchRealData(retries = 3): Promise<ToolData[]> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch("https://fm1.iglb.intel.com/reports/report/COS_DB_SSRS/Reports/ABA_History", {
+        headers: {
+          "Content-Type": "application/json",
+          // Add any necessary authentication headers here
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      if (!Array.isArray(data) || !data.every(isValidToolData)) {
+        throw new Error("Invalid data format received from the server")
+      }
+
+      return data as ToolData[]
+    } catch (error) {
+      console.error(`Attempt ${attempt} failed:`, error instanceof Error ? error.message : String(error))
+      if (attempt === retries) {
+        throw error
+      }
+      // Wait before retrying (exponential backoff)
+      await delay(Math.pow(2, attempt) * 1000)
+    }
+  }
+  throw new Error("All retry attempts failed")
+}
+
+/**
+ * Validates if the provided item conforms to the ToolData structure
+ * @param item - The item to validate
+ * @returns A boolean indicating whether the item is valid ToolData
+ */
+function isValidToolData(item: any): item is ToolData {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    typeof item.name === "string" &&
+    typeof item.limitations === "object" &&
+    Object.values(item.limitations).every((val) => typeof val === "number")
+  )
+}
+
+/**
+ * Main function to fetch tool data. Attempts to fetch real data and falls back to mock data if unsuccessful.
+ * @returns An object containing the fetched data, a flag indicating if it's mock data, and any error message
+ */
+export async function fetchToolData(): Promise<{ data: ToolData[]; isMockData: boolean; error: string | null }> {
+  try {
+    const realData = await fetchRealData()
+    return { data: realData, isMockData: false, error: null }
+  } catch (error) {
+    console.warn("Failed to fetch real data, falling back to mock data")
+    let errorMessage = "Unknown error occurred"
+    if (error instanceof Error) {
+      console.error("Error details:", error.message)
+      errorMessage = `Failed to fetch real data: ${error.message}`
+    } else {
+      console.error("Unknown error occurred:", error)
+    }
+    return { data: generateMockData(), isMockData: true, error: errorMessage }
+  }
+}
+
