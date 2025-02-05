@@ -1,121 +1,58 @@
-/**
- * This module handles data fetching for the Tool Analytics Dashboard.
- * It includes functions to fetch real data from an API and fallback to mock data if needed.
- */
-import type { ToolData } from "@/types/tool"
-import { generateMockData } from "./mockData"
-import sql from "mssql";
+DECLARE @AZDateTime DATETIME = DATEADD(HOUR, -7, current_timestamp)
 
-// Utility function for delay
-/**
- * Utility function to create a delay
- * @param ms - The number of milliseconds to delay
- * @returns A promise that resolves after the specified delay
- */
-
-
-const config = {
-  user: "COS_DB_rw",
-  password: "mOkUgTq942jQ16r",
-  server: "sql3561-fm1-in.amr.corp.intel.com,3181", // or is it supposed to  'localhost', '192.168.1.100'
-  database: "COS_DB",
-  options: {
-    encrypt: true, // Use encryption if required
-    trustServerCertificate: true, // Set to true if using self-signed certificates
-  },
-
-};
-let poolPromise;
-
-if (!global.poolPromise) {
-  global.poolPromise = sql.connect(config)
-    .then(pool => {
-      console.log("Connected to SQL Server");
-      return pool;
-    })
-    .catch(err => {
-      console.error("Database connection failed", err);
-      throw err;
-    });
-}
-
-export default async function getDbPool() {
-  return await global.poolPromise;
-}
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-/**
- * Attempts to fetch real data from the API with retry mechanism
- * @param retries - The number of retry attempts (default: 3)
- * @returns A promise that resolves to an array of ToolData
- * @throws An error if all retry attempts fail
- */
-async function fetchRealData(retries = 3): Promise<ToolData[]> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const response = await fetch("https://fm1.iglb.intel.com/reports/report/COS_DB_SSRS/Reports/ABA_History", {
-        headers: {
-          "Content-Type": "application/json",
-          // Add any necessary authentication headers here
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-
-      if (!Array.isArray(data) || !data.every(isValidToolData)) {
-        throw new Error("Invalid data format received from the server")
-      }
-
-      return data as ToolData[]
-    } catch (error) {
-      console.error(`Attempt ${attempt} failed:`, error instanceof Error ? error.message : String(error))
-      if (attempt === retries) {
-        throw error
-      }
-      // Wait before retrying (exponential backoff)
-      await delay(Math.pow(2, attempt) * 1000)
-    }
-  }
-  throw new Error("All retry attempts failed")
-}
-
-/**
- * Validates if the provided item conforms to the ToolData structure
- * @param item - The item to validate
- * @returns A boolean indicating whether the item is valid ToolData
- */
-function isValidToolData(item: any): item is ToolData {
-  return (
-    typeof item === "object" &&
-    item !== null &&
-    typeof item.name === "string" &&
-    typeof item.limitations === "object" &&
-    Object.values(item.limitations).every((val) => typeof val === "number")
-  )
-}
-
-/**
- * Main function to fetch tool data. Attempts to fetch real data and falls back to mock data if unsuccessful.
- * @returns An object containing the fetched data, a flag indicating if it's mock data, and any error message
- */
-export async function fetchToolData(): Promise<{ data: ToolData[]; isMockData: boolean; error: string | null }> {
-  try {
-    const realData = await fetchRealData()
-    return { data: realData, isMockData: false, error: null }
-  } catch (error) {
-    console.warn("Failed to fetch real data, falling back to mock data")
-    let errorMessage = "Unknown error occurred"
-    if (error instanceof Error) {
-      console.error("Error details:", error.message)
-      errorMessage = `Failed to fetch real data: ${error.message}`
-    } else {
-      console.error("Unknown error occurred:", error)
-    }
-    return { data: generateMockData(), isMockData: true, error: errorMessage }
-  }
-}
-
+select CEID,
+       sum(case when DAYS_3 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_3DAYS,
+       cast(round((1.0 * sum(case when DAYS_3 = 1 then 1 else 0 end)) / (3 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_3DAYS,
+       sum(case when DAYS_7 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_7DAYS,
+       cast(round((1.0 * sum(case when DAYS_7 = 1 then 1 else 0 end)) / (7 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_7DAYS,
+       sum(case when DAYS_14 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_14DAYS,
+       cast(round((1.0 * sum(case when DAYS_14 = 1 then 1 else 0 end)) / (14 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_14DAYS,
+       sum(case when DAYS_21 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_21DAYS,
+       cast(round((1.0 * sum(case when DAYS_21 = 1 then 1 else 0 end)) / (21 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_21DAYS,
+       sum(case when DAYS_28 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_28DAYS,
+       cast(round((1.0 * sum(case when DAYS_28 = 1 then 1 else 0 end)) / (28 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_28DAYS,
+       sum(case when DAYS_35 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_35DAYS,
+       cast(round((1.0 * sum(case when DAYS_35 = 1 then 1 else 0 end)) / (35 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_35DAYS,
+       sum(case when DAYS_42 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_42DAYS,
+       cast(round((1.0 * sum(case when DAYS_42 = 1 then 1 else 0 end)) / (42 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_42DAYS,
+       sum(case when DAYS_49 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_49DAYS,
+       cast(round((1.0 * sum(case when DAYS_49 = 1 then 1 else 0 end)) / (49 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_49DAYS,
+       sum(case when DAYS_56 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_56DAYS,
+       cast(round((1.0 * sum(case when DAYS_56 = 1 then 1 else 0 end)) / (56 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_56DAYS,
+       sum(case when DAYS_63 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_63DAYS,
+       cast(round((1.0 * sum(case when DAYS_63 = 1 then 1 else 0 end)) / (63 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_63DAYS,
+       sum(case when DAYS_70 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_70DAYS,
+       cast(round((1.0 * sum(case when DAYS_70 = 1 then 1 else 0 end)) / (70 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_70DAYS,
+       sum(case when DAYS_77 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_77DAYS,
+       cast(round((1.0 * sum(case when DAYS_77 = 1 then 1 else 0 end)) / (77 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_77DAYS,
+       sum(case when DAYS_84 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_84DAYS,
+       cast(round((1.0 * sum(case when DAYS_84 = 1 then 1 else 0 end)) / (84 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_84DAYS,
+       sum(case when DAYS_91 = 1 then 1 else 0 end) as ABA_LIMITER_COUNT_91DAYS,
+       cast(round((1.0 * sum(case when DAYS_91 = 1 then 1 else 0 end)) / (91 * 12), 4) as decimal(6,4)) as ABA_PERCENT_FLAGED_91DAYS
+from (select CEID,
+             OF3     as ABA_CLASSIFICATION,
+             OF5     as AFTER_CLASS,
+             LAST_UPDATE_DATE,
+			 case when LAST_UPDATE_DATE between @AZDateTime - 3 and @AZDateTime then 1 else 0 end as DAYS_3,
+             case when LAST_UPDATE_DATE between @AZDateTime - 7 and @AZDateTime then 1 else 0 end as DAYS_7,
+             case when LAST_UPDATE_DATE between @AZDateTime - 14 and @AZDateTime then 1 else 0 end as DAYS_14,
+             case when LAST_UPDATE_DATE between @AZDateTime - 21 and @AZDateTime then 1 else 0 end as DAYS_21,
+             case when LAST_UPDATE_DATE between @AZDateTime - 28 and @AZDateTime then 1 else 0 end as DAYS_28,
+             case when LAST_UPDATE_DATE between @AZDateTime - 35 and @AZDateTime then 1 else 0 end as DAYS_35,
+             case when LAST_UPDATE_DATE between @AZDateTime - 42 and @AZDateTime then 1 else 0 end as DAYS_42,
+             case when LAST_UPDATE_DATE between @AZDateTime - 49 and @AZDateTime then 1 else 0 end as DAYS_49,
+             case when LAST_UPDATE_DATE between @AZDateTime - 56 and @AZDateTime then 1 else 0 end as DAYS_56,
+             case when LAST_UPDATE_DATE between @AZDateTime - 63 and @AZDateTime then 1 else 0 end as DAYS_63,
+             case when LAST_UPDATE_DATE between @AZDateTime - 70 and @AZDateTime then 1 else 0 end as DAYS_70,
+             case when LAST_UPDATE_DATE between @AZDateTime - 77 and @AZDateTime then 1 else 0 end as DAYS_77,
+             case when LAST_UPDATE_DATE between @AZDateTime - 81 and @AZDateTime then 1 else 0 end as DAYS_84,
+             case when LAST_UPDATE_DATE between @AZDateTime - 91 and @AZDateTime then 1 else 0 end as DAYS_91
+      from F_ME_SKYNET
+      where 1 = 1 
+        and REPORT_NAME = 'COS_DB_PRIORITY'
+        and LAST_UPDATE_USER = 'ABA_Update'
+        and OF3 = 'ABA Limiter'
+        and PROCESS = 1274
+        and LAST_UPDATE_DATE > CURRENT_TIMESTAMP - 13 * 7) as data
+group by CEID
+order by 9 desc
