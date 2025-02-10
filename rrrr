@@ -1,279 +1,486 @@
-/**
- * Dashboard component for the Tool Analytics application.
- * Displays various visualizations and data tables for tool performance analysis.
- */
+✓ Starting...
+ ⚠ Invalid next.config.js options detected: 
+ ⚠     Unrecognized key(s) in object: 'fontLoaders' at "experimental"
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+ ✓ Ready in 13.8s
+ ○ Compiling / ...
+(node:16248) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+The user aborted a request.
+
+Retrying 1/3...
+The user aborted a request.
+
+Retrying 2/3...
+The user aborted a request.
+
+Retrying 3/3...
+AbortError: The user aborted a request.
+    at abort (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\next\dist\compiled\node-fetch\index.js:1:65594)
+    at AbortSignal.abortAndFinalize (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\next\dist\compiled\node-fetch\index.js:1:65814)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:827:20)
+    at AbortSignal.dispatchEvent (node:internal/event_target:762:26)
+    at runAbort (node:internal/abort_controller:449:10)
+    at abortSignal (node:internal/abort_controller:435:3)
+    at AbortController.abort (node:internal/abort_controller:468:5)
+    at Timeout.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\next\dist\compiled\@next\font\dist\google\fetch-css-from-google-fonts.js:44:47)
+    at listOnTimeout (node:internal/timers:614:17)
+    at process.processTimers (node:internal/timers:549:7) {
+  type: 'aborted'
+}
+ ⨯ Failed to download `Inter` from Google Fonts. Using fallback font instead.
+
+Failed to fetch `Inter` from Google Fonts.}
+ ✓ Compiled / in 22.7s (716 modules)
+ GET / 200 in 23579ms
+ ✓ Compiled in 981ms (362 modules)
+ ○ Compiling /api/fetchToolData ...
+ ✓ Compiled /api/fetchToolData in 4.9s (404 modules)
+Database query error: RequestError: Invalid object name 'ABA_History'.
+    at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:384:15)
+    at Connection.emit (node:events:507:28)
+    at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
+    at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
+    at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:507:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid object name 'ABA_History'.
+      at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:382:19)
+      at Connection.emit (node:events:507:28)
+      at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
+      at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
+      at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+      at Readable.emit (node:events:507:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 208,
+      state: 1,
+      class: 16,
+      message: "Invalid object name 'ABA_History'.",
+      serverName: 'p1fm1sql507\\SQL01',
+      procName: '',
+      lineNumber: 2
+    }
+  },
+  number: 208,
+  lineNumber: 2,
+  state: 1,
+  class: 16,
+  serverName: 'p1fm1sql507\\SQL01',
+  procName: '',
+  precedingErrors: []
+}
+Database query error: RequestError: Invalid object name 'ABA_History'.
+    at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:384:15)
+    at Connection.emit (node:events:507:28)
+    at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
+    at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
+    at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:507:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid object name 'ABA_History'.
+      at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:382:19)
+      at Connection.emit (node:events:507:28)
+      at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
+      at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
+      at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+      at Readable.emit (node:events:507:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 208,
+      state: 1,
+      class: 16,
+      message: "Invalid object name 'ABA_History'.",
+      serverName: 'p1fm1sql507\\SQL01',
+      procName: '',
+      lineNumber: 2
+    }
+  },
+  number: 208,
+  lineNumber: 2,
+  state: 1,
+  class: 16,
+  serverName: 'p1fm1sql507\\SQL01',
+  procName: '',
+  precedingErrors: []
+}
+ GET /api/fetchToolData 500 in 6940ms
+Database query error: RequestError: Invalid object name 'ABA_History'.
+    at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:384:15)
+    at Connection.emit (node:events:507:28)
+    at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
+    at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
+    at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:507:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid object name 'ABA_History'.
+      at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:382:19)
+      at Connection.emit (node:events:507:28)
+      at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
+      at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
+      at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+      at Readable.emit (node:events:507:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 208,
+      state: 1,
+      class: 16,
+      message: "Invalid object name 'ABA_History'.",
+      serverName: 'p1fm1sql507\\SQL01',
+      procName: '',
+      lineNumber: 2
+    }
+  },
+  number: 208,
+  lineNumber: 2,
+  state: 1,
+  class: 16,
+  serverName: 'p1fm1sql507\\SQL01',
+  procName: '',
+  precedingErrors: []
+}
+Database query error: RequestError: Invalid object name 'ABA_History'.
+    at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:384:15)
+    at Connection.emit (node:events:507:28)
+    at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
+    at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
+    at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:507:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid object name 'ABA_History'.
+      at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:382:19)
+      at Connection.emit (node:events:507:28)
+      at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
+      at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
+      at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+      at Readable.emit (node:events:507:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 208,
+      state: 1,
+      class: 16,
+      message: "Invalid object name 'ABA_History'.",
+      serverName: 'p1fm1sql507\\SQL01',
+      procName: '',
+      lineNumber: 2
+    }
+  },
+  number: 208,
+  lineNumber: 2,
+  state: 1,
+  class: 16,
+  serverName: 'p1fm1sql507\\SQL01',
+  procName: '',
+  precedingErrors: []
+}
+ GET /api/fetchToolData 500 in 488ms
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import DataTable from "./DataTable"
-import TrendVisualization from "./TrendVisualization"
-import Heatmap from "./Heatmap"
-import ForecastingAndAlerts from "./ForecastingAndAlerts"
-import { fetchToolData } from "@/lib/api"
+import * as React from "react"
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { ToolData } from "@/types/tool"
-import { AlertCircle, BarChart3, Grid, Table, ArrowUp } from "lucide-react"
 
-/**
- * Main Dashboard component
- * Fetches and displays tool data, handles loading states, and error scenarios
- */
-export default function Dashboard() {
-  // State for managing tool data and UI states
-  const [toolData, setToolData] = useState<ToolData[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isMockData, setIsMockData] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+const columns: ColumnDef<ToolData>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "CEID",
+    header: "CEID",
+    cell: ({ row }) => <div className="capitalize">{row.getValue("CEID")}</div>,
+  },
+  {
+    accessorKey: "limitations.3",
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          3 Days
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.3")}</div>,
+  },
+  {
+    accessorKey: "limitations.7",
+    header: "7 Days",
+    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.7")}</div>,
+  },
+  {
+    accessorKey: "limitations.14",
+    header: "14 Days",
+    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.14")}</div>,
+  },
+  {
+    accessorKey: "limitations.21",
+    header: "21 Days",
+    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.21")}</div>,
+  },
+  {
+    accessorKey: "limitations.28",
+    header: "28 Days",
+    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.28")}</div>,
+  },
+  {
+    accessorKey: "limitations.91",
+    header: "91 Days",
+    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.91")}</div>,
+  },
+  {
+    id: "actions",
+    enableHiding: false,
+    cell: ({ row }) => {
+      const tool = row.original
 
-  useEffect(() => {
-    // Function to fetch data and update component state
-    const loadData = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        const { data, isMockData, error } = await fetchToolData()
-        setToolData(data)
-        setIsMockData(isMockData)
-        if (error) {
-          setError(error)
-        }
-      } catch (err) {
-        console.error("Error loading data:", err)
-        setError(err instanceof Error ? err.message : "An unknown error occurred")
-        setIsMockData(true)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    loadData()
-  }, [])
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(tool.CEID)}>Copy CEID</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>View CEID details</DropdownMenuItem>
+            <DropdownMenuItem>Edit CEID settings</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
+    },
+  },
+]
 
-  // Display loading skeleton while data is being fetched
-  if (isLoading) {
-    return (
-      <div className="flex flex-col space-y-4 p-8">
-        <Skeleton className="h-12 w-[250px]" />
-        <Skeleton className="h-4 w-[300px]" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-[200px] w-full" />
-          ))}
-        </div>
-      </div>
-    )
-  }
+export default function DataTable({ data }: { data: ToolData[] }) {
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = React.useState({})
 
-  // Calculate average limitation and count of critical tools
-  const avgLimitation = (
-    toolData.reduce(
-      (acc, tool) =>
-        acc + Object.values(tool.limitations).reduce((sum, val) => sum + val, 0) / Object.keys(tool.limitations).length,
-      0,
-    ) / toolData.length
-  ).toFixed(2)
-  const criticalTools = toolData.filter((tool) => Object.values(tool.limitations).some((val) => val > 80)).length
+  const table = useReactTable({
+    data,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  })
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header section */}
-      <header className="border-b bg-blue-900">
-        <div className="container mx-auto py-6">
-          <h1 className="text-4xl font-bold text-white">Tool Analytics Dashboard</h1>
-          <p className="text-blue-200">Advanced insights for tool performance and bottleneck detection</p>
+    <div className="w-full">
+      <div className="flex items-center py-4">
+        <Input
+          placeholder="Filter CEIDs..."
+          value={(table.getColumn("CEID")?.getFilterValue() as string) ?? ""}
+          onChange={(event) => table.getColumn("CEID")?.setFilterValue(event.target.value)}
+          className="max-w-sm"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Columns <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                )
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  )
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
+          selected.
         </div>
-      </header>
-      {/* Main content */}
-      <main className="container mx-auto py-8">
-        {/* Alert for mock data usage */}
-        {isMockData && (
-          <Alert className="mb-8 border-orange-500 bg-orange-100 text-orange-900">
-            <AlertCircle className="h-4 w-4 text-orange-500" />
-            <AlertTitle className="text-orange-700">Demo Mode</AlertTitle>
-            <AlertDescription className="text-orange-600">
-              {error
-                ? `Unable to access the database: ${error}. Using mock data for demonstration.`
-                : "Unable to access the database. This dashboard is currently using mock data for demonstration purposes."}
-            </AlertDescription>
-          </Alert>
-        )}
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* Total Tools Card */}
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Tools</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-blue-200"
-              >
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{toolData.length}</div>
-              <p className="text-xs text-blue-200">
-                <ArrowUp className="inline mr-1 h-4 w-4" />
-                +2 from last month
-              </p>
-            </CardContent>
-          </Card>
-          {/* Average Limitation Card */}
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg. Limitation</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-green-200"
-              >
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{avgLimitation}%</div>
-              <p className="text-xs text-green-200">
-                <ArrowUp className="inline mr-1 h-4 w-4" />
-                +1.2% from last week
-              </p>
-            </CardContent>
-          </Card>
-          {/* Critical Tools Card */}
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Tools</CardTitle>
-              <AlertCircle className="h-4 w-4 text-orange-200" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{criticalTools}</div>
-              <p className="text-xs text-orange-200">
-                <ArrowUp className="inline mr-1 h-4 w-4" />
-                +2 from yesterday
-              </p>
-            </CardContent>
-          </Card>
-          {/* Efficiency Score Card */}
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Efficiency Score</CardTitle>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                className="h-4 w-4 text-purple-200"
-              >
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">7.5</div>
-              <p className="text-xs text-purple-200">
-                <ArrowUp className="inline mr-1 h-4 w-4" />
-                +0.3 points from last month
-              </p>
-            </CardContent>
-          </Card>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            Next
+          </Button>
         </div>
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="table" className="space-y-4">
-          <TabsList className="bg-blue-100 p-1 rounded-lg">
-            <TabsTrigger value="table" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-              <Table className="mr-2 h-4 w-4" />
-              Data Table
-            </TabsTrigger>
-            <TabsTrigger value="trends" className="data-[state=active]:bg-green-500 data-[state=active]:text-white">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Trend Visualization
-            </TabsTrigger>
-            <TabsTrigger value="heatmap" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-              <Grid className="mr-2 h-4 w-4" />
-              Heatmap
-            </TabsTrigger>
-            <TabsTrigger
-              value="forecasting"
-              className="data-[state=active]:bg-purple-500 data-[state=active]:text-white"
-            >
-              <AlertCircle className="mr-2 h-4 w-4" />
-              Forecasting & Alerts
-            </TabsTrigger>
-          </TabsList>
-          {/* Data Table Tab Content */}
-          <TabsContent value="table">
-            <Card>
-              <CardHeader className="bg-blue-50">
-                <CardTitle className="text-blue-800">Interactive Data Table</CardTitle>
-                <CardDescription className="text-blue-600">
-                  Sort, filter, and analyze tool limitation data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DataTable data={toolData} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          {/* Trend Visualization Tab Content */}
-          <TabsContent value="trends">
-            <Card>
-              <CardHeader className="bg-green-50">
-                <CardTitle className="text-green-800">Trend Visualization</CardTitle>
-                <CardDescription className="text-green-600">Visualize tool limitation trends over time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TrendVisualization data={toolData} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          {/* Heatmap Tab Content */}
-          <TabsContent value="heatmap">
-            <Card>
-              <CardHeader className="bg-orange-50">
-                <CardTitle className="text-orange-800">Limitation Heatmap</CardTitle>
-                <CardDescription className="text-orange-600">
-                  Quickly identify critical tools and trends
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Heatmap data={toolData} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          {/* Forecasting & Alerts Tab Content */}
-          <TabsContent value="forecasting">
-            <Card>
-              <CardHeader className="bg-purple-50">
-                <CardTitle className="text-purple-800">Forecasting & Anomaly Detection</CardTitle>
-                <CardDescription className="text-purple-600">
-                  Predict future bottlenecks and detect anomalies
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ForecastingAndAlerts data={toolData} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+      </div>
     </div>
   )
 }
+
+
+
+
+
+
+
+
+
 
