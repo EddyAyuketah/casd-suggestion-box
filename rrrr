@@ -1,486 +1,87 @@
-✓ Starting...
- ⚠ Invalid next.config.js options detected: 
- ⚠     Unrecognized key(s) in object: 'fontLoaders' at "experimental"
- ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
- ✓ Ready in 13.8s
- ○ Compiling / ...
-(node:16248) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-The user aborted a request.
+import pandas as pd
+import PyUber
 
-Retrying 1/3...
-The user aborted a request.
+from datetime import datetime
 
-Retrying 2/3...
-The user aborted a request.
+outs_goal = 8000
+quarter_goal = 67900
+deadline = datetime(2025, 11, 3)
 
-Retrying 3/3...
-AbortError: The user aborted a request.
-    at abort (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\next\dist\compiled\node-fetch\index.js:1:65594)
-    at AbortSignal.abortAndFinalize (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\next\dist\compiled\node-fetch\index.js:1:65814)
-    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:827:20)
-    at AbortSignal.dispatchEvent (node:internal/event_target:762:26)
-    at runAbort (node:internal/abort_controller:449:10)
-    at abortSignal (node:internal/abort_controller:435:3)
-    at AbortController.abort (node:internal/abort_controller:468:5)
-    at Timeout.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\next\dist\compiled\@next\font\dist\google\fetch-css-from-google-fonts.js:44:47)
-    at listOnTimeout (node:internal/timers:614:17)
-    at process.processTimers (node:internal/timers:549:7) {
-  type: 'aborted'
-}
- ⨯ Failed to download `Inter` from Google Fonts. Using fallback font instead.
+commit_ww = 202552
+ssafi_lsb_operation = 185006
+segment_day_end = 68
 
-Failed to fetch `Inter` from Google Fonts.}
- ✓ Compiled / in 22.7s (716 modules)
- GET / 200 in 23579ms
- ✓ Compiled in 981ms (362 modules)
- ○ Compiling /api/fetchToolData ...
- ✓ Compiled /api/fetchToolData in 4.9s (404 modules)
-Database query error: RequestError: Invalid object name 'ABA_History'.
-    at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:384:15)
-    at Connection.emit (node:events:507:28)
-    at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
-    at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
-    at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-    at Readable.emit (node:events:507:28)
-    at addChunk (node:internal/streams/readable:559:12)
-    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
-    at Readable.push (node:internal/streams/readable:391:5)
-    at nextAsync (node:internal/streams/from:194:22)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-  code: 'EREQUEST',
-  originalError: Error: Invalid object name 'ABA_History'.
-      at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:382:19)
-      at Connection.emit (node:events:507:28)
-      at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
-      at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
-      at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-      at Readable.emit (node:events:507:28)
-      at addChunk (node:internal/streams/readable:559:12)
-      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
-      at Readable.push (node:internal/streams/readable:391:5)
-      at nextAsync (node:internal/streams/from:194:22)
-      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-    info: ErrorMessageToken {
-      name: 'ERROR',
-      handlerName: 'onErrorMessage',
-      number: 208,
-      state: 1,
-      class: 16,
-      message: "Invalid object name 'ABA_History'.",
-      serverName: 'p1fm1sql507\\SQL01',
-      procName: '',
-      lineNumber: 2
-    }
-  },
-  number: 208,
-  lineNumber: 2,
-  state: 1,
-  class: 16,
-  serverName: 'p1fm1sql507\\SQL01',
-  procName: '',
-  precedingErrors: []
-}
-Database query error: RequestError: Invalid object name 'ABA_History'.
-    at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:384:15)
-    at Connection.emit (node:events:507:28)
-    at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
-    at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
-    at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-    at Readable.emit (node:events:507:28)
-    at addChunk (node:internal/streams/readable:559:12)
-    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
-    at Readable.push (node:internal/streams/readable:391:5)
-    at nextAsync (node:internal/streams/from:194:22)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-  code: 'EREQUEST',
-  originalError: Error: Invalid object name 'ABA_History'.
-      at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:382:19)
-      at Connection.emit (node:events:507:28)
-      at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
-      at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
-      at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-      at Readable.emit (node:events:507:28)
-      at addChunk (node:internal/streams/readable:559:12)
-      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
-      at Readable.push (node:internal/streams/readable:391:5)
-      at nextAsync (node:internal/streams/from:194:22)
-      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-    info: ErrorMessageToken {
-      name: 'ERROR',
-      handlerName: 'onErrorMessage',
-      number: 208,
-      state: 1,
-      class: 16,
-      message: "Invalid object name 'ABA_History'.",
-      serverName: 'p1fm1sql507\\SQL01',
-      procName: '',
-      lineNumber: 2
-    }
-  },
-  number: 208,
-  lineNumber: 2,
-  state: 1,
-  class: 16,
-  serverName: 'p1fm1sql507\\SQL01',
-  procName: '',
-  precedingErrors: []
-}
- GET /api/fetchToolData 500 in 6940ms
-Database query error: RequestError: Invalid object name 'ABA_History'.
-    at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:384:15)
-    at Connection.emit (node:events:507:28)
-    at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
-    at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
-    at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-    at Readable.emit (node:events:507:28)
-    at addChunk (node:internal/streams/readable:559:12)
-    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
-    at Readable.push (node:internal/streams/readable:391:5)
-    at nextAsync (node:internal/streams/from:194:22)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-  code: 'EREQUEST',
-  originalError: Error: Invalid object name 'ABA_History'.
-      at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:382:19)
-      at Connection.emit (node:events:507:28)
-      at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
-      at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
-      at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-      at Readable.emit (node:events:507:28)
-      at addChunk (node:internal/streams/readable:559:12)
-      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
-      at Readable.push (node:internal/streams/readable:391:5)
-      at nextAsync (node:internal/streams/from:194:22)
-      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-    info: ErrorMessageToken {
-      name: 'ERROR',
-      handlerName: 'onErrorMessage',
-      number: 208,
-      state: 1,
-      class: 16,
-      message: "Invalid object name 'ABA_History'.",
-      serverName: 'p1fm1sql507\\SQL01',
-      procName: '',
-      lineNumber: 2
-    }
-  },
-  number: 208,
-  lineNumber: 2,
-  state: 1,
-  class: 16,
-  serverName: 'p1fm1sql507\\SQL01',
-  procName: '',
-  precedingErrors: []
-}
-Database query error: RequestError: Invalid object name 'ABA_History'.
-    at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:384:15)
-    at Connection.emit (node:events:507:28)
-    at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
-    at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
-    at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-    at Readable.emit (node:events:507:28)
-    at addChunk (node:internal/streams/readable:559:12)
-    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
-    at Readable.push (node:internal/streams/readable:391:5)
-    at nextAsync (node:internal/streams/from:194:22)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-  code: 'EREQUEST',
-  originalError: Error: Invalid object name 'ABA_History'.
-      at handleError (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\mssql\lib\tedious\request.js:382:19)
-      at Connection.emit (node:events:507:28)
-      at Connection.emit (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\connection.js:970:18)
-      at RequestTokenHandler.onErrorMessage (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\handler.js:284:21)
-      at Readable.<anonymous> (C:\Users\eddyayuk\Downloads\tool-analytics-dashboard (1)\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-      at Readable.emit (node:events:507:28)
-      at addChunk (node:internal/streams/readable:559:12)
-      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
-      at Readable.push (node:internal/streams/readable:391:5)
-      at nextAsync (node:internal/streams/from:194:22)
-      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-    info: ErrorMessageToken {
-      name: 'ERROR',
-      handlerName: 'onErrorMessage',
-      number: 208,
-      state: 1,
-      class: 16,
-      message: "Invalid object name 'ABA_History'.",
-      serverName: 'p1fm1sql507\\SQL01',
-      procName: '',
-      lineNumber: 2
-    }
-  },
-  number: 208,
-  lineNumber: 2,
-  state: 1,
-  class: 16,
-  serverName: 'p1fm1sql507\\SQL01',
-  procName: '',
-  precedingErrors: []
-}
- GET /api/fetchToolData 500 in 488ms
+lineview = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LineView.TXT"
+df_lineview = pd.read_csv(lineview, sep="\t")
 
+ssafi_lsb_fls = df_lineview.loc[df_lineview["OPERATION"] == ssafi_lsb_operation]["FULL_LOOP_SEQ"].values[0]
 
+# don't forget to update the start date!!
+quarter_ships_sql = f'''
+SELECT
+  SUM(WAFER_QTY)
+FROM
+  F_LOT_RUN_CARD
+WHERE
+  OUT_DATE >= TO_DATE('09/06/2025 18:00', 'MM/DD/YYYY HH24:MI')
+  AND (LOT_TYPE = 'PROD' OR LOT_TYPE = 'ENG')
+  AND LOT LIKE 'L%'
+ AND OPERATION = {ssafi_lsb_operation}
+'''
 
+quarter_ships = pd.read_sql(quarter_ships_sql, PyUber.connect('F32_PROD_XEUS')).values
+quarter_outs_remaining = quarter_goal - quarter_ships[0][0]
+days_till_deadline = (deadline - datetime.today()).days + 1
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-"use client"
-
-import * as React from "react"
-import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import type { ToolData } from "@/types/tool"
-
-const columns: ColumnDef<ToolData>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "CEID",
-    header: "CEID",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("CEID")}</div>,
-  },
-  {
-    accessorKey: "limitations.3",
-    header: ({ column }) => {
-      return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          3 Days
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.3")}</div>,
-  },
-  {
-    accessorKey: "limitations.7",
-    header: "7 Days",
-    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.7")}</div>,
-  },
-  {
-    accessorKey: "limitations.14",
-    header: "14 Days",
-    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.14")}</div>,
-  },
-  {
-    accessorKey: "limitations.21",
-    header: "21 Days",
-    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.21")}</div>,
-  },
-  {
-    accessorKey: "limitations.28",
-    header: "28 Days",
-    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.28")}</div>,
-  },
-  {
-    accessorKey: "limitations.91",
-    header: "91 Days",
-    cell: ({ row }) => <div className="text-right">{row.getValue("limitations.91")}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const tool = row.original
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(tool.CEID)}>Copy CEID</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View CEID details</DropdownMenuItem>
-            <DropdownMenuItem>Edit CEID settings</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
-
-export default function DataTable({ data }: { data: ToolData[] }) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
-
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  })
-
-  return (
-    <div className="w-full">
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter CEIDs..."
-          value={(table.getColumn("CEID")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("CEID")?.setFilterValue(event.target.value)}
-          className="max-w-sm"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
+quarter_volume = (df_lineview
+                  .query(f"FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION != 204")
+                  .assign(PP_INV=lambda x: x.iloc[::-1]['INV_PROD'].cumsum()[::-1],
+                          PP_W=lambda x: x["PP_INV"] // quarter_outs_remaining,
+                          PP_mod=lambda x: x["PP_INV"] % quarter_outs_remaining)
                   )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-          selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-            Next
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
+quarter_volume_pp = quarter_volume.query("PP_W == 1").tail(1)
+quarter_bump_inv = quarter_outs_remaining - quarter_volume.query("PP_W == 0").head(1).filter(["PP_mod"]).values[0][0]
 
+segment_days_till_deadline = segment_day_end - quarter_volume_pp['SEGMENT_DAY'].head(1).values[0]
 
+ahead_behind = days_till_deadline - segment_days_till_deadline
 
+print(f"""
+      Quarter outs remaining: {quarter_outs_remaining} 
+      PP is SD{quarter_volume_pp.filter(['SEGMENT_DAY', 'OPERATION', 
+                                         'OPER_SHORT_DESC', 'CEID']).to_string(index=False, header=False)} and {quarter_bump_inv}w remains from PP 
+      Days till deadline: {days_till_deadline}
+      Segment days till deadline: {segment_days_till_deadline}
+      Ahead/Behind: {ahead_behind} days
+      Shiftly min outs to hit goal: {round(quarter_outs_remaining / days_till_deadline / 2, 0)} 
+      Weekly min outs to hit goal: {round((quarter_outs_remaining / days_till_deadline) * 7, 0)}""")
 
+outs_remaining = outs_goal - df_lineview.loc[df_lineview["OPERATION"] == ssafi_lsb_operation]["CW_OUTS_PROD"].values[0]
 
+pp = (df_lineview
+      .query(f"FULL_LOOP_SEQ <= {ssafi_lsb_fls} "
+             f"& OPERATION != 204")
+      .filter(["SEGMENT_DAY", "OPERATION", "OPER_SHORT_DESC", "CEID", "INV_PROD"])
+      .assign(PP_INV=lambda x: x.iloc[::-1]['INV_PROD'].cumsum()[::-1],
+              PP_W=lambda x: x["PP_INV"] // outs_remaining,
+              PP_mod=lambda x: x["PP_INV"] % outs_remaining)
+      .query("PP_W == 1 & INV_PROD != 0 ")
+      )
 
+pp_operation = pp.query(f"PP_mod == {pp['PP_mod'].min()}")
 
+pp_before = (df_lineview
+             .query(f"FULL_LOOP_SEQ <= {ssafi_lsb_fls} "
+                    f"& OPERATION != 204")
+             .filter(["SEGMENT_DAY", "OPERATION", "OPER_SHORT_DESC", "CEID", "INV_PROD"])
+             .assign(PP_INV=lambda x: x.iloc[::-1]['INV_PROD'].cumsum()[::-1],
+                     PP_W=lambda x: x["PP_INV"] // outs_remaining,
+                     PP_mod=lambda x: x["PP_INV"] % outs_remaining)
+             .query("PP_W == 0 & INV_PROD != 0 ")
+             )
 
+bump_inv = outs_remaining - pp_before["PP_INV"].head(1).values[0]
 
+print(
+    f"\n Current Week PP is SD{pp_operation.filter(['SEGMENT_DAY', 'OPER_SHORT_DESC', 'CEID']).to_string(index=False, header=False)} and {bump_inv}w remains from PP")
