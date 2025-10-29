@@ -1,1 +1,158 @@
-LOL.....
+✓ LineView loaded: 4389 operations, updated 0.1h ago
+✓ FIST column found in LineView
+✓ CEID data loaded: 300 CEIDs
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\run_Test.py:137: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  quarter_ships_df = pd.read_sql(quarter_ships_sql, PyUber.connect('F32_PROD_XEUS'))
+✓ Quarter ships: 53,335w from 2257 lots
+  Period: 2025-09-06T19:16:08.000000000 to 2025-10-29T13:08:38.000000000 (53 days)
+  Actual rate: 1006w/day
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\run_Test.py:184: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_week_df = pd.read_sql(last_week_sql, PyUber.connect('F32_PROD_XEUS'))
+✓ Last week (WW202548) ships: 6,594w
+
+⏰ Time remaining: 36 days = 850.6 hours = 72 shifts
+
+🔍 Analyzing 24h look-ahead from PP...
+  Filtered to operations with LAYER_COUNT >= 0.3
+  Found 18 operations spanning 23.3h
+  FIST values in lookahead window: ['SSAFI-M0_M0 S']
+  Identified 15 limiter(s) in 24h window
+
+  DEBUG - Sample of FIST values in limiters:
+    Limiter 1: CEID=SAUli, FIST='SSAFI-M0_M0 S' (type: <class 'str'>)
+    Limiter 2: CEID=REGfe, FIST='SSAFI-M0_M0 S' (type: <class 'str'>)
+    Limiter 3: CEID=GTAbe, FIST='SSAFI-M0_M0 S' (type: <class 'str'>)
+    Limiter 4: CEID=DRTnc, FIST='SSAFI-M0_M0 S' (type: <class 'str'>)
+    Limiter 5: CEID=SAUli, FIST='SSAFI-M0_M0 S' (type: <class 'str'>)
+  FIST Distribution: BE-LL=0, BE-UL=0, SSAFI-M0=15, SSAFI-M1=0, Other=0
+
+====================================================================================================
+Q4 PRODUCTION CONTROL DASHBOARD - 24/7 OPERATION
+Timestamp: 2025-10-29 13:23:02 | Current Week: WW202549
+====================================================================================================
+
+QUARTERLY COMMIT STATUS:
+  Q4 Ships Goal:                                96,915w
+  Shipped to Date:                              53,335w  ( 55.0%)
+  Commit Inventory Remaining:                   43,580w  ( 45.0%)
+
+PRODUCTION POINT (PP) - QUARTERLY:
+  PP Ships Location:                        58 193925 L 4M0Cdr SAUli
+  Bump Inventory from PP:                           62w
+  Segment Days (PP → SD104):                      46 SD
+  Q4 Ships Goal Required (PP → SD104):        43,580w
+
+SCHEDULE ANALYSIS:
+  Calendar Days Remaining:                          36 days
+  Segment Days Remaining (PP → SD104):            46 SD
+  Commit Ahead/Behind:                             -10 days ❌ BEHIND
+
+WIP & INVENTORY:
+  Total WIP in Fab:                            114,165w
+  Last 24hr Inventory Reduction:                   923w
+
+REQUIRED OUTPUT RATES (Q4 QUARTERLY):
+  Shiftly Min Outs to Hit Q4 Goal:                 605w/shift (12h)
+  Daily Min Outs to Hit Q4 Goal:                  1211w/day
+  Weekly Min Outs to Hit Q4 Goal:                 8474w/week
+
+
+RATE ANALYSIS (Q4):
+  Historical Avg Rate:                          1006.3w/day
+  Required Rate:                                1210.6w/day
+  Rate Gap:                                      204.2w/day (+20.3%)
+  Status:                                   ❌ MUST ACCELERATE
+
+
+====================================================================================================
+WEEKLY PERFORMANCE & TRACKING
+====================================================================================================
+
+LAST WEEK (WW202548):
+  Shipped:                                       6,594w
+  Goal:                                          8,100w
+  Status:                                   ❌ MISSED by 1,506w
+  Shortfall to Make Up:                         1,506w
+
+CURRENT WEEK (WW202549):
+  Base Weekly Goal:                              8,100w
+  Catch-up from Last Week:                      +1,506w
+  THIS WEEK REQUIRED TOTAL:                      9,606w  ⚠️  INCREASED
+
+  Shipped This Week (so far):                    4,170w  ( 43.4%)
+  Still Need to Ship This Week:                  5,436w
+
+  Days Left in Week:                                 5 days
+  Shifts Left in Week:                               8 shifts
+
+  Required per Shift (remaining):                679.5w/shift
+  Required per Day (remaining):                 1087.2w/day
+
+WEEK PP (Current Week):
+  Location:                                 97 E #4CM14ST CARcostg
+  Bump Inventory from PP:                          122w
+
+NEXT WEEK PROJECTION (WW202550):
+  Current Week Daily Rate:                      1390.0w/day
+  Projected Ships:                               9,730w
+
+
+====================================================================================================
+TOOL LIMITER ANALYSIS (24h Look-Ahead from PP) - FILTERED BY FIST
+====================================================================================================
+Look-Ahead Configuration:
+  Hours Ahead:                              24h
+  Layer Count Threshold:                    0.3 (exclude < 30%)
+  HAO Variance Threshold:                   3.5h
+  WSPW Pace Gap Threshold:                  500
+  UP Tool Threshold:                        10% of TOOL_REQD
+  ROADS Pace Threshold:                     10% below ROADS
+
+Total Limiters Identified: 15
+
+
+⚠️  BE-LL LIMITERS (M2-M5): None
+
+
+⚠️  BE-UL LIMITERS (M6-M14, TM0, CE): None
+
+
+⚠️  SSAFI-M0 LIMITERS: 15 tool(s)
+
+CEID         FIST                 Operation  Description          SD    CT Goal  AVG HAO  INV      Limiter Reasons
+----------------------------------------------------------------------------------------------------------------------------------------------------------------   
+SAUli        SSAFI-M0_M0 S        241921     L 4M0C 6p            58    1.71     3.60     50       AVG_HAO (3.60h) > CT_GOAL (1.71h) | INV_PROD (50w) > INV_GOAL (28w) | WSPW pace 656 below goal
+REGfe        SSAFI-M0_M0 S        241286     L-4M0CspR            58    0.08     nan      0        WSPW pace 908 below goal
+GTAbe        SSAFI-M0_M0 S        149455     E*4M0C IEA           58    2.53     0.11     27       WSPW pace 1295 below goal | HR24_WSPW_PACE (7186) 11.0% below ROADS (8070)
+DRTnc        SSAFI-M0_M0 S        134641     W 4M0DLSC            58    0.27     0.10     2        WSPW pace 970 below goal | HR24_WSPW_PACE (6924) 12.5% below ROADS (7910)
+SAUli        SSAFI-M0_M0 S        241922     L 4M0D 6p            58    1.75     nan      0        WSPW pace 656 below goal
+REGfe        SSAFI-M0_M0 S        241287     L-4M0DspR            58    0.08     1.76     45       AVG_HAO (1.76h) > CT_GOAL (0.08h) | INV_PROD (45w) > INV_GOAL (1w) | WSPW pace 908 below goal
+GTAbe        SSAFI-M0_M0 S        149456     E*4M0D IEA           58    2.58     1.13     150      INV_PROD (150w) > INV_GOAL (134w) | WSPW pace 1295 below goal | HR24_WSPW_PACE (7186) 11.0% below ROADS (8070)
+CDKli        SSAFI-M0_M0 S        137910     L-4M0DaHC            58    0.08     13.46    43       AVG_HAO (13.46h) > CT_GOAL (0.08h) | INV_PROD (43w) > INV_GOAL (w) | WSPW pace 908 below goal
+GTAbe        SSAFI-M0_M0 S        149456     E*4M0D IEA           58    2.58     1.13     150      INV_PROD (150w) > INV_GOAL (134w) | WSPW pace 1295 below goal | HR24_WSPW_PACE (7186) 11.0% below ROADS (8070)
+CDKli        SSAFI-M0_M0 S        137910     L-4M0DaHC            58    0.08     13.46    43       AVG_HAO (13.46h) > CT_GOAL (0.08h) | INV_PROD (43w) > INV_GOAL (GTAbe        SSAFI-M0_M0 S        149456     E*4M0D IEA           58    2.58     1.13     150      INV_PROD (150w) > INV_GOAL (134w) | WSPW pace 1295 below goal | HR24_WSPW_PACE (7186) 11.0% below ROADS (8070)
+CDKli        SSAFI-M0_M0 S        137910     L-4M0DaHC            58    0.08     13.46    43       AVG_HAO (13.46h) > CT_GOAL (0.08h) | INV_PROD (43w) > INV_GOAL (HR24_WSPW_PACE (7186) 11.0% below ROADS (8070)
+CDKli        SSAFI-M0_M0 S        137910     L-4M0DaHC            58    0.08     13.46    43       AVG_HAO (13.46h) > CT_GOAL (0.08h) | INV_PROD (43w) > INV_GOAL (2w) | AVG_HAO & MAX_HAO both >3.5h over CT_GOAL | WSPW pace 1298 below goal | HR24_WSPW_PACE (6394) 21.4% below ROADS (8131)
+CDKli        SSAFI-M0_M0 S        137910     L-4M0DaHC            58    0.08     13.46    43       AVG_HAO (13.46h) > CT_GOAL (0.08h) | INV_PROD (43w) > INV_GOAL (2w) | AVG_HAO & MAX_HAO both >3.5h over CT_GOAL | WSPW pace 1298 below goal | HR24_WSPW_PACE (6394) 21.4% below ROADS (8131)
+LSBnp        SSAFI-M0_M0 S        129311     Z 4RNDIF47           58    0.11     nan      0        WSPW pace 641 below goal | HR24_WSPW_PACE (6925) 28.0% below ROA2w) | AVG_HAO & MAX_HAO both >3.5h over CT_GOAL | WSPW pace 1298 below goal | HR24_WSPW_PACE (6394) 21.4% below ROADS (8131)
+LSBnp        SSAFI-M0_M0 S        129311     Z 4RNDIF47           58    0.11     nan      0        WSPW pace 641 below goal | HR24_WSPW_PACE (6925) 28.0% below ROALSBnp        SSAFI-M0_M0 S        129311     Z 4RNDIF47           58    0.11     nan      0        WSPW pace 641 below goal | HR24_WSPW_PACE (6925) 28.0% below ROADS (9620)
+GTOtmstg     SSAFI-M0_M0 S        137263     E 4M0SvSTG           58    0.08     nan      0        WSPW pace 2511 below goal
+DS (9620)
+GTOtmstg     SSAFI-M0_M0 S        137263     E 4M0SvSTG           58    0.08     nan      0        WSPW pace 2511 below goal
+GTOtm        SSAFI-M0_M0 S        137913     E*4M0CDa             58    3.54     5.38     250      AVG_HAO (5.38h) > CT_GOAL (3.54h) | INV_PROD (250w) > INV_GOAL (GTOtmstg     SSAFI-M0_M0 S        137263     E 4M0SvSTG           58    0.08     nan      0        WSPW pace 2511 below goal
+GTOtm        SSAFI-M0_M0 S        137913     E*4M0CDa             58    3.54     5.38     250      AVG_HAO (5.38h) > CT_GOAL (3.54h) | INV_PROD (250w) > INV_GOAL (GTOtm        SSAFI-M0_M0 S        137913     E*4M0CDa             58    3.54     5.38     250      AVG_HAO (5.38h) > CT_GOAL (3.54h) | INV_PROD (250w) > INV_GOAL (185w)
+TGRne        SSAFI-M0_M0 S        132650     W 4M0S PHC           59    0.52     0.06     25       INV_PROD (25w) > INV_GOAL (23w) | HR24_WSPW_PACE (7383) 22.2% beTGRne        SSAFI-M0_M0 S        132650     W 4M0S PHC           59    0.52     0.06     25       INV_PROD (25w) > INV_GOAL (23w) | HR24_WSPW_PACE (7383) 22.2% below ROADS (9495)
+SATpp        SSAFI-M0_M0 S        238087     D*4M0S OPR           59    5.80     2.25     349      INV_PROD (349w) > INV_GOAL (257w) | WSPW pace 1094 below goal | low ROADS (9495)
+SATpp        SSAFI-M0_M0 S        238087     D*4M0S OPR           59    5.80     2.25     349      INV_PROD (349w) > INV_GOAL (257w) | WSPW pace 1094 below goal | HR24_WSPW_PACE (7464) 10.2% below ROADS (8309)
+SATpp        SSAFI-M0_M0 S        238087     D*4M0S OPR           59    5.80     2.25     349      INV_PROD (349w) > INV_GOAL (257w) | WSPW pace 1094 below goal | HR24_WSPW_PACE (7464) 10.2% below ROADS (8309)
+HR24_WSPW_PACE (7464) 10.2% below ROADS (8309)
+JGRwx        SSAFI-M0_M0 S        138949     W 4M0SdOLY           59    0.53     0.14     50       INV_PROD (50w) > INV_GOAL (25w) | WSPW pace 1012 below goal | HR24_WSPW_PACE (7350) 21.6% below ROADS (9372)
+JGRwx        SSAFI-M0_M0 S        138949     W 4M0SdOLY           59    0.53     0.14     50       INV_PROD (50w) > INV_GOAL (25w) | WSPW pace 1012 below goal | HR24_WSPW_PACE (7350) 21.6% below ROADS (9372)
+PLIpg        SSAFI-M0_M0 S        146274     P*4M0Sa OX           59    2.90     7.11     67       AVG_HAO (7.11h) > CT_GOAL (2.90h) | AVG_HAO & MAX_HAO both >3.5h24_WSPW_PACE (7350) 21.6% below ROADS (9372)
+PLIpg        SSAFI-M0_M0 S        146274     P*4M0Sa OX           59    2.90     7.11     67       AVG_HAO (7.11h) > CT_GOAL (2.90h) | AVG_HAO & MAX_HAO both >3.5hPLIpg        SSAFI-M0_M0 S        146274     P*4M0Sa OX           59    2.90     7.11     67       AVG_HAO (7.11h) > CT_GOAL (2.90h) | AVG_HAO & MAX_HAO both >3.5h over CT_GOAL | HR24_WSPW_PACE (7696) 15.9% below ROADS (9151)
+
+
+⚠️  SSAFI-M1 LIMITERS: None
+
+====================================================================================================
+PS C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\FIST>
