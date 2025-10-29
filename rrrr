@@ -1,1 +1,8 @@
-LOL..........
+okay, now with the limiters IDENTIFIED, here lets filter them by fist. 
+
+so any CEID that under FIST is BE-LL_M2, BE-LL_M3, BE-LL_M4, and BE-LL_M5 should be in its own table 
+while any CEID  under FIST that is BE-UL_M6,BE-UL_M7, BE-UL_M8, BE-UL_M9, BE-UL_M10, BE-UL_M11, BE-UL_M12, BE-UL_M13, BE-UL_M14, BE-UL_TM0,BE-UL_CE
+should be in its own table below 
+Also, any CEID in that rand that when filterd by FIST, is under 
+SSAFI-M0_M0 R, SSAFI-M0_M0 S, should be in its own table, 
+and anything under SSAFI-M1_M1 R, SSAFI-M1_M1 S, should be in its own table.  
