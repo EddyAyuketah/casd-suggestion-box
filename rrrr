@@ -1,12 +1,3 @@
- * Debugger is active!
- * Debugger PIN: 816-131-130
-127.0.0.1 - - [30/Oct/2025 09:32:54] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [30/Oct/2025 09:32:55] "GET /favicon.ico HTTP/1.1" 404 -
- * Detected change in 'C:\\Users\\eddyayuk\\My Programs\\SQLPathFinder3\\Python3\\Lib\\site-packages\\flask\\app.py', reloading
- * Detected change in 'C:\\Users\\eddyayuk\\My Programs\\SQLPathFinder3\\Python3\\Lib\\site-packages\\werkzeug\\debug\\__init__.py', reloading
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\App\fab_tracker_app.py:1130: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  quarter_ships_df = pd.read_sql(quarter_ships_sql, PyUber.connect('F32_PROD_XEUS'))
- * Restarting with watchdog (windowsapi)
 ================================================================================
 🏭 Semiconductor Fab Production Tracker
 ================================================================================
@@ -14,3 +5,54 @@ c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\App\fab
 ✓ Server starting...
 ✓ Open your browser to: http://localhost:5000
 ✓ Press Ctrl+C to stop the server
+
+================================================================================
+ * Serving Flask app 'fab_tracker_app' (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.76.212:5000
+Press CTRL+C to quit
+127.0.0.1 - - [30/Oct/2025 09:41:25] "GET / HTTP/1.1" 200 -
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\App\fab_tracker_app.py:1130: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  quarter_ships_df = pd.read_sql(quarter_ships_sql, PyUber.connect('F32_PROD_XEUS'))
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\App\fab_tracker_app.py:1167: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_week_df = pd.read_sql(last_week_sql, PyUber.connect('F32_PROD_XEUS'))
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\App\fab_tracker_app.py:1259: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  lookahead_ops['CUMULATIVE_CT'] = lookahead_ops['CT_GOAL'].cumsum()
+[2025-10-30 09:42:03,503] ERROR in app: Exception on /analyze [POST]
+Traceback (most recent call last):
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\flask\app.py", line 2077, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\flask\app.py", line 1525, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\flask\app.py", line 1523, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\flask\app.py", line 1509, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
+  File "c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\App\fab_tracker_app.py", line 1506, in analyze
+    return jsonify(result)
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\flask\json\__init__.py", line 301, in jsonify
+    f"{dumps(data, indent=indent, separators=separators)}\n",
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\flask\json\__init__.py", line 131, in dumps
+    return _json.dumps(obj, **kwargs)
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\json\__init__.py", line 234, in dumps
+    return cls(
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\json\encoder.py", line 199, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\json\encoder.py", line 257, in iterencode
+    return _iterencode(o, 0)
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\flask\json\__init__.py", line 50, in default
+    return super().default(o)
+  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\json\encoder.py", line 179, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type int64 is not JSON serializable
+127.0.0.1 - - [30/Oct/2025 09:42:03] "POST /analyze HTTP/1.1" 500 -
