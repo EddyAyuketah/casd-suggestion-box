@@ -1,14 +1,1 @@
-I want you to design a futuristic dashboard in simple react that is used to track certified material throughout the factory. 
-At the very top there should be 6  analytic boxes 
-box 1 should allow the user to choose hours at operation, noted as IP, <6 hours, less than 12 hours, greater than 24 hours and also allow the user to set their own specific time. 
 
-bOX 2 should allow the user to search for any lot and allow users to multi select lots, 
-box 3 should allow the user to search for any CEID in the factory, 
-box 4 allows fist to choose between different areas, 1 to 8 
-box 5 should have all lots on hold, in store, active
-box 6 should allow user to choose between various segment days. 
-
-Below those 6 boxes, there should be a chart that changes as peer the filters in the 6 boxes above, allowing multi select, 
- and below this, there should be a page section with 18 columns with lables LOT, STATE, INS, SIF, MDT, HB, OPER_DESC, DAY, HAO, IP Hrs, CEID, FIST, QTY, INLINEDPML, ETA M1Etest ETA, Ah/Be MES Comment Entity_avail_list
-note that the MES comment should be the widest as text will be stored here. 
-make this app fully futuristic and add other useful metrics that i can use here. please help and make sure this app is in simple react.
