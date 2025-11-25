@@ -1,1 +1,28 @@
-LOL
+Go ahead and do that but just to help you, i had created a react app in the past and my server.js file was like this. thisis just to 
+help you understand what the connection should look like, white using our existing path. also, let code pull from CEID_PATH.txt,LINEVIEW_PATH.txt when running 
+locally. Below is the server.js code
+// server/server.js
+const express = require('express');
+const fs = require('fs');
+const cors = require('cors');
+
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+
+const FILE_PATH = '\\\\azshfs.intel.com\\azanalysis$\\1274_MAODATA\\MfgEng\\COS_DB\\ABA_History.txt';
+
+app.get('/api/aba-history', (req, res) => {
+  fs.readFile(FILE_PATH, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading the file:', err);
+      return res.status(500).json({ error: 'Failed to read ABA History file.' });
+    }
+    res.send(data);
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`🔥 Server is running at http://localhost:${PORT}/api/aba-history`);
+});
