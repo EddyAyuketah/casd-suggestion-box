@@ -1,72 +1,180 @@
-Note that this is the  output from my script and the report is lacking some of this data.  
+i get this error 
+Cannot read properties of undefined (reading 'toLocaleString')
+TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+    at WeeklyCard (http://localhost:3000/main.ac88c6bc09c10cfe88d9.hot-update.js:103:43)
+    at Object.react_stack_bottom_frame (http://localhost:3000/static/js/bundle.js:40182:18)
+    at renderWithHooks (http://localhost:3000/static/js/bundle.js:31055:20)
+    at updateFunctionComponent (http://localhost:3000/static/js/bundle.js:32444:17)
+    at beginWork (http://localhost:3000/static/js/bundle.js:33013:16)
+    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:27531:68)
+    at performUnitOfWork (http://localhost:3000/static/js/bundle.js:35440:93)
+    at workLoopSync (http://localhost:3000/static/js/bundle.js:35335:38)
+    at renderRootSync (http://localhost:3000/static/js/bundle.js:35320:7)
+    at performWorkOnRoot (http://localhost:3000/static/js/bundle.js:34993:33)
 
-CURRENT SHIFT PERFORMANCE (Day Shift):
-  Shift Start:                          2025-11-25 06:00
-  Hours Into Shift:                     7.3 / 12 hrs
-  Hours Remaining:                      4.7 hrs
-  
-  Shipped This Shift:                   274 wafers
-  Shift Target:                         593 wafers
-  Remaining:                            319 wafers
-  
-  Current Pace:                         37.8 wfrs/hr
-  Projected End of Shift:               453 wafers
-  Status:                               ⚠ BEHIND PACE
+then this in console 
+Uncaught TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+    at WeeklyCard (main.5495ac5e8bb17d75859b.hot-update.js:103:43)
+    at Object.react_stack_bottom_frame (react-dom-client.development.js:25770:1)
+    at renderWithHooks (react-dom-client.development.js:7523:1)
+    at updateFunctionComponent (react-dom-client.development.js:9984:1)
+    at beginWork (react-dom-client.development.js:11610:1)
+    at runWithFiberInDEV (react-dom-client.development.js:793:1)
+    at performUnitOfWork (react-dom-client.development.js:17538:1)
+    at workLoopSync (react-dom-client.development.js:17375:1)
+    at renderRootSync (react-dom-client.development.js:17347:1)
+    at performWorkOnRoot (react-dom-client.development.js:16387:1)Understand this error
+react-dom-client.development.js:9233 An error occurred in the <WeeklyCard> component.
 
-  CURRENT POSITION:                     SD85 | Oper 213049 | FDEdt | M-#4DM7HMS
-  TARGET BY END OF SHIFT:               SD85 | Oper 187712 | REXck | E*#46M7vFT
-  CT Progress Needed This Shift:        17.5 CT hrs
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
 
-==============================================================================================================
+defaultOnUncaughtError @ react-dom-client.development.js:9233Understand this warning
+WeeklyCard.js:33 Uncaught TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+    at WeeklyCard (WeeklyCard.js:33:1)
+    at Object.react_stack_bottom_frame (react-dom-client.development.js:25770:1)
+    at renderWithHooks (react-dom-client.development.js:7523:1)
+    at updateFunctionComponent (react-dom-client.development.js:9984:1)
+    at beginWork (react-dom-client.development.js:11610:1)
+    at runWithFiberInDEV (react-dom-client.development.js:793:1)
+    at performUnitOfWork (react-dom-client.development.js:17538:1)
+    at workLoopSync (react-dom-client.development.js:17375:1)
+    at renderRootSync (react-dom-client.development.js:17347:1)
+    at performWorkOnRoot (react-dom-client.development.js:16387:1)Understand this error
+react-dom-client.development.js:9233 An error occurred in the <WeeklyCard> component.
 
-QUARTERLY PERFORMANCE:
-  Goal:                                 96,000 wafers
-  Shipped to Date:                      80,025 wafers
-  Remaining:                            15,975 wafers
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
 
-LAST WEEK SHIPMENTS (WW202548):      7,102 wafers
-  vs Weekly Goal:                       -1,198 wafers (-14.4%)
+defaultOnUncaughtError @ react-dom-client.development.js:9233Understand this warning
+WeeklyCard.js:33 Uncaught TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+    at WeeklyCard (WeeklyCard.js:33:1)
+    at Object.react_stack_bottom_frame (react-dom-client.development.js:25770:1)
+    at renderWithHooks (react-dom-client.development.js:7523:1)
+    at updateFunctionComponent (react-dom-client.development.js:9984:1)
+    at beginWork (react-dom-client.development.js:11610:1)
+    at runWithFiberInDEV (react-dom-client.development.js:793:1)
+    at performUnitOfWork (react-dom-client.development.js:17538:1)
+    at workLoopSync (react-dom-client.development.js:17375:1)
+    at renderRootSync (react-dom-client.development.js:17347:1)
+    at performWorkOnRoot (react-dom-client.development.js:16387:1)Understand this error
+react-dom-client.development.js:9233 An error occurred in the <WeeklyCard> component.
 
-PULL POINT (Quarterly):
-  Segment Day:                          SD85
-  CEID:                                 FDEdt
-  Operation:                            213049
-  Description:                          M-#4DM7HMS
-  Bump Inventory from PP:               22 wafers
-  Segment Days Remaining:               19 days
-  Calendar Days Remaining:              12 days
-  Commit Status:                        -7 days ❌ BEHIND
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
 
-24-HOUR PULL POINT TRACKING:
-  Pull Point Target:                    24hr = 35.0 CT hrs (catch-up mode)
-  Target Range:                         SD85 SRKcx - SD85 ORLch
+defaultOnUncaughtError @ react-dom-client.development.js:9233Understand this warning
+WeeklyCard.js:33 Uncaught TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+    at WeeklyCard (WeeklyCard.js:33:1)
+    at Object.react_stack_bottom_frame (react-dom-client.development.js:25770:1)
+    at renderWithHooks (react-dom-client.development.js:7523:1)
+    at updateFunctionComponent (react-dom-client.development.js:9984:1)
+    at beginWork (react-dom-client.development.js:11610:1)
+    at runWithFiberInDEV (react-dom-client.development.js:793:1)
+    at performUnitOfWork (react-dom-client.development.js:17538:1)
+    at workLoopSync (react-dom-client.development.js:17375:1)
+    at renderRootSync (react-dom-client.development.js:17347:1)
+    at performWorkOnRoot (react-dom-client.development.js:16387:1)
+WeeklyCard @ WeeklyCard.js:33
+react_stack_bottom_frame @ react-dom-client.development.js:25770
+renderWithHooks @ react-dom-client.development.js:7523
+updateFunctionComponent @ react-dom-client.development.js:9984
+beginWork @ react-dom-client.development.js:11610
+runWithFiberInDEV @ react-dom-client.development.js:793
+performUnitOfWork @ react-dom-client.development.js:17538
+workLoopSync @ react-dom-client.development.js:17375
+renderRootSync @ react-dom-client.development.js:17347
+performWorkOnRoot @ react-dom-client.development.js:16387
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:18831
+performWorkUntilDeadline @ createSelectorCreator.ts:477
+<WeeklyCard>
+(anonymous) @ react-jsx-dev-runtime.development.js:207
+App @ App.js:74
+react_stack_bottom_frame @ react-dom-client.development.js:25770
+renderWithHooksAgain @ react-dom-client.development.js:7633
+renderWithHooks @ react-dom-client.development.js:7529
+updateFunctionComponent @ react-dom-client.development.js:9984
+beginWork @ react-dom-client.development.js:11610
+runWithFiberInDEV @ react-dom-client.development.js:793
+performUnitOfWork @ react-dom-client.development.js:17538
+workLoopSync @ react-dom-client.development.js:17375
+renderRootSync @ react-dom-client.development.js:17347
+performWorkOnRoot @ react-dom-client.development.js:16387
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:18831
+performWorkUntilDeadline @ createSelectorCreator.ts:477Understand this error
+App.js:74 An error occurred in the <WeeklyCard> component.
 
-  24hr Inventory Reduction:             724 wfrs (PS_OUTS: 600 + PPS_OUTS: 124)
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
 
-  Last 24 Hours:                        MISS ~ 816 wfrs (target: 1,186)
-    Status:                             370 wfrs short of drum beat
+defaultOnUncaughtError @ react-dom-client.development.js:9233
+logUncaughtError @ react-dom-client.development.js:9277
+runWithFiberInDEV @ react-dom-client.development.js:793
+lane.callback @ react-dom-client.development.js:9353
+callCallback @ react-dom-client.development.js:7332
+commitCallbacks @ react-dom-client.development.js:7340
+runWithFiberInDEV @ react-dom-client.development.js:793
+commitLayoutEffectOnFiber @ react-dom-client.development.js:13911
+flushLayoutEffects @ react-dom-client.development.js:18009
+commitRoot @ react-dom-client.development.js:17813
+commitRootWhenReady @ react-dom-client.development.js:16625
+performWorkOnRoot @ react-dom-client.development.js:16576
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:18831
+performWorkUntilDeadline @ createSelectorCreator.ts:477
+<WeeklyCard>
+(anonymous) @ react-jsx-dev-runtime.development.js:207
+App @ App.js:74
+react_stack_bottom_frame @ react-dom-client.development.js:25770
+renderWithHooksAgain @ react-dom-client.development.js:7633
+renderWithHooks @ react-dom-client.development.js:7529
+updateFunctionComponent @ react-dom-client.development.js:9984
+beginWork @ react-dom-client.development.js:11610
+runWithFiberInDEV @ react-dom-client.development.js:793
+performUnitOfWork @ react-dom-client.development.js:17538
+workLoopSync @ react-dom-client.development.js:17375
+renderRootSync @ react-dom-client.development.js:17347
+performWorkOnRoot @ react-dom-client.development.js:16387
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:18831
+performWorkUntilDeadline @ createSelectorCreator.ts:477Understand this warning
+WeeklyCard.js:33 Uncaught TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+    at WeeklyCard (WeeklyCard.js:33:1)
+    at Object.react_stack_bottom_frame (react-dom-client.development.js:25770:1)
+    at renderWithHooks (react-dom-client.development.js:7523:1)
+    at updateFunctionComponent (react-dom-client.development.js:9984:1)
+    at beginWork (react-dom-client.development.js:11610:1)
+    at runWithFiberInDEV (react-dom-client.development.js:793:1)
+    at performUnitOfWork (react-dom-client.development.js:17538:1)
+    at workLoopSync (react-dom-client.development.js:17375:1)
+    at renderRootSync (react-dom-client.development.js:17347:1)
+    at performWorkOnRoot (react-dom-client.development.js:16387:1)
+WeeklyCard @ WeeklyCard.js:33
+react_stack_bottom_frame @ react-dom-client.development.js:25770
+renderWithHooks @ react-dom-client.development.js:7523
+updateFunctionComponent @ react-dom-client.development.js:9984
+beginWork @ react-dom-client.development.js:11610
+runWithFiberInDEV @ react-dom-client.development.js:793
+performUnitOfWork @ react-dom-client.development.js:17538
+workLoopSync @ react-dom-client.development.js:17375
+renderRootSync @ react-dom-client.development.js:17347
+performWorkOnRoot @ react-dom-client.development.js:16387
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:18831
+performWorkUntilDeadline @ createSelectorCreator.ts:477
+<WeeklyCard>
+(anonymous) @ react-jsx-dev-runtime.development.js:207
+App @ App.js:74
+react_stack_bottom_frame @ react-dom-client.development.js:25770
+renderWithHooksAgain @ react-dom-client.development.js:7633
+renderWithHooks @ react-dom-client.development.js:7529
+updateFunctionComponent @ react-dom-client.development.js:9984
+beginWork @ react-dom-client.development.js:11610
+runWithFiberInDEV @ react-dom-client.development.js:793
+performUnitOfWork @ react-dom-client.development.js:17538
+workLoopSync @ react-dom-client.development.js:17375
+renderRootSync @ react-dom-client.development.js:17347
+performWorkOnRoot @ react-dom-client.development.js:16387
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:18831
+performWorkUntilDeadline @ createSelectorCreator.ts:477Understand this error
+App.js:74 An error occurred in the <WeeklyCard> component.
 
-  Next 24 Hours Target:                 SD85 | ORLch | M-#46V6 DC
-    Complete:                           35.0 CT hrs (55 operations)
-    Pace Required:                      1,186 wfrs/day (~593 wfrs/shift)
-
-WEEKLY TARGET (Auto-Adjusted):
-  Shortfall (Last Week):                1,198 wafers
-  Weeks Remaining:                      2
-  Even Catch-up Allocation:             599 wafers/week
-  This Week Required:                   8,899 wafers
-  This Week Shipped:                    2,351 wafers
-  Remaining This Week:                  6,548 wafers
-  Days Left:                            5.45 | Shifts Left: 10
-  Required per Day:                     1,202.0 wafers/day
-  Required per Shift:                   601.0 wafers/shift
-
-CRITICAL LIMITER ANALYSIS (35h Look-Ahead - Aligned with 24hr Target):
-  Showing Top 1 of 1 Identified Limiters
-  Note: Pace-based limiters only flagged when CEID has adequate inventory (≥75% of goal)
-
-Sev  CEID        Oper    Description         SD    CT     HAO    INV     Critical Issues
---------------------------------------------------------------------------------------------------------------------------------------------
-25   REXck       187712  E*#46M7vFT          85    3.1    8.7    262     AVG_HAO 2.8×CT_goal (8.7h vs 3.1h)
-
-==============================================================================================================
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
