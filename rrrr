@@ -1,36 +1,17 @@
-console error shows this 
+useDashboard.js:31 Dashboard fetch error: 
+AxiosError {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
 
-Uncaught Error: Cannot find module './components/LimitersCard'
-    at webpackMissingModule (ShiftCard.js:38:1)
-    at ./src/App.js (ShiftCard.js:38:1)
-    at options.factory (startup:7:1)
-    at __webpack_require__ (startup:7:1)
-    at fn (startup:7:1)
-    at hotRequire (startup:7:1)
-    at ./src/index.js (startup:7:1)
-    at options.factory (startup:7:1)
-    at __webpack_require__ (startup:7:1)
-    at startup:7:1
-
-and screen shows this 
-
-Compiled with problems:
-×
-ERROR in ./src/App.js 13:0-57
-Module not found: Error: Can't resolve './components/LimitersCard' in 'C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\src'
-ERROR in ./src/App.js 141:37-47
-export 'WeeklyCard' (imported as 'WeeklyCard') was not found in './components/WeeklyCard' (possible exports: DailyCard)
-
-and terminal shows this 
-
-Failed to compile.
-
-Module not found: Error: Can't resolve './components/LimitersCard' in 'C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\src'
-ERROR in ./src/App.js 13:0-57
-Module not found: Error: Can't resolve './components/LimitersCard' in 'C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\src'
-
-ERROR in ./src/App.js 141:37-47
-export 'WeeklyCard' (imported as 'WeeklyCard') was not found in './components/WeeklyCard' (possible exports: DailyCard)
-
-webpack compiled with 2 errors
-
+useDashboard.js:22 
+ POST http://localhost:5000/api/dashboard net::ERR_CONNECTION_REFUSED
+useDashboard.js:31 Dashboard fetch error: 
+AxiosError {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
+useDashboard.js:22 
+ POST http://localhost:5000/api/dashboard net::ERR_CONNECTION_REFUSED
+useDashboard.js:31 Dashboard fetch error: 
+AxiosError {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
+useDashboard.js:22 
+ POST http://localhost:5000/api/dashboard net::ERR_CONNECTION_REFUSED
+useDashboard.js:31 Dashboard fetch error: 
+AxiosError {message: 'Network Error', name: 'AxiosError', code: 'ERR_NETWORK', config: {…}, request: XMLHttpRequest, …}
+useDashboard.js:22 
+ POST http://localhost:5000/api/dashboard net::ERR_CONNECTION_REFUSED
