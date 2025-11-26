@@ -1,1 +1,154 @@
-LOL
+Why do i get this error in console---
+
+Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+useDashboard.js:31 Dashboard fetch error: 
+AxiosError
+code
+: 
+"ERR_NETWORK"
+config
+: 
+{transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 0, …}
+event
+: 
+ProgressEvent {isTrusted: true, lengthComputable: false, loaded: 0, total: 0, type: 'error', …}
+message
+: 
+"Network Error"
+name
+: 
+"AxiosError"
+request
+: 
+XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 0, withCredentials: false, upload: XMLHttpRequestUpload, …}
+stack
+: 
+"AxiosError: Network Error\n    at XMLHttpRequest.handleError (http://localhost:3000/static/js/bundle.js:4723:19)\n    at Axios.request (http://localhost:3000/static/js/bundle.js:5174:41)\n    at async http://localhost:3000/static/js/bundle.js:77313:24"
+[[Prototype]]
+: 
+Error
+:5000/api/dashboard:1 
+ Failed to load resource: net::ERR_CONNECTION_REFUSED
+useDashboard.js:31 Dashboard fetch error: 
+AxiosError
+code
+: 
+"ERR_NETWORK"
+config
+: 
+{transitional: {…}, adapter: Array(3), transformRequest: Array(1), transformResponse: Array(1), timeout: 0, …}
+event
+: 
+ProgressEvent {isTrusted: true, lengthComputable: false, loaded: 0, total: 0, type: 'error', …}
+message
+: 
+"Network Error"
+name
+: 
+"AxiosError"
+request
+: 
+XMLHttpRequest {onreadystatechange: null, readyState: 4, timeout: 0, withCredentials: false, upload: XMLHttpRequestUpload, …}
+stack
+: 
+"AxiosError: Network Error\n    at XMLHttpRequest.handleError (http://localhost:3000/static/js/bundle.js:4723:19)\n    at Axios.request (http://localhost:3000/static/js/bundle.js:5174:41)\n    at async http://localhost:3000/static/js/bundle.js:77313:24"
+[[Prototype]]
+: 
+Error
+
+:5000/api/dashboard:1 
+ Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+MY TERMINAL SAYS THIS. 
+
+> production-dashboard-server@1.0.0 start
+> node server.js
+
+🚀 Q4 Production Dashboard Server running at http://localhost:5000
+📊 API available at http://localhost:5000/api/dashboard
+📈 History API at http://localhost:5000/api/history
+
+📁 Data Paths:
+   LineView: \\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LineView.TXT
+   CEID: \\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\CEID.TXT
+Reading LineView file...
+Reading CEID file...
+Loaded 4128 lineview records and 294 CEID records
+Database query failed, using mock data: Python script failed: {"error": "No module named 'PyUber'"}
+
+
+=== Calculated Values ===
+Bump Inventory: 18
+Segment Days Remaining: 19
+Calendar Days Remaining: 10
+Commit: -9 days BEHIND
+========================
+
+History API error: Error: Python script failed: {"error": "No module named 'PyUber'"}
+
+    at ChildProcess.<anonymous> (C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\server.js:318:16)
+    at ChildProcess.emit (node:events:518:28)
+    at maybeClose (node:internal/child_process:1101:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:304:5)
+History API error: Error: Python script failed: {"error": "No module named 'PyUber'"}
+
+    at ChildProcess.<anonymous> (C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\server.js:318:16)
+    at ChildProcess.emit (node:events:518:28)
+    at maybeClose (node:internal/child_process:1101:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:304:5)
+Reading LineView file...
+Reading CEID file...
+Reading LineView file...
+Reading CEID file...
+Reading LineView file...
+Loaded 4128 lineview records and 294 CEID records
+Loaded 4128 lineview records and 294 CEID records
+Reading CEID file...
+Database query failed, using mock data: Python script failed: {"error": "No module named 'PyUber'"}
+
+
+=== Calculated Values ===
+Bump Inventory: 18
+Segment Days Remaining: 19
+Calendar Days Remaining: 10
+Commit: -9 days BEHIND
+========================
+
+Database query failed, using mock data: Python script failed: {"error": "No module named 'PyUber'"}
+
+
+=== Calculated Values ===
+Bump Inventory: 18
+Segment Days Remaining: 19
+Calendar Days Remaining: 10
+Commit: -9 days BEHIND
+========================
+
+Loaded 4128 lineview records and 294 CEID records
+Database query failed, using mock data: Python script failed: {"error": "No module named 'PyUber'"}
+
+
+=== Calculated Values ===
+Bump Inventory: 18
+Segment Days Remaining: 19
+Calendar Days Remaining: 10
+Commit: -9 days BEHIND
+========================
+
+Reading LineView file...
+Reading CEID file...
+Loaded 4128 lineview records and 294 CEID records
+Database query failed, using mock data: Python script failed: {"error": "No module named 'PyUber'"}
+
+
+=== Calculated Values ===
+Bump Inventory: 18
+Segment Days Remaining: 19
+Calendar Days Remaining: 10
+Commit: -9 days BEHIND
+========================
+
+Honestly, i think the is something wrong with the Pull point calculation.  please go through it again and validate the calculations, 
+making sure its bullet proof. and all other calculations before we Launch this for production.  
+﻿
+
