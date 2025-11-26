@@ -1,10 +1,1 @@
-now when i host the code on our naz site i get Error Loading Dashboard
 
-Request Failed with status code 404. 
-when i hit f12 i see this 
-Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
-Fist_LAD/:1 Manifest fetch from https://azshweb.intel.com/azAnalysis$/1274_MAODATA/Config/AZFSM_Production/reports/Fist_LAD/manifest.json failed, code 401Understand this error
-/api/dashboard:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
-useDashboard.js:33 Dashboard fetch error: Y
-(anonymous) @ useDashboard.js:33Understand this error
-manifest.json:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
