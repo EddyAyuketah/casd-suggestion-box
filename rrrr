@@ -1,173 +1,41 @@
-Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-:3000/api/data/lineview:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-useDashboard.js:169 Dashboard fetch error: Error: LineView fetch failed: 500
-    at useDashboard.js:51:1
-(anonymous) @ useDashboard.js:169Understand this error
-:3000/api/data/lineview:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-:3000/api/data/ceid:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-useDashboard.js:169 Dashboard fetch error: Error: LineView fetch failed: 500
-    at useDashboard.js:51:1
-(anonymous) @ useDashboard.js:169Understand this error
-useDashboard.js:41 Fetching dashboard data...
-:3000/api/data/lineview:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-:3000/api/data/ceid:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-useDashboard.js:169 Dashboard fetch error: Error: LineView fetch failed: 500
-    at useDashboard.js:51:1
-
-
-
-Fetching LineView data...
-Fetching CEID data...
-
-========== SHIPMENT DATA REQUEST ==========
-Query params: {
-  quarter_goal: '96000',
-  outs_goal: '8300',
-  be_lsb_operation: '9812',
-  catchup_ct_target: '35',
-  lookahead_hours: '35',
-  segment_day_end: '104',
-  deadline: '2025-12-06'
-}
-Config for Python: {
-  quarter_goal: 96000,
-  outs_goal: 8300,
-  be_lsb_operation: 9812,
-  catchup_ct_target: 35,
-  lookahead_hours: 35,
-  segment_day_end: 104,
-  deadline: '2025-12-06'
-}
-Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\db_queries.py with args: [
-  '{"quarter_goal":96000,"outs_goal":8300,"be_lsb_operation":9812,"catchup_ct_target":35,"lookahead_hours":35,"segment_day_end":104,"deadline":"2025-12-06"}'
-]
-CEID fetch error: Error: unable to get local issuer certificate
-    at TLSSocket.onConnectSecure (node:_tls_wrap:1679:34)
-    at TLSSocket.emit (node:events:518:28)
-    at TLSSocket._finishInit (node:_tls_wrap:1078:8)
-    at ssl.onhandshakedone (node:_tls_wrap:864:12) {
-  code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'
-}
-LineView fetch error: Error: unable to get local issuer certificate
-    at TLSSocket.onConnectSecure (node:_tls_wrap:1679:34)
-    at TLSSocket.emit (node:events:518:28)
-    at TLSSocket._finishInit (node:_tls_wrap:1078:8)
-    at ssl.onhandshakedone (node:_tls_wrap:864:12) {
-  code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'
-}
-Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Database query failed, using mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Returning mock shipment data: {
-  current_shift_ships: 274,
-  quarter_ships: 80025,
-  last_week_ships: 7102,
-  last_24h_ships: 816,
-  current_week_outs: 6234
-}
-========== REQUEST COMPLETE (MOCK) ==========
-
-Fetching CEID data...
-Fetching LineView data...
-LineView fetch error: Error: unable to get local issuer certificate
-    at TLSSocket.onConnectSecure (node:_tls_wrap:1679:34)
-    at TLSSocket.emit (node:events:518:28)
-    at TLSSocket._finishInit (node:_tls_wrap:1078:8)
-    at ssl.onhandshakedone (node:_tls_wrap:864:12) {
-  code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'
-}
-CEID fetch error: Error: unable to get local issuer certificate
-    at TLSSocket.onConnectSecure (node:_tls_wrap:1679:34)
-    at TLSSocket.emit (node:events:518:28)
-    at TLSSocket._finishInit (node:_tls_wrap:1078:8)
-    at ssl.onhandshakedone (node:_tls_wrap:864:12) {
-  code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'
-}
-
-========== SHIPMENT DATA REQUEST ==========
-Query params: {
-  quarter_goal: '96000',
-  outs_goal: '8300',
-  be_lsb_operation: '9812',
-  catchup_ct_target: '35',
-  lookahead_hours: '35',
-  segment_day_end: '104',
-  deadline: '2025-12-06'
-}
-Config for Python: {
-  quarter_goal: 96000,
-  outs_goal: 8300,
-  be_lsb_operation: 9812,
-  catchup_ct_target: 35,
-  lookahead_hours: 35,
-  segment_day_end: 104,
-  deadline: '2025-12-06'
-}
-Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\db_queries.py with args: [
-  '{"quarter_goal":96000,"outs_goal":8300,"be_lsb_operation":9812,"catchup_ct_target":35,"lookahead_hours":35,"segment_day_end":104,"deadline":"2025-12-06"}'
-]
-Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Database query failed, using mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Returning mock shipment data: {
-  current_shift_ships: 274,
-  quarter_ships: 80025,
-  last_week_ships: 7102,
-  last_24h_ships: 816,
-  current_week_outs: 6234
-}
-========== REQUEST COMPLETE (MOCK) ==========
-
-Fetching LineView data...
-LineView fetch error: Error: unable to get local issuer certificate
-    at TLSSocket.onConnectSecure (node:_tls_wrap:1679:34)
-    at TLSSocket.emit (node:events:518:28)
-    at TLSSocket._finishInit (node:_tls_wrap:1078:8)
-    at ssl.onhandshakedone (node:_tls_wrap:864:12) {
-  code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'
-}
-Fetching CEID data...
-
-========== SHIPMENT DATA REQUEST ==========
-Query params: {
-  quarter_goal: '96000',
-  outs_goal: '8300',
-  be_lsb_operation: '9812',
-  catchup_ct_target: '35',
-  lookahead_hours: '35',
-  segment_day_end: '104',
-  deadline: '2025-12-06'
-}
-Config for Python: {
-  quarter_goal: 96000,
-  outs_goal: 8300,
-  be_lsb_operation: 9812,
-  catchup_ct_target: 35,
-  lookahead_hours: 35,
-  segment_day_end: 104,
-  deadline: '2025-12-06'
-}
-Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\db_queries.py with args: [
-  '{"quarter_goal":96000,"outs_goal":8300,"be_lsb_operation":9812,"catchup_ct_target":35,"lookahead_hours":35,"segment_day_end":104,"deadline":"2025-12-06"}'
-]
-CEID fetch error: Error: unable to get local issuer certificate
-    at TLSSocket.onConnectSecure (node:_tls_wrap:1679:34)
-    at TLSSocket.emit (node:events:518:28)
-    at TLSSocket._finishInit (node:_tls_wrap:1078:8)
-    at ssl.onhandshakedone (node:_tls_wrap:864:12) {
-  code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'
-}
-Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Database query failed, using mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Returning mock shipment data: {
-  current_shift_ships: 274,
-  quarter_ships: 80025,
-  last_week_ships: 7102,
-  last_24h_ships: 816,
-  current_week_outs: 6234
-}
-========== REQUEST COMPLETE (MOCK) ==========
+Uncaught runtime errors:
+×
+ERROR
+fetchHistory is not a function
+TypeError: fetchHistory is not a function
+    at loadHistory (http://localhost:3000/static/js/bundle.js:70979:29)
+    at http://localhost:3000/static/js/bundle.js:70991:5
+    at Object.react_stack_bottom_frame (http://localhost:3000/static/js/bundle.js:35940:18)
+    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:23227:68)
+    at commitHookEffectListMount (http://localhost:3000/static/js/bundle.js:29231:157)
+    at commitHookPassiveMountEffects (http://localhost:3000/static/js/bundle.js:29268:56)
+    at commitPassiveMountOnFiber (http://localhost:3000/static/js/bundle.js:30282:25)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/static/js/bundle.js:30265:7)
+    at commitPassiveMountOnFiber (http://localhost:3000/static/js/bundle.js:30339:9)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/static/js/bundle.js:30265:7)
+ERROR
+fetchHistory is not a function
+TypeError: fetchHistory is not a function
+    at loadHistory (http://localhost:3000/static/js/bundle.js:70979:29)
+    at http://localhost:3000/static/js/bundle.js:70991:5
+    at Object.react_stack_bottom_frame (http://localhost:3000/static/js/bundle.js:35940:18)
+    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:23227:68)
+    at commitHookEffectListMount (http://localhost:3000/static/js/bundle.js:29231:157)
+    at commitHookPassiveMountEffects (http://localhost:3000/static/js/bundle.js:29268:56)
+    at commitPassiveMountOnFiber (http://localhost:3000/static/js/bundle.js:30282:25)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/static/js/bundle.js:30265:7)
+    at commitPassiveMountOnFiber (http://localhost:3000/static/js/bundle.js:30339:9)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/static/js/bundle.js:30265:7)
+ERROR
+fetchHistory is not a function
+TypeError: fetchHistory is not a function
+    at loadHistory (http://localhost:3000/static/js/bundle.js:70979:29)
+    at http://localhost:3000/static/js/bundle.js:70991:5
+    at Object.react_stack_bottom_frame (http://localhost:3000/static/js/bundle.js:35940:18)
+    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:23227:68)
+    at commitHookEffectListMount (http://localhost:3000/static/js/bundle.js:29231:157)
+    at commitHookPassiveMountEffects (http://localhost:3000/static/js/bundle.js:29268:56)
+    at reconnectPassiveEffects (http://localhost:3000/static/js/bundle.js:30372:9)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/static/js/bundle.js:30355:7)
+    at reconnectPassiveEffects (http://localhost:3000/static/js/bundle.js:30386:9)
+    at doubleInvokeEffectsOnFiber (http://localhost:3000/static/js/bundle.js:31654:127)
