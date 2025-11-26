@@ -1,32 +1,6 @@
+but i have hosted it before. not that the data is avalable here too 
 
-echo off
+CEID_PATH: https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/CEID.txt
+LINE_VIEW_PATH: https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/LineView.txt
 
-REM build command. Must use call command or else code stops once npm is done
-call npm run build
-
-REM Get the current date and time
-set timestamp=%date:~10,4%%date:~4,2%%date:~7,2%_%time:~0,2%%time:~3,2%%time:~6,2%
-
-REM Set folder path
-set folder=\\azshfs.intel.com\azanalysis$\1274_MAODATA\config\AZFSM_Production\reports\Fist_LAD
-REM Set the path and name of the output zip file
-rem set output_zip=%folder%\backups\Tact_Report_BU_%timestamp%.zip
-
-
-REM Create the zip file
-IF NOT EXIST %folder%\backups (
-  mkdir %folder%\backups
-)
-zip -r %output_zip% %folder% -x %folder%\backups\*
-
-
-REM Delete old files except for zip file backups.
-REM need to find way to keep last X number of build
-for /r "%folder%" %%f in (*) do (
-    if /i not "%%~xf"==".zip" (
-        echo Deleting "%%f"
-        del /q "%%f"
-    )
-)
-REM copy new build to folder
-xcopy build /s %folder% /E/H/C/I
+and it can litterally be accessed through the naz. 
