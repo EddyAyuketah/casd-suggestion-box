@@ -1,13 +1,866 @@
-// After parsing LineView, add this debug code:
-const lineview = parseTSV(lineviewText);
-const ceid = parseTSV(ceidText);
+This is my useDashboard code 
 
-console.log(`✅ Loaded ${lineview.length} lineview records and ${ceid.length} CEID records`);
+import { useState, useEffect, useCallback } from 'react';
+import { DEFAULT_CONFIG } from '../config/defaults';
+import * as calc from '../utils/calculations';
 
-// Find finish operation row
-const finishOp = lineview.find(row => calc.safeNum(row.OPERATION) === config.be_lsb_operation);
-if (!finishOp) throw new Error('Finish operation not found in LineView');
+// Fetch directly from NAZ - updates every 15 minutes automatically
+const LINEVIEW_URL = 'https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/LineView.txt';
+const CEID_URL = 'https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/CEID.txt';
 
-// 🔍 DEBUG: Log all available columns
-console.log('🔍 Available columns in LineView:', Object.keys(finishOp));
-console.log('🔍 Finish operation row data:', finishOp);
+function parseTSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split('\t');
+  
+  return lines.slice(1).map(line => {
+    const values = line.split('\t');
+    const obj = {};
+    headers.forEach((header, i) => {
+      obj[header] = values[i];
+    });
+    return obj;
+  });
+}
+
+export function useDashboard() {
+  const [config, setConfig] = useState(() => {
+    const saved = localStorage.getItem('dashboardConfig');
+    return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+  });
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Fetching latest data from NAZ...');
+      
+      // Fetch data files directly - they update every 15 minutes
+      const [lineviewResponse, ceidResponse] = await Promise.all([
+        fetch(LINEVIEW_URL + '?t=' + Date.now()), // Cache buster
+        fetch(CEID_URL + '?t=' + Date.now())
+      ]);
+      
+      if (!lineviewResponse.ok) {
+        throw new Error(`LineView fetch failed: ${lineviewResponse.status}`);
+      }
+      if (!ceidResponse.ok) {
+        throw new Error(`CEID fetch failed: ${ceidResponse.status}`);
+      }
+      
+      const lineviewText = await lineviewResponse.text();
+      const ceidText = await ceidResponse.text();
+      
+      const lineview = parseTSV(lineviewText);
+      const ceid = parseTSV(ceidText);
+      
+      console.log(`✅ Loaded ${lineview.length} lineview records and ${ceid.length} CEID records`);
+      
+      const now = new Date();
+      
+      // Find finish operation row to extract shipment data
+      const finishOp = lineview.find(row => calc.safeNum(row.OPERATION) === config.be_lsb_operation);
+      if (!finishOp) throw new Error('Finish operation not found in LineView');
+      
+      // Extract shipment data from LineView columns
+      const shipmentData = {
+        current_shift_ships: calc.safeNum(finishOp.CS_OUTS || 0, 0),
+        quarter_ships: calc.safeNum(finishOp.QTR_OUTS || finishOp.QTR_OUTS_PROD || 0, 0),
+        last_week_ships: calc.safeNum(finishOp.LW_OUTS || finishOp.LW_OUTS_PROD || 0, 0),
+        last_24h_ships: calc.safeNum(finishOp.PS_OUTS || 0, 0),
+        current_week_outs: calc.safeNum(finishOp.CW_OUTS || finishOp.CW_OUTS_PROD || 0, 0)
+      };
+      
+      console.log('📊 Shipment data from LineView:', shipmentData);
+      
+      const beLsbFls = calc.safeNum(finishOp.FULL_LOOP_SEQ);
+      
+      // Perform all calculations
+      const shiftInfo = calc.getCurrentShiftInfo();
+      const targetPerShift = config.outs_goal / calc.SHIFTS_PER_WEEK;
+      const shiftPaceRate = shiftInfo.hoursIntoShift > 0 
+        ? shipmentData.current_shift_ships / shiftInfo.hoursIntoShift : 0;
+      const projectedShiftEnd = shipmentData.current_shift_ships + 
+        (shiftPaceRate * shiftInfo.hoursRemaining);
+      
+      const quarterRemaining = Math.max(0, config.quarter_goal - shipmentData.quarter_ships);
+      
+      const { pullPoint, opsWithPP } = calc.calculateQuarterlyPullPoint(lineview, quarterRemaining, beLsbFls);
+      const ppFullLoopSeq = calc.safeNum(pullPoint.FULL_LOOP_SEQ);
+      const ppSegmentDay = calc.safeNum(pullPoint.SEGMENT_DAY, 0);
+      
+      const bumpInventory = calc.calculateBumpInventory(opsWithPP, quarterRemaining);
+      const daysInfo = calc.calculateDaysRemaining(config, pullPoint, now);
+      const pullPoint24h = calc.calculate24HourPullPoint(lineview, pullPoint, finishOp, config, beLsbFls);
+      const weeklyInfo = calc.calculateWeeklyTargets(config, finishOp, shipmentData, now);
+      
+      // Build response object
+      const dashboardData = {
+        timestamp: now.toISOString(),
+        shift: {
+          name: shiftInfo.shiftName,
+          start: shiftInfo.shiftStart.toISOString(),
+          hours_into: Math.round(shiftInfo.hoursIntoShift * 10) / 10,
+          hours_remaining: Math.round(shiftInfo.hoursRemaining * 10) / 10,
+          shipped: Math.round(shipmentData.current_shift_ships),
+          target: Math.round(targetPerShift),
+          pace_rate: Math.round(shiftPaceRate * 10) / 10,
+          projected_end: Math.round(projectedShiftEnd),
+          status: projectedShiftEnd >= targetPerShift ? 'ON PACE' : 'BEHIND PACE',
+          ct_progress_needed: config.catchup_ct_target / 2
+        },
+        quarterly: {
+          goal: config.quarter_goal,
+          shipped: Math.round(shipmentData.quarter_ships),
+          remaining: Math.round(quarterRemaining),
+          percent_complete: Math.round((shipmentData.quarter_ships / config.quarter_goal) * 1000) / 10
+        },
+        weekly: {
+          last_week_ships: Math.round(shipmentData.last_week_ships),
+          weekly_goal: config.outs_goal,
+          variance: Math.round(shipmentData.last_week_ships - config.outs_goal),
+          this_week_required: Math.round(weeklyInfo.thisWeekRequired),
+          this_week_shipped: Math.round(weeklyInfo.currentWeekOuts),
+          remaining_this_week: Math.round(weeklyInfo.outsRemainingThisWeek),
+          days_left: Math.round(weeklyInfo.daysLeft * 100) / 100,
+          shifts_left: weeklyInfo.shiftsLeft,
+          need_per_day: Math.round(weeklyInfo.needPerDay * 10) / 10,
+          need_per_shift: Math.round(weeklyInfo.needPerShift * 10) / 10,
+          shortfall: Math.round(weeklyInfo.totalShortfall)
+        },
+        daily: {
+          last_24h_ships: Math.round(shipmentData.last_24h_ships),
+          target: Math.round(targetPerShift * 2),
+          variance: Math.round(shipmentData.last_24h_ships - (targetPerShift * 2)),
+          status: shipmentData.last_24h_ships >= (targetPerShift * 2) ? 'HIT' : 'MISS'
+        },
+        pull_point: {
+          current_sd: ppSegmentDay,
+          current_ceid: pullPoint.CEID || 'N/A',
+          current_operation: pullPoint.OPERATION || 'N/A',
+          current_desc: pullPoint.OPER_SHORT_DESC || 'N/A',
+          current_fls: ppFullLoopSeq,
+          bump_inventory: Math.round(bumpInventory),
+          segment_days_remaining: daysInfo.segmentDays,
+          calendar_days_remaining: daysInfo.calendarDays,
+          commit_ahead_behind: daysInfo.commitAheadBehind,
+          commit_status: daysInfo.commitStatus
+        },
+        pull_point_24h: {
+          target_ct_hours: config.catchup_ct_target,
+          operations_count: pullPoint24h.ops24h.length,
+          start_sd: pullPoint24h.first24hOp ? calc.safeNum(pullPoint24h.first24hOp.SEGMENT_DAY, 0) : ppSegmentDay,
+          start_ceid: pullPoint24h.first24hOp ? (pullPoint24h.first24hOp.CEID || 'N/A') : 'N/A',
+          end_sd: pullPoint24h.last24hOp ? calc.safeNum(pullPoint24h.last24hOp.SEGMENT_DAY, 0) : ppSegmentDay,
+          end_ceid: pullPoint24h.last24hOp ? (pullPoint24h.last24hOp.CEID || 'N/A') : 'N/A',
+          end_desc: pullPoint24h.last24hOp ? (pullPoint24h.last24hOp.OPER_SHORT_DESC || 'N/A') : 'N/A',
+          ps_outs: Math.round(pullPoint24h.psOuts),
+          pps_outs: Math.round(pullPoint24h.ppsOuts),
+          inventory_reduction: Math.round(pullPoint24h.psOuts + pullPoint24h.ppsOuts)
+        },
+        limiters: [],
+        config
+      };
+      
+      setData(dashboardData);
+      setLastUpdate(new Date());
+      
+    } catch (err) {
+      console.error('Dashboard fetch error:', err);
+      setError(err.message || 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, [config]);
+
+  const fetchHistory = useCallback(async (days = 14) => {
+    console.log('History feature not available');
+    return null;
+  }, []);
+
+  const updateConfig = useCallback((newConfig) => {
+    setConfig(newConfig);
+    localStorage.setItem('dashboardConfig', JSON.stringify(newConfig));
+  }, []);
+
+  const resetConfig = useCallback(() => {
+    setConfig(DEFAULT_CONFIG);
+    localStorage.removeItem('dashboardConfig');
+  }, []);
+
+  // Auto-refresh every 5 minutes (data updates every 15 min)
+  useEffect(() => {
+    let interval;
+    if (autoRefresh) {
+      interval = setInterval(() => fetchData(), 5 * 60 * 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [autoRefresh, fetchData]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return {
+    data,
+    loading,
+    error,
+    config,
+    lastUpdate,
+    historyData: null,
+    historyLoading: false,
+    updateConfig,
+    resetConfig,
+    refreshData: fetchData, // ← This is your refresh button function!
+    fetchHistory,
+    autoRefresh,
+    setAutoRefresh
+  };
+}
+
+also take a look at my script again so we can do everything correctly. 
+
+import math
+import numpy as np
+import pandas as pd
+from datetime import datetime, timedelta
+from pathlib import Path
+
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+OUTS_GOAL = 8300
+QUARTER_GOAL = 96000
+DEADLINE = datetime(2025, 12, 6, 23, 59, 59)
+QUARTER_START = datetime(2025, 9, 6, 18, 0)
+COMMIT_WW = 202549
+BE_LSB_OPERATION = 9812
+SEGMENT_DAY_END = 104
+
+# 24-HOUR PULL POINT AND LIMITER ANALYSIS (ALIGNED)
+CATCHUP_CT_TARGET = 35.0  # Target: Complete 35 CT hours in next 24 calendar hours
+LOOKAHEAD_HOURS = 35      # Limiter analysis matches 24hr pull point target
+
+LAYER_COUNT_THRESHOLD = 0.30
+LIMITER_WSPW_GAP = 1000
+
+#thresholds for limiter detection
+LIMITER_HAO_MULTIPLIER = 2.5  # More stringent: avg_hao >= 2.5x CT_goal
+LIMITER_INV_MULTIPLIER = 2.0   # inv_prod >= 2x inv_goal
+LIMITER_INV_MIN_THRESHOLD = 300  # Only flag if inventory > 500 wafers
+LIMITER_INV_STARVATION_THRESHOLD = 0.75  # If INV_PROD < 75% of INV_GOAL, they're being starved
+LIMITER_CT_MIN_THRESHOLD = 1.0   # Only check operations with CT >= 1 hour
+LIMITER_MAX_DISPLAY = 10  # Show top 10 most critical limiters
+
+# Shift configuration ( based on fab's shift times)
+SHIFT_START_HOURS = [6, 18]  # Day shift: 6am, Night shift: 6pm
+HOURS_PER_SHIFT = 12
+SHIFTS_PER_DAY = 2
+DAYS_PER_WEEK = 7
+SHIFTS_PER_WEEK = 14
+
+LINEVIEW_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LineView.TXT"
+CEID_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\CEID.TXT"
+EXCLUDED_OPERATIONS = [204]
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+def get_current_shift_info(now: datetime):
+    """
+    Determine current shift start time and shift name.
+    Returns: (shift_start_datetime, shift_name, hours_into_shift)
+    """
+    current_hour = now.hour
+    
+    # Determine which shift we're in
+    if current_hour >= SHIFT_START_HOURS[0] and current_hour < SHIFT_START_HOURS[1]:
+        # Day shift (6am - 6pm)
+        shift_start = now.replace(hour=SHIFT_START_HOURS[0], minute=0, second=0, microsecond=0)
+        shift_name = "Day"
+    else:
+        # Night shift (6pm - 6am next day)
+        if current_hour >= SHIFT_START_HOURS[1]:
+            shift_start = now.replace(hour=SHIFT_START_HOURS[1], minute=0, second=0, microsecond=0)
+        else:
+            # After midnight, shift started yesterday at 6pm
+            shift_start = (now - timedelta(days=1)).replace(hour=SHIFT_START_HOURS[1], minute=0, second=0, microsecond=0)
+        shift_name = "Night"
+    
+    hours_into_shift = (now - shift_start).total_seconds() / 3600.0
+    return shift_start, shift_name, hours_into_shift
+
+
+def ceil_days(seconds: float) -> int:
+    """Convert seconds to rounded-up calendar days."""
+    return max(0, int(math.ceil(seconds / 86400.0)))
+
+
+def round_up_days(n: float) -> int:
+    """Round day difference while preserving ahead/behind sign."""
+    if n >= 0:
+        return int(math.ceil(n))
+    return -int(math.ceil(abs(n)))
+
+
+def hours_until_next_monday(now: datetime) -> float:
+    """Get hours remaining until next Monday (for week remaining calc)."""
+    nxt = (now + timedelta(days=(7 - now.weekday()))).replace(hour=0, minute=0, second=0, microsecond=0)
+    return max(0.0, (nxt - now).total_seconds() / 3600.0)
+
+
+def safe_num(value, default=np.nan):
+    """Convert to float safely."""
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def fmt_int(x):
+    """Format integer output."""
+    try:
+        if pd.isna(x):
+            return "—"
+        return f"{int(round(x)):,}"
+    except Exception:
+        return str(x)
+
+
+def fmt_float(x, d=1):
+    """Format float with fixed decimals."""
+    try:
+        if pd.isna(x):
+            return "—"
+        return f"{x:,.{d}f}"
+    except Exception:
+        return str(x)
+
+
+def load_tsv(path: str) -> pd.DataFrame:
+    """Load TSV file safely."""
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(f"Missing data file: {path}")
+    return pd.read_csv(p, sep="\t")
+
+
+# =============================================================================
+# DATABASE CONNECTOR
+# =============================================================================
+try:
+    import PyUber
+    _DB = None
+    def get_db():
+        global _DB
+        if _DB is None:
+            _DB = PyUber.connect("F32_PROD_XEUS")
+        return _DB
+except Exception:
+    PyUber = None
+    def get_db():
+        raise RuntimeError("❌ PyUber unavailable — enable internal DB access.")
+
+
+# =============================================================================
+# LOAD DATA
+# =============================================================================
+now = datetime.now()
+df_lineview = load_tsv(LINEVIEW_PATH)
+df_ceid = pd.read_csv(CEID_PATH, sep="\t") if Path(CEID_PATH).exists() else pd.DataFrame()
+db = get_db()
+
+# Normalize data
+df_lineview["FULL_LOOP_SEQ"] = pd.to_numeric(df_lineview.get("FULL_LOOP_SEQ", 0), errors="coerce").fillna(0)
+df_lineview["INV_PROD"] = pd.to_numeric(df_lineview.get("INV_PROD", 0), errors="coerce").fillna(0)
+if "SEGMENT_DAY" not in df_lineview.columns:
+    df_lineview["SEGMENT_DAY"] = 0
+if not df_ceid.empty and "CEID" in df_ceid.columns:
+    df_ceid["CEID"] = df_ceid["CEID"].astype(str)
+
+# =============================================================================
+# CURRENT SHIFT TRACKING
+# =============================================================================
+shift_start, shift_name, hours_into_shift = get_current_shift_info(now)
+hours_remaining_shift = HOURS_PER_SHIFT - hours_into_shift
+
+current_shift_sql = f"""
+SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+FROM F_LOT_RUN_CARD
+WHERE
+    OUT_DATE >= TO_DATE('{shift_start:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+    AND OUT_DATE <= SYSDATE
+    AND LOT_TYPE IN ('PROD','ENG')
+    AND( LOT LIKE 'L%' OR LOT LIKE 'N%')
+    AND LOT NOT LIKE 'L9%'
+    AND OPERATION = {BE_LSB_OPERATION}
+    AND WAFER_QTY > 0
+"""
+shift_df = pd.read_sql(current_shift_sql, db)
+current_shift_ships = safe_num(shift_df["TOTAL_WAFERS"].iloc[0], 0)
+
+# Calculate shift targets
+target_per_shift = OUTS_GOAL / SHIFTS_PER_WEEK  # ~593 wafers/shift
+shift_target_remaining = max(0, target_per_shift - current_shift_ships)
+shift_pace_rate = current_shift_ships / hours_into_shift if hours_into_shift > 0 else 0
+projected_shift_end = current_shift_ships + (shift_pace_rate * hours_remaining_shift)
+
+# Determine shift status
+if projected_shift_end >= target_per_shift:
+    shift_status = "ON PACE"
+    shift_icon = "✓"
+else:
+    shift_status = "BEHIND PACE"
+    shift_icon = "⚠"
+
+# =============================================================================
+# QUARTERLY SHIPMENTS
+# =============================================================================
+quarter_sql = f"""
+SELECT
+    SUM(WAFER_QTY) AS TOTAL_WAFERS,
+    COUNT(DISTINCT LOT) AS LOT_COUNT,
+    MAX(OUT_DATE) AS LAST_SHIP_DATE,
+    MIN(OUT_DATE) AS FIRST_SHIP_DATE
+FROM F_LOT_RUN_CARD
+WHERE
+    OUT_DATE >= TO_DATE('{QUARTER_START:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+    AND OUT_DATE <= SYSDATE
+    AND LOT_TYPE IN ('PROD','ENG')
+    AND( LOT LIKE 'L%' OR LOT LIKE 'N%') AND LOT NOT LIKE 'L9%'
+    AND OPERATION = {BE_LSB_OPERATION}
+    AND WAFER_QTY > 0
+"""
+qdf = pd.read_sql(quarter_sql, db)
+quarter_ships = safe_num(qdf["TOTAL_WAFERS"].iloc[0], 0)
+lot_count = int(qdf["LOT_COUNT"].iloc[0] or 0)
+first_ship = pd.to_datetime(qdf["FIRST_SHIP_DATE"].iloc[0])
+last_ship = pd.to_datetime(qdf["LAST_SHIP_DATE"].iloc[0])
+days_elapsed = max(1, (last_ship.normalize() - first_ship.normalize()).days + 1)
+actual_daily_rate = quarter_ships / days_elapsed
+
+# =============================================================================
+# LAST WEEK SHIPMENTS
+# =============================================================================
+cur_monday = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+last_monday = cur_monday - timedelta(days=7)
+
+last_week_sql = f"""
+SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+FROM F_LOT_RUN_CARD
+WHERE
+    OUT_DATE >= TO_DATE('{last_monday:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+    AND OUT_DATE < TO_DATE('{cur_monday:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+    AND LOT_TYPE IN ('PROD','ENG')
+    AND( LOT LIKE 'L%' OR LOT LIKE 'N%') AND LOT NOT LIKE 'L9%'
+    AND OPERATION = {BE_LSB_OPERATION}
+    AND WAFER_QTY > 0
+"""
+lwd = pd.read_sql(last_week_sql, db)
+last_week_ships = safe_num(lwd["TOTAL_WAFERS"].iloc[0], 0)
+last_ww = COMMIT_WW - 1
+
+# =============================================================================
+# LAST 24 HOURS SHIPMENTS
+# =============================================================================
+yesterday = now - timedelta(hours=24)
+last_24h_sql = f"""
+SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+FROM F_LOT_RUN_CARD
+WHERE
+    OUT_DATE >= TO_DATE('{yesterday:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+    AND OUT_DATE <= SYSDATE
+    AND LOT_TYPE IN ('PROD','ENG')
+    AND( LOT LIKE 'L%' OR LOT LIKE 'N%') AND LOT NOT LIKE 'L9%'
+    AND OPERATION = {BE_LSB_OPERATION}
+    AND WAFER_QTY > 0
+"""
+last_24h_df = pd.read_sql(last_24h_sql, db)
+last_24h_ships = safe_num(last_24h_df["TOTAL_WAFERS"].iloc[0], 0)
+
+# =============================================================================
+# 24-HOUR INVENTORY REDUCTION (PS_OUTS + PPS_OUTS)
+# =============================================================================
+ssafi_row = df_lineview[df_lineview["OPERATION"] == BE_LSB_OPERATION]
+if not ssafi_row.empty:
+    ps_outs_24h = safe_num(ssafi_row["PS_OUTS"].values[0], 0)
+    pps_outs_24h = safe_num(ssafi_row["PPS_OUTS"].values[0], 0) if "PPS_OUTS" in ssafi_row.columns else 0
+    inventory_reduction_24h = ps_outs_24h + pps_outs_24h
+else:
+    ps_outs_24h = 0
+    pps_outs_24h = 0
+    inventory_reduction_24h = 0
+
+# =============================================================================
+# QUARTERLY PP CALCULATION
+# =============================================================================
+ssafi_lsb_fls = float(df_lineview.loc[df_lineview["OPERATION"] == BE_LSB_OPERATION, "FULL_LOOP_SEQ"].values[0])
+quarter_remaining = max(0, QUARTER_GOAL - quarter_ships)
+
+df_q = df_lineview.query(f"FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}").copy()
+df_q["PP_INV"] = df_q["INV_PROD"].iloc[::-1].cumsum()[::-1]
+df_q["PP_W"] = df_q["PP_INV"].apply(lambda x: x // quarter_remaining if quarter_remaining > 0 else np.nan)
+df_q["PP_mod"] = df_q["PP_INV"].apply(lambda x: x % quarter_remaining if quarter_remaining > 0 else np.nan)
+
+quarter_pp = df_q.query("PP_W == 1").tail(1)
+if quarter_remaining > 0 and not df_q.query("PP_W == 0").empty:
+    quarter_bump_inv = quarter_remaining - df_q.query("PP_W == 0").head(1)["PP_mod"].values[0]
+else:
+    quarter_bump_inv = 0
+
+if quarter_pp.empty:
+    print("❌ Insufficient WIP to reach quarterly goal.")
+    quarter_pp = df_q.tail(1)
+
+pp_segment_day = int(quarter_pp["SEGMENT_DAY"].values[0])
+pp_full_loop_seq = float(quarter_pp["FULL_LOOP_SEQ"].values[0])
+
+# =============================================================================
+# SHIFT PULL POINT CALCULATION
+# =============================================================================
+# Calculate where we should be by end of shift
+# Assuming we want to complete proportional CT based on shift target
+shift_ct_target = (CATCHUP_CT_TARGET / 2)  # Half of daily target per shift (~17.5 CT hours)
+
+shift_target_ops = df_lineview.query(
+    f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+).sort_values("FULL_LOOP_SEQ").copy()
+
+shift_target_ops["CT_GOAL"] = pd.to_numeric(shift_target_ops["CT_GOAL"], errors="coerce").fillna(0.0)
+shift_target_ops["CUMULATIVE_CT"] = shift_target_ops["CT_GOAL"].cumsum()
+shift_end_target_ops = shift_target_ops.query(f"CUMULATIVE_CT <= {shift_ct_target}").copy()
+
+if not shift_end_target_ops.empty:
+    shift_end_op = shift_end_target_ops.tail(1)
+    shift_end_sd = shift_end_op["SEGMENT_DAY"].values[0]
+    shift_end_ceid = shift_end_op.get("CEID", pd.Series(["N/A"])).values[0]
+    shift_end_desc = shift_end_op.get("OPER_SHORT_DESC", pd.Series(["N/A"])).values[0]
+    shift_end_oper = shift_end_op["OPERATION"].values[0]
+else:
+    shift_end_sd = pp_segment_day
+    shift_end_ceid = "N/A"
+    shift_end_desc = "N/A"
+    shift_end_oper = "N/A"
+
+# Current position (quarterly PP)
+current_pp_ceid = quarter_pp.get("CEID", pd.Series(["N/A"])).values[0]
+current_pp_oper = quarter_pp["OPERATION"].values[0] if "OPERATION" in quarter_pp.columns else "N/A"
+current_pp_desc = quarter_pp.get("OPER_SHORT_DESC", pd.Series(["N/A"])).values[0]
+
+# =============================================================================
+# 24-HOUR PULL POINT CALCULATION
+# =============================================================================
+# Calculate what we need to ship per shift
+weekly_target = OUTS_GOAL
+shifts_per_week = SHIFTS_PER_WEEK
+target_per_shift_calc = weekly_target / shifts_per_week  # Should be ~593 wafers/shift
+
+# Calculate CT hours for next 24 hours
+next_24h_ops = df_lineview.query(
+    f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+).sort_values("FULL_LOOP_SEQ").copy()
+
+next_24h_ops["CT_GOAL"] = pd.to_numeric(next_24h_ops["CT_GOAL"], errors="coerce").fillna(0.0)
+next_24h_ops["CUMULATIVE_CT"] = next_24h_ops["CT_GOAL"].cumsum()
+
+# Use the aligned catchup target
+next_24h_target_ops = next_24h_ops.query(f"CUMULATIVE_CT <= {CATCHUP_CT_TARGET}").copy()
+
+# Calculate 24h pull point
+pull_point_24h_ct = CATCHUP_CT_TARGET
+if not next_24h_target_ops.empty:
+    last_op_in_24h = next_24h_target_ops.tail(1)
+    pp_24h_sd = last_op_in_24h["SEGMENT_DAY"].values[0]
+    pp_24h_ceid = last_op_in_24h.get("CEID", pd.Series(["N/A"])).values[0]
+    pp_24h_desc = last_op_in_24h.get("OPER_SHORT_DESC", pd.Series(["N/A"])).values[0]
+    pp_24h_oper = last_op_in_24h["OPERATION"].values[0]
+    
+    # Get the first operation in the 24h window for reference
+    first_op_in_24h = next_24h_target_ops.head(1)
+    pp_24h_start_sd = first_op_in_24h["SEGMENT_DAY"].values[0]
+    pp_24h_start_ceid = first_op_in_24h.get("CEID", pd.Series(["N/A"])).values[0]
+    pp_24h_start_desc = first_op_in_24h.get("OPER_SHORT_DESC", pd.Series(["N/A"])).values[0]
+else:
+    pp_24h_sd = pp_segment_day
+    pp_24h_ceid = "N/A"
+    pp_24h_desc = "N/A"
+    pp_24h_oper = "N/A"
+    pp_24h_start_sd = pp_segment_day
+    pp_24h_start_ceid = "N/A"
+    pp_24h_start_desc = "N/A"
+
+# Determine HIT or MISS for last 24 hours
+# Target for 24 hours should be 2 shifts worth
+last_24h_target = target_per_shift_calc * 2  # ~1186 wafers in 24 hours
+last_24h_variance = last_24h_ships - last_24h_target
+last_24h_status = "HIT" if last_24h_variance >= 0 else "MISS"
+
+# Find limiter reason for MISS
+last_24h_limiter_reason = "on target"
+if last_24h_status == "MISS":
+    # Get operations from last 24 hours that may have been limiters
+    last_24h_limiter_reason = f"{abs(last_24h_variance):.0f} wfrs short of drum beat"
+
+# =============================================================================
+# TIME / SCHEDULE
+# =============================================================================
+seconds_remaining = max(0.0, (DEADLINE - now).total_seconds())
+calendar_days_remaining = ceil_days(seconds_remaining)
+segment_days_remaining = max(0, SEGMENT_DAY_END - pp_segment_day)
+commit_ahead_behind_days = round_up_days(calendar_days_remaining - segment_days_remaining)
+commit_status_icon = "✓ AHEAD" if commit_ahead_behind_days >= 0 else "❌ BEHIND"
+
+# =============================================================================
+# WEEKLY GOAL DISTRIBUTION
+# =============================================================================
+weeks_left = max(1, math.ceil((DEADLINE - now).days / 7))
+total_shortfall = max(0, OUTS_GOAL - last_week_ships)
+catchup_per_week = total_shortfall / weeks_left
+this_week_required = OUTS_GOAL + catchup_per_week
+
+if "CW_OUTS_PROD" in df_lineview.columns:
+    current_week_outs = float(df_lineview.loc[df_lineview["OPERATION"] == BE_LSB_OPERATION, "CW_OUTS_PROD"].values[0])
+else:
+    current_week_outs = 0
+
+outs_remaining_this_week = max(0, this_week_required - current_week_outs)
+hours_left = hours_until_next_monday(now)
+days_left = max(1.0, hours_left / 24.0)  # Keep as float for 2 decimal places
+shifts_left = max(1, int(hours_left // HOURS_PER_SHIFT))
+need_day = outs_remaining_this_week / days_left
+need_shift = need_day / 2  # Simply divide daily need by 2
+
+# =============================================================================
+# ENHANCED LIMITER ANALYSIS
+# =============================================================================
+def _get_val(df, col):
+    try:
+        if col in df.columns and not df.empty:
+            return safe_num(df[col].iloc[0], np.nan)
+        return np.nan
+    except Exception:
+        return np.nan
+
+
+def calculate_severity_score(row, reasons_dict):
+    """
+    Calculate severity score (0-100) based on multiple factors.
+    Higher score = more critical limiter.
+    """
+    score = 0
+    ct_goal = safe_num(row.get("CT_GOAL", 0))
+    
+    # Weight by CT_GOAL - longer operations have more impact
+    ct_weight = min(ct_goal / 5.0, 2.0)  # Max 2x multiplier for long ops
+    
+    for reason_type, reason_text in reasons_dict.items():
+        if reason_type == "HAO":
+            score += 40 * ct_weight  # Critical bottleneck
+        elif reason_type == "INV":
+            score += 30 * ct_weight  # Severe backup
+        elif reason_type == "WSPW":
+            score += 25 * ct_weight  # Pace issue
+        elif reason_type == "CS_PACE":
+            score += 35 * ct_weight  # Throughput constraint
+    
+    return min(score, 100)  # Cap at 100
+
+
+def is_inventory_starved(inv_prod, inv_goal):
+    """
+    Check if a CEID is being starved of inventory.
+    Returns True if INV_PROD < 75% of INV_GOAL
+    """
+    if math.isnan(inv_prod) or math.isnan(inv_goal) or inv_goal <= 0:
+        return False  # Can't determine, assume not starved
+    
+    return inv_prod < (inv_goal * LIMITER_INV_STARVATION_THRESHOLD)
+
+
+lookahead_ops = df_lineview.query(
+    f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+).copy()
+
+if "LAYER_COUNT" in lookahead_ops.columns:
+    lookahead_ops = lookahead_ops.query(f"LAYER_COUNT >= {LAYER_COUNT_THRESHOLD}")
+
+lookahead_ops = lookahead_ops.sort_values("FULL_LOOP_SEQ").copy()
+lookahead_ops["CT_GOAL"] = pd.to_numeric(lookahead_ops["CT_GOAL"], errors="coerce").fillna(0.0)
+lookahead_ops["CUMULATIVE_CT"] = lookahead_ops["CT_GOAL"].cumsum()
+lookahead_window = lookahead_ops.query(f"CUMULATIVE_CT <= {LOOKAHEAD_HOURS}").copy()
+
+# Filter to only significant operations
+lookahead_window = lookahead_window.query(f"CT_GOAL >= {LIMITER_CT_MIN_THRESHOLD}").copy()
+
+limiters = []
+for _, row in lookahead_window.iterrows():
+    reasons_dict = {}
+    reasons_list = []
+    ceid = row.get("CEID", "N/A")
+    ct_goal = safe_num(row.get("CT_GOAL", 0))
+    avg_hao = safe_num(row.get("AVG_HAO", np.nan))
+    inv_prod = safe_num(row.get("INV_PROD", np.nan))
+    inv_goal = safe_num(row.get("INV_GOAL", np.nan))
+    
+    # Check if operation is starved of inventory
+    is_starved = is_inventory_starved(inv_prod, inv_goal)
+
+    # CRITERIA 1: Critical HAO violation (2.5x threshold)
+    if not math.isnan(avg_hao) and ct_goal > 0 and avg_hao >= (ct_goal * LIMITER_HAO_MULTIPLIER):
+        multiplier = avg_hao / ct_goal
+        reasons_dict["HAO"] = f"AVG_HAO {multiplier:.1f}×CT_goal ({avg_hao:.1f}h vs {ct_goal:.1f}h)"
+        reasons_list.append(reasons_dict["HAO"])
+
+    # CRITERIA 2: Severe inventory buildup (2x AND > 500 wafers)
+    if (not math.isnan(inv_prod) and not math.isnan(inv_goal) and 
+        inv_goal > 0 and inv_prod >= (inv_goal * LIMITER_INV_MULTIPLIER) and 
+        inv_prod >= LIMITER_INV_MIN_THRESHOLD):
+        multiplier = inv_prod / inv_goal
+        reasons_dict["INV"] = f"INV {multiplier:.1f}×GOAL ({inv_prod:.0f} vs {inv_goal:.0f} wfrs)"
+        reasons_list.append(reasons_dict["INV"])
+
+    # CRITERIA 3: CEID-BASED CHECKS (only if NOT starved of inventory)
+    if not df_ceid.empty and "CEID" in df_ceid.columns and ceid is not None and str(ceid) != "N/A":
+        ceid_row = df_ceid[df_ceid["CEID"] == str(ceid)]
+        if not ceid_row.empty:
+            roads = _get_val(ceid_row, "ROADS_CAPACITY")
+            cs_pace = _get_val(ceid_row, "CS_PACE")
+            wspw = _get_val(ceid_row, "CS_WSPW_PACE")
+            wse = _get_val(ceid_row, "WSE_GOAL")
+
+            # WSPW pace gap check (only if they have adequate inventory)
+            if not is_starved and not math.isnan(wspw) and not math.isnan(wse) and wse > 0:
+                pace_gap = wse - wspw
+                if pace_gap >= LIMITER_WSPW_GAP:
+                    pct_below = (pace_gap / wse) * 100
+                    reasons_dict["WSPW"] = f"WSPW {pct_below:.0f}% below goal ({pace_gap:.0f} wfrs) - adequate INV"
+                    reasons_list.append(reasons_dict["WSPW"])
+
+            # CS_PACE check when roads capacity is adequate (only if they have adequate inventory)
+            if not is_starved and not math.isnan(roads) and not math.isnan(cs_pace) and roads >= OUTS_GOAL:
+                weekly_pace = cs_pace * SHIFTS_PER_WEEK
+                if weekly_pace < OUTS_GOAL:
+                    shortfall = OUTS_GOAL - weekly_pace
+                    pct_below = (shortfall / OUTS_GOAL) * 100
+                    reasons_dict["CS_PACE"] = f"CS_PACE {pct_below:.0f}% below target ({weekly_pace:.0f} vs {OUTS_GOAL}) - adequate INV"
+                    reasons_list.append(reasons_dict["CS_PACE"])
+
+    # Only add if we found actual limiter reasons
+    if reasons_list:
+        severity = calculate_severity_score(row, reasons_dict)
+        limiters.append({
+            "CEID": ceid,
+            "OPERATION": row.get("OPERATION"),
+            "OPER_SHORT_DESC": row.get("OPER_SHORT_DESC"),
+            "SEGMENT_DAY": row.get("SEGMENT_DAY"),
+            "CT_GOAL": ct_goal,
+            "AVG_HAO": avg_hao,
+            "INV_PROD": inv_prod,
+            "INV_GOAL": inv_goal,
+            "IS_STARVED": is_starved,
+            "SEVERITY": severity,
+            "REASONS": " | ".join(reasons_list)
+        })
+
+# Sort by severity (highest first) and limit display
+limiters_sorted = sorted(limiters, key=lambda x: x["SEVERITY"], reverse=True)
+limiters_display = limiters_sorted[:LIMITER_MAX_DISPLAY]
+
+# =============================================================================
+# OUTPUT REPORT
+# =============================================================================
+print(f"""
+{'='*110}
+Q4 PRODUCTION CONTROL DASHBOARD | {now:%Y-%m-%d %H:%M:%S} | WW{COMMIT_WW}
+{'='*110}
+
+CURRENT SHIFT PERFORMANCE ({shift_name} Shift):
+  Shift Start:                          {shift_start:%Y-%m-%d %H:%M}
+  Hours Into Shift:                     {fmt_float(hours_into_shift, 1)} / {HOURS_PER_SHIFT} hrs
+  Hours Remaining:                      {fmt_float(hours_remaining_shift, 1)} hrs
+  
+  Shipped This Shift:                   {fmt_int(current_shift_ships)} wafers
+  Shift Target:                         {fmt_int(target_per_shift)} wafers
+  Remaining:                            {fmt_int(shift_target_remaining)} wafers
+  
+  Current Pace:                         {fmt_float(shift_pace_rate, 1)} wfrs/hr
+  Projected End of Shift:               {fmt_int(projected_shift_end)} wafers
+  Status:                               {shift_icon} {shift_status}
+  
+  CURRENT POSITION:                     SD{pp_segment_day} | Oper {current_pp_oper} | {current_pp_ceid} | {current_pp_desc}
+  TARGET BY END OF SHIFT:               SD{shift_end_sd} | Oper {shift_end_oper} | {shift_end_ceid} | {shift_end_desc}
+  CT Progress Needed This Shift:        {shift_ct_target:.1f} CT hrs
+
+{'='*110}
+
+QUARTERLY PERFORMANCE:
+  Goal:                                 {fmt_int(QUARTER_GOAL)} wafers
+  Shipped to Date:                      {fmt_int(quarter_ships)} wafers
+  Remaining:                            {fmt_int(quarter_remaining)} wafers
+  
+LAST WEEK SHIPMENTS (WW{last_ww}):      {fmt_int(last_week_ships)} wafers
+  vs Weekly Goal:                       {fmt_int(last_week_ships - OUTS_GOAL)} wafers ({'+' if last_week_ships >= OUTS_GOAL else ''}{((last_week_ships/OUTS_GOAL - 1) * 100):.1f}%)
+
+PULL POINT (Quarterly):
+  Segment Day:                          SD{pp_segment_day}
+  CEID:                                 {quarter_pp['CEID'].values[0] if 'CEID' in quarter_pp.columns else 'N/A'}
+  Operation:                            {quarter_pp['OPERATION'].values[0] if 'OPERATION' in quarter_pp.columns else 'N/A'}
+  Description:                          {quarter_pp['OPER_SHORT_DESC'].values[0] if 'OPER_SHORT_DESC' in quarter_pp.columns else 'N/A'}
+  Bump Inventory from PP:               {fmt_int(quarter_bump_inv)} wafers
+  Segment Days Remaining:               {fmt_int(segment_days_remaining)} days
+  Calendar Days Remaining:              {fmt_int(calendar_days_remaining)} days
+  Commit Status:                        {commit_ahead_behind_days:+} days {commit_status_icon}
+
+24-HOUR PULL POINT TRACKING:
+  Pull Point Target:                    24hr = {pull_point_24h_ct:.1f} CT hrs (catch-up mode)
+  Target Range:                         SD{pp_24h_start_sd} {pp_24h_start_ceid} - SD{pp_24h_sd} {pp_24h_ceid}
+  
+  24hr Inventory Reduction:             {fmt_int(inventory_reduction_24h)} wfrs (PS_OUTS: {fmt_int(ps_outs_24h)} + PPS_OUTS: {fmt_int(pps_outs_24h)})
+  
+  Last 24 Hours:                        {last_24h_status} ~ {fmt_int(last_24h_ships)} wfrs (target: {fmt_int(last_24h_target)})
+    Status:                             {last_24h_limiter_reason}
+    
+  Next 24 Hours Target:                 SD{pp_24h_sd} | {pp_24h_ceid} | {pp_24h_desc}
+    Complete:                           {pull_point_24h_ct:.1f} CT hrs ({len(next_24h_target_ops)} operations)
+    Pace Required:                      {fmt_int(target_per_shift_calc * 2)} wfrs/day (~{fmt_int(target_per_shift_calc)} wfrs/shift)
+
+WEEKLY TARGET (Auto-Adjusted):
+  Shortfall (Last Week):                {fmt_int(total_shortfall)} wafers
+  Weeks Remaining:                      {fmt_int(weeks_left)}
+  Even Catch-up Allocation:             {fmt_int(catchup_per_week)} wafers/week
+  This Week Required:                   {fmt_int(this_week_required)} wafers
+  This Week Shipped:                    {fmt_int(current_week_outs)} wafers
+  Remaining This Week:                  {fmt_int(outs_remaining_this_week)} wafers
+  Days Left:                            {fmt_float(days_left, 2)} | Shifts Left: {fmt_int(shifts_left)}
+  Required per Day:                     {fmt_float(need_day)} wafers/day
+  Required per Shift:                   {fmt_float(need_shift)} wafers/shift
+
+CRITICAL LIMITER ANALYSIS ({LOOKAHEAD_HOURS}h Look-Ahead - Aligned with 24hr Target):
+  Showing Top {len(limiters_display)} of {len(limiters)} Identified Limiters
+  Note: Pace-based limiters only flagged when CEID has adequate inventory (≥75% of goal)
+""")
+
+if limiters_display:
+    print(f"{'Sev':<5}{'CEID':<12}{'Oper':<8}{'Description':<20}{'SD':<6}{'CT':<7}{'HAO':<7}{'INV':<8}Critical Issues")
+    print("-" * 140)
+    for lim in limiters_display:
+        severity_display = f"{lim['SEVERITY']:.0f}"
+        print(f"{severity_display:<5}{str(lim['CEID'])[:12]:<12}{str(lim['OPERATION'])[:8]:<8}{str(lim['OPER_SHORT_DESC'])[:20]:<20}"
+              f"{fmt_int(lim.get('SEGMENT_DAY',0)):<6}{fmt_float(lim.get('CT_GOAL',0)):<7}{fmt_float(lim.get('AVG_HAO',0)):<7}"
+              f"{fmt_int(lim.get('INV_PROD',0)):<8}{lim['REASONS']}")
+else:
+    print("✓ No critical limiters identified in look-ahead window.")
+
+if len(limiters) > LIMITER_MAX_DISPLAY:
+    print(f"\n  Note: {len(limiters) - LIMITER_MAX_DISPLAY} additional minor limiters not shown.")
+
+print(f"\n{'='*110}\n")
