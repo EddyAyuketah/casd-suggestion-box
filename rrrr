@@ -1,94 +1,49 @@
-For the refresh button, remeber, i don't have a src/components/Dashboard.jsx code. it is in the app.js file. 
-so the code for the refresh button is here right? 
-import React, { useState } from 'react';
-import { useDashboard } from './hooks/useDashboard';
-import { Header } from './components/Header';
-import { ConfigModal } from './components/ConfigModal';
-import { ShiftCard } from './components/ShiftCard';
-import { QuarterlyCard } from './components/QuarterlyCard';
-import { WeeklyCard } from './components/WeeklyCard';
-import { DailyCard } from './components/DailyCard';
-import { PullPointCard } from './components/PullPointCard';
-import { LimitersCard } from './components/LimitersCard';
-import './App.css';
+This is my existing Header.js code 
 
-function App() {
-  const {
-    data,
-    loading,
-    error,
-    config,
-    lastUpdate,
-    updateConfig,
-    resetConfig,
-    refreshData,
-    fetchHistory,
-    autoRefresh,
-    setAutoRefresh
-  } = useDashboard();
+import React from 'react';
+import { format } from 'date-fns';
 
-  const [configModalOpen, setConfigModalOpen] = useState(false);
-
-  if (loading && !data) {
-    return (
-      <div className="loading-screen">
-        <div className="spinner"></div>
-        <p>Loading dashboard data...</p>
-        <small>Reading LineView and CEID files...</small>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="error-screen">
-        <div className="error-icon">❌</div>
-        <h2>Error Loading Dashboard</h2>
-        <p className="error-message">{error}</p>
-        <button className="btn btn-primary" onClick={refreshData}>
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="loading-screen">
-        <p>No data available</p>
-      </div>
-    );
-  }
-
+export function Header({ 
+  timestamp, 
+  lastUpdate,
+  onRefresh, 
+  onConfigOpen, 
+  autoRefresh, 
+  onAutoRefreshChange 
+}) {
   return (
-    <div className="app">
-      <Header
-        timestamp={data.timestamp}
-        lastUpdate={lastUpdate}
-        onRefresh={refreshData}
-        onConfigOpen={() => setConfigModalOpen(true)}
-        autoRefresh={autoRefresh}
-        onAutoRefreshChange={setAutoRefresh}
-      />
-
-      <div className="dashboard-grid">
-        <ShiftCard data={data} />
-        <QuarterlyCard data={data} />
-        <WeeklyCard data={data} />
-        <DailyCard data={data} fetchHistory={fetchHistory} />
-        <PullPointCard data={data} />
-        <LimitersCard data={data} />
+    <div className="header">
+      <div className="header-left">
+        <h1>
+          <span className="header-icon">📊</span>
+          Q4 Production Control Dashboard
+        </h1>
       </div>
-
-      <ConfigModal
-        isOpen={configModalOpen}
-        onClose={() => setConfigModalOpen(false)}
-        config={config}
-        onSave={updateConfig}
-        onReset={resetConfig}
-      />
+      <div className="header-right">
+        {lastUpdate && (
+          <div className="timestamp">
+            Last Updated: {format(lastUpdate, 'PPpp')}
+          </div>
+        )}
+        <div className="header-actions">
+          <button className="btn btn-secondary" onClick={onConfigOpen}>
+            ⚙️ Configuration
+          </button>
+          <button className="btn btn-primary" onClick={onRefresh}>
+            🔄 Refresh
+          </button>
+        </div>
+        <div className="auto-refresh">
+          <label>
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => onAutoRefreshChange(e.target.checked)}
+            />
+            <span>Auto-refresh every 5 min</span>
+          </label>
+        </div>
+      </div>
     </div>
   );
 }
-
-export default App;
