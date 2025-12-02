@@ -1,41 +1,201 @@
-Uncaught runtime errors:
-×
-ERROR
-fetchHistory is not a function
-TypeError: fetchHistory is not a function
-    at loadHistory (http://localhost:3000/static/js/bundle.js:70979:29)
-    at http://localhost:3000/static/js/bundle.js:70991:5
-    at Object.react_stack_bottom_frame (http://localhost:3000/static/js/bundle.js:35940:18)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:23227:68)
-    at commitHookEffectListMount (http://localhost:3000/static/js/bundle.js:29231:157)
-    at commitHookPassiveMountEffects (http://localhost:3000/static/js/bundle.js:29268:56)
-    at commitPassiveMountOnFiber (http://localhost:3000/static/js/bundle.js:30282:25)
-    at recursivelyTraversePassiveMountEffects (http://localhost:3000/static/js/bundle.js:30265:7)
-    at commitPassiveMountOnFiber (http://localhost:3000/static/js/bundle.js:30339:9)
-    at recursivelyTraversePassiveMountEffects (http://localhost:3000/static/js/bundle.js:30265:7)
-ERROR
-fetchHistory is not a function
-TypeError: fetchHistory is not a function
-    at loadHistory (http://localhost:3000/static/js/bundle.js:70979:29)
-    at http://localhost:3000/static/js/bundle.js:70991:5
-    at Object.react_stack_bottom_frame (http://localhost:3000/static/js/bundle.js:35940:18)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:23227:68)
-    at commitHookEffectListMount (http://localhost:3000/static/js/bundle.js:29231:157)
-    at commitHookPassiveMountEffects (http://localhost:3000/static/js/bundle.js:29268:56)
-    at commitPassiveMountOnFiber (http://localhost:3000/static/js/bundle.js:30282:25)
-    at recursivelyTraversePassiveMountEffects (http://localhost:3000/static/js/bundle.js:30265:7)
-    at commitPassiveMountOnFiber (http://localhost:3000/static/js/bundle.js:30339:9)
-    at recursivelyTraversePassiveMountEffects (http://localhost:3000/static/js/bundle.js:30265:7)
-ERROR
-fetchHistory is not a function
-TypeError: fetchHistory is not a function
-    at loadHistory (http://localhost:3000/static/js/bundle.js:70979:29)
-    at http://localhost:3000/static/js/bundle.js:70991:5
-    at Object.react_stack_bottom_frame (http://localhost:3000/static/js/bundle.js:35940:18)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:23227:68)
-    at commitHookEffectListMount (http://localhost:3000/static/js/bundle.js:29231:157)
-    at commitHookPassiveMountEffects (http://localhost:3000/static/js/bundle.js:29268:56)
-    at reconnectPassiveEffects (http://localhost:3000/static/js/bundle.js:30372:9)
-    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/static/js/bundle.js:30355:7)
-    at reconnectPassiveEffects (http://localhost:3000/static/js/bundle.js:30386:9)
-    at doubleInvokeEffectsOnFiber (http://localhost:3000/static/js/bundle.js:31654:127)
+Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+/api/data/ceid:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+/api/shipments?quarter_goal=96000&outs_goal=8300&be_lsb_operation=9812&catchup_ct_target=35&lookahead_hours=35&segment_day_end=104&deadline=2025-12-06:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+useDashboard.js:172 Dashboard fetch error: Error: LineView fetch failed: 404
+    at useDashboard.js:54:15
+(anonymous) @ useDashboard.js:172Understand this error
+manifest.json:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+Fist_LAD/:1 Manifest fetch from https://azshweb.intel.com/azAnalysis$/1274_MAODATA/Config/AZFSM_Production/reports/Fist_LAD/manifest.json failed, code 401Understand this error
+manifest.json:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+
+This is my terminal output in the server section.  
+> production-dashboard-server@1.0.0 start
+> node server.js
+
+React build path: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\client\build
+
+================================================================================
+🚀 Q4 PRODUCTION DASHBOARD SERVER
+================================================================================
+
+📊 Dashboard UI:        http://localhost:5000
+🔌 API Base:            http://localhost:5000/api
+
+📡 Available Endpoints:
+   GET  /api/health          - Server health check
+   GET  /api/config          - Server configuration
+   GET  /api/data/lineview   - LineView.txt proxy
+   GET  /api/data/ceid       - CEID.txt proxy
+   GET  /api/shipments       - Real-time shipment data
+   GET  /api/history         - Historical data
+   POST /api/test-python     - Test Python connectivity
+
+📁 React Build:         C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\client\build
+🐍 Python Scripts:      C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python
+
+🌐 Data Sources:
+   LineView Local: \\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LineView.TXT
+   LineView URL:   https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/LineView.txt
+   CEID Local:     \\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\CEID.TXT
+   CEID URL:       https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/CEID.txt
+
+🔍 Data Source Status:
+   LineView Local: ✅ Accessible
+   CEID Local:     ✅ Accessible
+
+================================================================================
+
+Fetching LineView data...
+Reading LineView from local network path...
+LineView data read from file: 4587472 bytes
+Fetching CEID data...
+Reading CEID from local network path...
+CEID data read from file: 240736 bytes
+
+========== SHIPMENT DATA REQUEST ==========
+Query params: {
+  quarter_goal: '96000',
+  outs_goal: '8300',
+  be_lsb_operation: '9812',
+  catchup_ct_target: '35',
+  lookahead_hours: '35',
+  segment_day_end: '104',
+  deadline: '2025-12-06'
+}
+Config for Python: {
+  quarter_goal: 96000,
+  outs_goal: 8300,
+  be_lsb_operation: 9812,
+  catchup_ct_target: 35,
+  lookahead_hours: 35,
+  segment_day_end: 104,
+  deadline: '2025-12-06'
+}
+Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\db_queries.py with args: [
+  '{"quarter_goal":96000,"outs_goal":8300,"be_lsb_operation":9812,"catchup_ct_target":35,"lookahead_hours":35,"segment_day_end":104,"deadline":"2025-12-06"}'
+]
+Fetching LineView data...
+Reading LineView from local network path...
+LineView data read from file: 4587472 bytes
+Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+Database query failed, using mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+Returning mock shipment data: {
+  current_shift_ships: 274,
+  quarter_ships: 80025,
+  last_week_ships: 7102,
+  last_24h_ships: 816,
+  current_week_outs: 6234,
+  timestamp: '2025-12-02T15:24:51.057Z'
+}
+========== REQUEST COMPLETE (MOCK) ==========
+
+
+========== SHIPMENT DATA REQUEST ==========
+Query params: {
+  quarter_goal: '96000',
+  outs_goal: '8300',
+  be_lsb_operation: '9812',
+  catchup_ct_target: '35',
+  lookahead_hours: '35',
+  segment_day_end: '104',
+  deadline: '2025-12-06'
+}
+Config for Python: {
+  quarter_goal: 96000,
+  outs_goal: 8300,
+  be_lsb_operation: 9812,
+  catchup_ct_target: 35,
+  lookahead_hours: 35,
+  segment_day_end: 104,
+  deadline: '2025-12-06'
+}
+Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\db_queries.py with args: [
+  '{"quarter_goal":96000,"outs_goal":8300,"be_lsb_operation":9812,"catchup_ct_target":35,"lookahead_hours":35,"segment_day_end":104,"deadline":"2025-12-06"}'
+]
+Fetching CEID data...
+Reading CEID from local network path...
+CEID data read from file: 240736 bytes
+Fetching LineView data...
+Reading LineView from local network path...
+LineView data read from file: 4587472 bytes
+Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+Database query failed, using mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+Returning mock shipment data: {
+  current_shift_ships: 274,
+  quarter_ships: 80025,
+  last_week_ships: 7102,
+  last_24h_ships: 816,
+  current_week_outs: 6234,
+  timestamp: '2025-12-02T15:24:59.267Z'
+}
+========== REQUEST COMPLETE (MOCK) ==========
+
+Fetching CEID data...
+Reading CEID from local network path...
+CEID data read from file: 240736 bytes
+
+========== SHIPMENT DATA REQUEST ==========
+Query params: {
+  quarter_goal: '96000',
+  outs_goal: '8300',
+  be_lsb_operation: '9812',
+  catchup_ct_target: '35',
+  lookahead_hours: '35',
+  segment_day_end: '104',
+  deadline: '2025-12-06'
+}
+Config for Python: {
+  quarter_goal: 96000,
+  outs_goal: 8300,
+  be_lsb_operation: 9812,
+  catchup_ct_target: 35,
+  lookahead_hours: 35,
+  segment_day_end: 104,
+  deadline: '2025-12-06'
+}
+Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\db_queries.py with args: [
+  '{"quarter_goal":96000,"outs_goal":8300,"be_lsb_operation":9812,"catchup_ct_target":35,"lookahead_hours":35,"segment_day_end":104,"deadline":"2025-12-06"}'
+]
+Fetching LineView data...
+Reading LineView from local network path...
+LineView data read from file: 4587472 bytes
+Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+Database query failed, using mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+Returning mock shipment data: {
+  current_shift_ships: 274,
+  quarter_ships: 80025,
+  last_week_ships: 7102,
+  last_24h_ships: 816,
+  current_week_outs: 6234,
+  timestamp: '2025-12-02T15:24:59.726Z'
+}
+========== REQUEST COMPLETE (MOCK) ==========
+
+
+========== HISTORY DATA REQUEST ==========
+Requesting history: 14 days for operation 9812
+Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\history_query.py with args: [ '14', '9812' ]
+Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+History query failed, generating mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+Returning mock history data
+========== REQUEST COMPLETE (MOCK) ==========
+
+
+========== HISTORY DATA REQUEST ==========
+Requesting history: 14 days for operation 9812
+Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\history_query.py with args: [ '14', '9812' ]
+Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+History query failed, generating mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
+
+Returning mock history data
+========== REQUEST COMPLETE (MOCK) ==========
+
