@@ -1,1 +1,13 @@
-LOL
+// After parsing LineView, add this debug code:
+const lineview = parseTSV(lineviewText);
+const ceid = parseTSV(ceidText);
+
+console.log(`✅ Loaded ${lineview.length} lineview records and ${ceid.length} CEID records`);
+
+// Find finish operation row
+const finishOp = lineview.find(row => calc.safeNum(row.OPERATION) === config.be_lsb_operation);
+if (!finishOp) throw new Error('Finish operation not found in LineView');
+
+// 🔍 DEBUG: Log all available columns
+console.log('🔍 Available columns in LineView:', Object.keys(finishOp));
+console.log('🔍 Finish operation row data:', finishOp);
