@@ -1,4 +1,13 @@
-﻿
+Failed to load resource: the server responded with a status of 401 (Unauthorized)
+Fist_LAD/:1 Manifest fetch from https://azshweb.intel.com/azAnalysis$/1274_MAODATA/Config/AZFSM_Production/reports/Fist_LAD/manifest.json failed, code 401
+useDashboard.js:61 ✅ Loaded 4126 lineview records and 292 CEID records
+useDashboard.js:70 ====================================================================================================
+useDashboard.js:71 🔍 DEBUG: FINISH OPERATION ROW (Operation 9812)
+useDashboard.js:72 ====================================================================================================
+useDashboard.js:73 All available columns: 
+Array(123)
+useDashboard.js:74 
+📋 Full row data:
 useDashboard.js:75 
 Object
 "ABA_OPER_CLASS "
