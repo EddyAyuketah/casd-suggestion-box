@@ -1,201 +1,94 @@
-Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
-/api/data/ceid:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
-/api/shipments?quarter_goal=96000&outs_goal=8300&be_lsb_operation=9812&catchup_ct_target=35&lookahead_hours=35&segment_day_end=104&deadline=2025-12-06:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
-useDashboard.js:172 Dashboard fetch error: Error: LineView fetch failed: 404
-    at useDashboard.js:54:15
-(anonymous) @ useDashboard.js:172Understand this error
-manifest.json:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
-Fist_LAD/:1 Manifest fetch from https://azshweb.intel.com/azAnalysis$/1274_MAODATA/Config/AZFSM_Production/reports/Fist_LAD/manifest.json failed, code 401Understand this error
-manifest.json:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+For the refresh button, remeber, i don't have a src/components/Dashboard.jsx code. it is in the app.js file. 
+so the code for the refresh button is here right? 
+import React, { useState } from 'react';
+import { useDashboard } from './hooks/useDashboard';
+import { Header } from './components/Header';
+import { ConfigModal } from './components/ConfigModal';
+import { ShiftCard } from './components/ShiftCard';
+import { QuarterlyCard } from './components/QuarterlyCard';
+import { WeeklyCard } from './components/WeeklyCard';
+import { DailyCard } from './components/DailyCard';
+import { PullPointCard } from './components/PullPointCard';
+import { LimitersCard } from './components/LimitersCard';
+import './App.css';
 
-This is my terminal output in the server section.  
-> production-dashboard-server@1.0.0 start
-> node server.js
+function App() {
+  const {
+    data,
+    loading,
+    error,
+    config,
+    lastUpdate,
+    updateConfig,
+    resetConfig,
+    refreshData,
+    fetchHistory,
+    autoRefresh,
+    setAutoRefresh
+  } = useDashboard();
 
-React build path: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\client\build
+  const [configModalOpen, setConfigModalOpen] = useState(false);
 
-================================================================================
-🚀 Q4 PRODUCTION DASHBOARD SERVER
-================================================================================
+  if (loading && !data) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Loading dashboard data...</p>
+        <small>Reading LineView and CEID files...</small>
+      </div>
+    );
+  }
 
-📊 Dashboard UI:        http://localhost:5000
-🔌 API Base:            http://localhost:5000/api
+  if (error) {
+    return (
+      <div className="error-screen">
+        <div className="error-icon">❌</div>
+        <h2>Error Loading Dashboard</h2>
+        <p className="error-message">{error}</p>
+        <button className="btn btn-primary" onClick={refreshData}>
+          Retry
+        </button>
+      </div>
+    );
+  }
 
-📡 Available Endpoints:
-   GET  /api/health          - Server health check
-   GET  /api/config          - Server configuration
-   GET  /api/data/lineview   - LineView.txt proxy
-   GET  /api/data/ceid       - CEID.txt proxy
-   GET  /api/shipments       - Real-time shipment data
-   GET  /api/history         - Historical data
-   POST /api/test-python     - Test Python connectivity
+  if (!data) {
+    return (
+      <div className="loading-screen">
+        <p>No data available</p>
+      </div>
+    );
+  }
 
-📁 React Build:         C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\client\build
-🐍 Python Scripts:      C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python
+  return (
+    <div className="app">
+      <Header
+        timestamp={data.timestamp}
+        lastUpdate={lastUpdate}
+        onRefresh={refreshData}
+        onConfigOpen={() => setConfigModalOpen(true)}
+        autoRefresh={autoRefresh}
+        onAutoRefreshChange={setAutoRefresh}
+      />
 
-🌐 Data Sources:
-   LineView Local: \\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LineView.TXT
-   LineView URL:   https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/LineView.txt
-   CEID Local:     \\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\CEID.TXT
-   CEID URL:       https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/CEID.txt
+      <div className="dashboard-grid">
+        <ShiftCard data={data} />
+        <QuarterlyCard data={data} />
+        <WeeklyCard data={data} />
+        <DailyCard data={data} fetchHistory={fetchHistory} />
+        <PullPointCard data={data} />
+        <LimitersCard data={data} />
+      </div>
 
-🔍 Data Source Status:
-   LineView Local: ✅ Accessible
-   CEID Local:     ✅ Accessible
-
-================================================================================
-
-Fetching LineView data...
-Reading LineView from local network path...
-LineView data read from file: 4587472 bytes
-Fetching CEID data...
-Reading CEID from local network path...
-CEID data read from file: 240736 bytes
-
-========== SHIPMENT DATA REQUEST ==========
-Query params: {
-  quarter_goal: '96000',
-  outs_goal: '8300',
-  be_lsb_operation: '9812',
-  catchup_ct_target: '35',
-  lookahead_hours: '35',
-  segment_day_end: '104',
-  deadline: '2025-12-06'
+      <ConfigModal
+        isOpen={configModalOpen}
+        onClose={() => setConfigModalOpen(false)}
+        config={config}
+        onSave={updateConfig}
+        onReset={resetConfig}
+      />
+    </div>
+  );
 }
-Config for Python: {
-  quarter_goal: 96000,
-  outs_goal: 8300,
-  be_lsb_operation: 9812,
-  catchup_ct_target: 35,
-  lookahead_hours: 35,
-  segment_day_end: 104,
-  deadline: '2025-12-06'
-}
-Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\db_queries.py with args: [
-  '{"quarter_goal":96000,"outs_goal":8300,"be_lsb_operation":9812,"catchup_ct_target":35,"lookahead_hours":35,"segment_day_end":104,"deadline":"2025-12-06"}'
-]
-Fetching LineView data...
-Reading LineView from local network path...
-LineView data read from file: 4587472 bytes
-Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
 
-Database query failed, using mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Returning mock shipment data: {
-  current_shift_ships: 274,
-  quarter_ships: 80025,
-  last_week_ships: 7102,
-  last_24h_ships: 816,
-  current_week_outs: 6234,
-  timestamp: '2025-12-02T15:24:51.057Z'
-}
-========== REQUEST COMPLETE (MOCK) ==========
-
-
-========== SHIPMENT DATA REQUEST ==========
-Query params: {
-  quarter_goal: '96000',
-  outs_goal: '8300',
-  be_lsb_operation: '9812',
-  catchup_ct_target: '35',
-  lookahead_hours: '35',
-  segment_day_end: '104',
-  deadline: '2025-12-06'
-}
-Config for Python: {
-  quarter_goal: 96000,
-  outs_goal: 8300,
-  be_lsb_operation: 9812,
-  catchup_ct_target: 35,
-  lookahead_hours: 35,
-  segment_day_end: 104,
-  deadline: '2025-12-06'
-}
-Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\db_queries.py with args: [
-  '{"quarter_goal":96000,"outs_goal":8300,"be_lsb_operation":9812,"catchup_ct_target":35,"lookahead_hours":35,"segment_day_end":104,"deadline":"2025-12-06"}'
-]
-Fetching CEID data...
-Reading CEID from local network path...
-CEID data read from file: 240736 bytes
-Fetching LineView data...
-Reading LineView from local network path...
-LineView data read from file: 4587472 bytes
-Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Database query failed, using mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Returning mock shipment data: {
-  current_shift_ships: 274,
-  quarter_ships: 80025,
-  last_week_ships: 7102,
-  last_24h_ships: 816,
-  current_week_outs: 6234,
-  timestamp: '2025-12-02T15:24:59.267Z'
-}
-========== REQUEST COMPLETE (MOCK) ==========
-
-Fetching CEID data...
-Reading CEID from local network path...
-CEID data read from file: 240736 bytes
-
-========== SHIPMENT DATA REQUEST ==========
-Query params: {
-  quarter_goal: '96000',
-  outs_goal: '8300',
-  be_lsb_operation: '9812',
-  catchup_ct_target: '35',
-  lookahead_hours: '35',
-  segment_day_end: '104',
-  deadline: '2025-12-06'
-}
-Config for Python: {
-  quarter_goal: 96000,
-  outs_goal: 8300,
-  be_lsb_operation: 9812,
-  catchup_ct_target: 35,
-  lookahead_hours: 35,
-  segment_day_end: 104,
-  deadline: '2025-12-06'
-}
-Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\db_queries.py with args: [
-  '{"quarter_goal":96000,"outs_goal":8300,"be_lsb_operation":9812,"catchup_ct_target":35,"lookahead_hours":35,"segment_day_end":104,"deadline":"2025-12-06"}'
-]
-Fetching LineView data...
-Reading LineView from local network path...
-LineView data read from file: 4587472 bytes
-Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Database query failed, using mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Returning mock shipment data: {
-  current_shift_ships: 274,
-  quarter_ships: 80025,
-  last_week_ships: 7102,
-  last_24h_ships: 816,
-  current_week_outs: 6234,
-  timestamp: '2025-12-02T15:24:59.726Z'
-}
-========== REQUEST COMPLETE (MOCK) ==========
-
-
-========== HISTORY DATA REQUEST ==========
-Requesting history: 14 days for operation 9812
-Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\history_query.py with args: [ '14', '9812' ]
-Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-History query failed, generating mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Returning mock history data
-========== REQUEST COMPLETE (MOCK) ==========
-
-
-========== HISTORY DATA REQUEST ==========
-Requesting history: 14 days for operation 9812
-Calling Python: C:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\fist-production-dashboard\server\python\history_query.py with args: [ '14', '9812' ]
-Python script failed with code 1: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-History query failed, generating mock data: Python script failed: {"error": "PyUber import failed: No module named 'PyUber'"}
-
-Returning mock history data
-========== REQUEST COMPLETE (MOCK) ==========
-
+export default App;
