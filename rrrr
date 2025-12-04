@@ -1,18 +1,1772 @@
+Looking at my script  bellow, in the schedule process analysis section 
+its easier to sho the data in the Quaterly progress section there too, kind of reducing repetitive views and 
+making it more usable to my managers since they care about that information. also, Lastweek section that shows how much we shipped is wrong. 
+in the line view path, that number is denotted as PW_OUTS_PROD at our BE LSB operation
+in our weekly trend & forecast analysis section, 
+the workweeks should match intel workweeks 
+so rather than it showing W1,W2,W3,W4,W5 to 13, if we're in WW49 now, it should show 48, 46, 45, 44, 43, 42 all the way to
+whatever work week we were in when the quater started.
+so its easy for everyone to understand. 
 
-export const DEFAULT_CONFIG = {
-  // Quarterly targets
-  quarter_goal: 96000,
-  quarter_start: '2025-09-06T18:00:00', // Sept 6, 2025, 6pm
-  outs_goal: 8300,
-  
-  // Operations
-  be_lsb_operation: 9812,
-  
-  // Pull point configuration
-  catchup_ct_target: 35.0,
-  lookahead_hours: 35,
-  segment_day_end: 104,
-  
-  // Deadline
-  deadline: '2025-12-06'
-};
+so write a new complete bullet proff code with all the fixes. 
+making 100% accurate.  
+
+
+import math
+import json
+import numpy as np
+import pandas as pd
+from datetime import datetime, timedelta
+from pathlib import Path
+
+# =============================================================================
+# CONFIGURATION - Reads from user config if available
+# =============================================================================
+CONFIG_FILE = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\MfgEng\COS_DB\dashboard_config.json"
+
+DEFAULT_CONFIG = {
+    "outs_goal": 8300,
+    "quarter_goal": 96000,
+    "deadline": "2025-12-06T23:59:59",
+    "quarter_start": "2025-09-06T18:00:00",
+    "commit_ww": 202549,
+    "segment_day_end": 104,
+    "lookahead_hours": 35,
+    "be_lsb_operation": 9812,
+    "catchup_ct_target": 35.0
+}
+
+def load_user_config():
+    """Load user configuration from NAZ if available"""
+    try:
+        if Path(CONFIG_FILE).exists():
+            with open(CONFIG_FILE, 'r') as f:
+                user_config = json.load(f)
+                print(f"✅ Loaded user configuration from {CONFIG_FILE}")
+                return user_config
+    except Exception as e:
+        print(f"⚠️ Could not load user config: {e}")
+    
+    print(f"📋 Using default configuration")
+    return DEFAULT_CONFIG
+
+CONFIG = load_user_config()
+
+# Apply configuration
+OUTS_GOAL = CONFIG["outs_goal"]
+QUARTER_GOAL = CONFIG["quarter_goal"]
+DEADLINE = datetime.fromisoformat(CONFIG["deadline"])
+QUARTER_START = datetime.fromisoformat(CONFIG["quarter_start"])
+COMMIT_WW = CONFIG["commit_ww"]
+BE_LSB_OPERATION = CONFIG["be_lsb_operation"]
+SEGMENT_DAY_END = CONFIG["segment_day_end"]
+CATCHUP_CT_TARGET = CONFIG["catchup_ct_target"]
+LOOKAHEAD_HOURS = CONFIG["lookahead_hours"]
+
+OUTPUT_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\MfgEng\COS_DB\dashboard.html"
+OUTPUT_URL = "https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html"
+
+SHIFT_START_HOURS = [6, 18]
+HOURS_PER_SHIFT = 12
+SHIFTS_PER_WEEK = 14
+DAYS_PER_WEEK = 7
+EXCLUDED_OPERATIONS = [204]
+
+LINEVIEW_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LineView.TXT"
+CEID_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\CEID.TXT"
+
+LIMITER_HAO_MULTIPLIER = 2.5
+LIMITER_INV_MULTIPLIER = 2.0
+LIMITER_INV_MIN_THRESHOLD = 300
+LIMITER_CT_MIN_THRESHOLD = 1.0
+LIMITER_MAX_DISPLAY = 10
+LAYER_COUNT_THRESHOLD = 0.30
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+def get_current_shift_info(now: datetime):
+    """Determine current shift"""
+    current_hour = now.hour
+    
+    if current_hour >= SHIFT_START_HOURS[0] and current_hour < SHIFT_START_HOURS[1]:
+        shift_start = now.replace(hour=SHIFT_START_HOURS[0], minute=0, second=0, microsecond=0)
+        shift_name = "Day"
+    else:
+        if current_hour >= SHIFT_START_HOURS[1]:
+            shift_start = now.replace(hour=SHIFT_START_HOURS[1], minute=0, second=0, microsecond=0)
+        else:
+            shift_start = (now - timedelta(days=1)).replace(hour=SHIFT_START_HOURS[1], minute=0, second=0, microsecond=0)
+        shift_name = "Night"
+    
+    hours_into_shift = (now - shift_start).total_seconds() / 3600.0
+    return shift_start, shift_name, hours_into_shift
+
+def safe_num(value, default=np.nan):
+    """Convert to float safely"""
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+def load_tsv(path: str) -> pd.DataFrame:
+    """Load TSV file"""
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(f"Missing data file: {path}")
+    return pd.read_csv(p, sep="\t")
+
+def get_week_number(date: datetime) -> int:
+    """Get week number since quarter start"""
+    return ((date - QUARTER_START).days // 7) + 1
+
+# =============================================================================
+# DATABASE CONNECTOR
+# =============================================================================
+try:
+    import PyUber
+    def get_db():
+        return PyUber.connect("F32_PROD_XEUS")
+except Exception:
+    def get_db():
+        raise RuntimeError("❌ PyUber unavailable")
+
+# =============================================================================
+# WEEKLY TREND ANALYSIS
+# =============================================================================
+def analyze_weekly_trends(db, now):
+    """Analyze week-by-week shipments and forecast"""
+    
+    weeks_data = []
+    current_date = QUARTER_START
+    week_num = 1
+    
+    # Query each week's shipments
+    while current_date < now:
+        week_end = min(current_date + timedelta(days=7), now)
+        
+        week_sql = f"""
+        SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_RUN_CARD
+        WHERE
+            OUT_DATE >= TO_DATE('{current_date:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND OUT_DATE < TO_DATE('{week_end:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND LOT_TYPE IN ('PROD','ENG')
+            AND (LOT LIKE 'L%' OR LOT LIKE 'N%')
+            AND LOT NOT LIKE 'L9%'
+            AND OPERATION = {BE_LSB_OPERATION}
+            AND WAFER_QTY > 0
+        """
+        
+        try:
+            week_df = pd.read_sql(week_sql, db)
+            ships = safe_num(week_df["TOTAL_WAFERS"].iloc[0], 0)
+            
+            weeks_data.append({
+                "week": week_num,
+                "start": current_date,
+                "end": week_end,
+                "ships": ships,
+                "cumulative": sum([w["ships"] for w in weeks_data]) + ships
+            })
+        except Exception as e:
+            print(f"⚠️ Could not query week {week_num}: {e}")
+        
+        current_date = week_end
+        week_num += 1
+    
+    if not weeks_data:
+        return None
+    
+    # Calculate trend
+    total_weeks = len(weeks_data)
+    total_ships = sum([w["ships"] for w in weeks_data])
+    avg_weekly = total_ships / total_weeks if total_weeks > 0 else 0
+    
+    # Linear regression for trend
+    x = np.array([w["week"] for w in weeks_data])
+    y = np.array([w["ships"] for w in weeks_data])
+    
+    if len(x) > 1:
+        z = np.polyfit(x, y, 1)
+        slope = z[0]
+        trend = "ACCELERATING" if slope > 0 else "DECELERATING" if slope < 0 else "FLAT"
+    else:
+        slope = 0
+        trend = "INSUFFICIENT DATA"
+    
+    # Forecast remaining weeks
+    weeks_remaining = max(1, math.ceil((DEADLINE - now).days / 7))
+    remaining_goal = max(0, QUARTER_GOAL - total_ships)
+    required_weekly = remaining_goal / weeks_remaining
+    
+    # Forecast scenarios
+    if avg_weekly > 0:
+        forecast_linear = total_ships + (avg_weekly * weeks_remaining)
+        forecast_trend = total_ships + sum([(avg_weekly + (slope * i)) for i in range(1, weeks_remaining + 1)])
+    else:
+        forecast_linear = total_ships
+        forecast_trend = total_ships
+    
+    will_hit_goal = forecast_trend >= QUARTER_GOAL
+    
+    return {
+        "weeks_data": weeks_data,
+        "total_weeks": total_weeks,
+        "avg_weekly": avg_weekly,
+        "slope": slope,
+        "trend": trend,
+        "weeks_remaining": weeks_remaining,
+        "required_weekly": required_weekly,
+        "forecast_linear": forecast_linear,
+        "forecast_trend": forecast_trend,
+        "will_hit_goal": will_hit_goal,
+        "gap_at_forecast": forecast_trend - QUARTER_GOAL
+    }
+
+# =============================================================================
+# CORRECT PROGRESS CALCULATION WITH PRECISE FRACTIONAL DAYS
+# =============================================================================
+def calculate_progress_data(pp_segment_day, segment_day_end, quarter_start, deadline, now):
+    """Calculate CORRECT progress metrics with precise fractional days (2 decimal places)"""
+    
+    total_days = (deadline - quarter_start).days
+    days_elapsed = (now - quarter_start).days
+    
+    # Calculate fractional calendar days remaining (precise to 2 decimals)
+    seconds_remaining = (deadline - now).total_seconds()
+    calendar_days_remaining_precise = seconds_remaining / 86400.0
+    calendar_days_remaining = max(0, calendar_days_remaining_precise)
+    
+    segment_days_completed = pp_segment_day
+    segment_days_remaining = max(0, segment_day_end - pp_segment_day)
+    segment_day_pct = (segment_days_completed / segment_day_end) * 100 if segment_day_end > 0 else 0
+    
+    expected_segment_day = (segment_day_end * days_elapsed) / total_days if total_days > 0 else 0
+    expected_pct = (days_elapsed / total_days) * 100 if total_days > 0 else 0
+    
+    # KEY METRIC: segment_days_remaining vs calendar_days_remaining (PRECISE to 2 decimals)
+    days_ahead_behind = round(calendar_days_remaining - segment_days_remaining, 2)
+    
+    if days_ahead_behind >= 0:
+        status = "AHEAD OF SCHEDULE"
+        status_class = "status-good"
+    else:
+        status = "BEHIND SCHEDULE"
+        status_class = "status-warn"
+    
+    segment_day_gap = expected_segment_day - segment_days_completed
+    
+    return {
+        "total_days": total_days,
+        "days_elapsed": days_elapsed,
+        "calendar_days_remaining": round(calendar_days_remaining, 2),
+        "segment_days_completed": segment_days_completed,
+        "segment_days_remaining": segment_days_remaining,
+        "segment_day_pct": segment_day_pct,
+        "expected_segment_day": expected_segment_day,
+        "expected_pct": expected_pct,
+        "segment_day_gap": segment_day_gap,
+        "days_ahead_behind": days_ahead_behind,
+        "status": status,
+        "status_class": status_class
+    }
+
+# =============================================================================
+# 24-HOUR PROGRESS ANALYSIS
+# =============================================================================
+def analyze_24h_progress(df_lineview, pp_full_loop_seq, ssafi_lsb_fls, catchup_ct_target):
+    """Analyze 24h progress: where we were, where we should be, where we are"""
+    
+    path_ops = df_lineview.query(
+        f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+    ).sort_values("FULL_LOOP_SEQ").copy()
+    
+    if path_ops.empty:
+        return None
+    
+    current_pp = path_ops.head(1)
+    start_sd = safe_num(current_pp["SEGMENT_DAY"].values[0], 0)
+    start_ceid = current_pp.get("CEID", pd.Series(["N/A"])).values[0]
+    start_op = current_pp["OPERATION"].values[0] if "OPERATION" in current_pp.columns else "N/A"
+    start_desc = current_pp.get("OPER_SHORT_DESC", pd.Series(["N/A"])).values[0]
+    
+    path_ops["CT_GOAL"] = pd.to_numeric(path_ops["CT_GOAL"], errors="coerce").fillna(0.0)
+    path_ops["CUMULATIVE_CT"] = path_ops["CT_GOAL"].cumsum()
+    
+    target_ops = path_ops.query(f"CUMULATIVE_CT <= {catchup_ct_target}").copy()
+    
+    if not target_ops.empty:
+        expected_end = target_ops.tail(1)
+        expected_sd = safe_num(expected_end["SEGMENT_DAY"].values[0], 0)
+        expected_ceid = expected_end.get("CEID", pd.Series(["N/A"])).values[0]
+        expected_op = expected_end["OPERATION"].values[0] if "OPERATION" in expected_end.columns else "N/A"
+        expected_desc = expected_end.get("OPER_SHORT_DESC", pd.Series(["N/A"])).values[0]
+    else:
+        expected_sd = start_sd
+        expected_ceid = start_ceid
+        expected_op = start_op
+        expected_desc = start_desc
+    
+    return {
+        "start_sd": start_sd,
+        "start_ceid": start_ceid,
+        "start_op": start_op,
+        "start_desc": start_desc,
+        "expected_sd": expected_sd,
+        "expected_ceid": expected_ceid,
+        "expected_op": expected_op,
+        "expected_desc": expected_desc,
+        "target_ct_hours": catchup_ct_target,
+        "operations_in_target": len(target_ops)
+    }
+
+# =============================================================================
+# CEID PERFORMANCE ANALYSIS
+# =============================================================================
+def analyze_ceid_performance(df_lineview, df_ceid, pp_full_loop_seq, ssafi_lsb_fls):
+    """Deep dive into CEID performance around pull point"""
+    
+    critical_path = df_lineview.query(
+        f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+    ).sort_values("FULL_LOOP_SEQ").copy()
+    
+    if "LAYER_COUNT" in critical_path.columns:
+        critical_path = critical_path.query(f"LAYER_COUNT >= {LAYER_COUNT_THRESHOLD}")
+    
+    critical_path["CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
+    critical_path["AVG_HAO"] = pd.to_numeric(critical_path["AVG_HAO"], errors="coerce").fillna(0.0)
+    critical_path["INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
+    critical_path["INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
+    
+    ceid_analysis = []
+    
+    for _, row in critical_path.iterrows():
+        ceid = row.get("CEID", "N/A")
+        ct_goal = safe_num(row.get("CT_GOAL", 0))
+        avg_hao = safe_num(row.get("AVG_HAO", np.nan))
+        inv_prod = safe_num(row.get("INV_PROD", np.nan))
+        inv_goal = safe_num(row.get("INV_GOAL", np.nan))
+        
+        if not math.isnan(avg_hao) and ct_goal > 0:
+            delay_hours = max(0, avg_hao - ct_goal)
+            delay_pct = ((avg_hao / ct_goal) - 1) * 100
+        else:
+            delay_hours = 0
+            delay_pct = 0
+        
+        if not math.isnan(inv_prod) and not math.isnan(inv_goal) and inv_goal > 0:
+            inv_status_pct = (inv_prod / inv_goal) * 100
+            inv_delta = inv_prod - inv_goal
+        else:
+            inv_status_pct = 0
+            inv_delta = 0
+        
+        performance_score = 100
+        if delay_pct > 0:
+            performance_score -= min(50, delay_pct)
+        if inv_status_pct > 150:
+            performance_score -= min(30, (inv_status_pct - 100) / 2)
+        
+        ceid_analysis.append({
+            "ceid": ceid,
+            "operation": row.get("OPERATION"),
+            "desc": row.get("OPER_SHORT_DESC", "")[:30],
+            "sd": row.get("SEGMENT_DAY"),
+            "ct_goal": ct_goal,
+            "avg_hao": avg_hao,
+            "delay_hours": delay_hours,
+            "delay_pct": delay_pct,
+            "inv_prod": inv_prod,
+            "inv_goal": inv_goal,
+            "inv_delta": inv_delta,
+            "inv_status_pct": inv_status_pct,
+            "performance_score": max(0, performance_score)
+        })
+    
+    return sorted(ceid_analysis, key=lambda x: x["performance_score"])[:15]
+
+# =============================================================================
+# HTML GENERATION WITH ALL ENHANCEMENTS
+# =============================================================================
+def generate_html_dashboard(data, ceid_analysis, progress_data, progress_24h, weekly_trends):
+    """Generate complete enhanced HTML dashboard"""
+    
+    # Prepare CEID analysis HTML
+    if ceid_analysis:
+        ceid_html = '''
+<div style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 0.9em;">
+    <strong>📘 How to Read This Data:</strong><br>
+    • <strong>Score:</strong> 100 = perfect performance, 0 = critical issues<br>
+    • <strong>Delay:</strong> How much longer wafers spend here vs. target CT<br>
+    • <strong>INV Status:</strong> Inventory multiplier vs. target<br>
+    <br>
+    <strong>Examples:</strong><br>
+    • 0.5x = Starved (need more inventory)<br>
+    • 1.0x = Perfect (right amount)<br>
+    • 12.19x over goal = <strong>Severe bottleneck</strong> (12× more inventory than target)<br>
+    <em>→ CEID can't process fast enough, causing massive upstream backup!</em>
+</div>
+<table class="limiter-table"><thead><tr>'''
+        ceid_html += '<th>Score</th><th>CEID</th><th>Oper</th><th>Description</th><th>SD</th>'
+        ceid_html += '<th>CT Goal</th><th>Avg HAO</th><th>Delay</th><th>INV Actual</th><th>INV Target</th><th>INV Status</th></tr></thead><tbody>'
+        
+        for ceid in ceid_analysis:
+            score_class = "severity-high" if ceid["performance_score"] < 50 else ("severity-med" if ceid["performance_score"] < 75 else "severity-low")
+            
+            # Calculate INV multiplier
+            inv_multiplier = ceid["inv_prod"] / ceid["inv_goal"] if ceid["inv_goal"] > 0 else 0
+            inv_class = "status-warn" if inv_multiplier > 1.5 or inv_multiplier < 0.5 else "status-good"
+            
+            # Format INV status text
+            if inv_multiplier >= 1.5:
+                inv_status_text = f'{inv_multiplier:.2f}x over goal'
+            elif inv_multiplier <= 0.5:
+                inv_status_text = f'{inv_multiplier:.2f}x (starved)'
+            else:
+                inv_status_text = f'{inv_multiplier:.2f}x'
+            
+            ceid_html += f'<tr>'
+            ceid_html += f'<td><span class="{score_class}">{ceid["performance_score"]:.0f}</span></td>'
+            ceid_html += f'<td>{ceid["ceid"]}</td>'
+            ceid_html += f'<td>{ceid["operation"]}</td>'
+            ceid_html += f'<td>{ceid["desc"]}</td>'
+            ceid_html += f'<td>SD{ceid["sd"]:.0f}</td>'
+            ceid_html += f'<td>{ceid["ct_goal"]:.1f}h</td>'
+            ceid_html += f'<td>{ceid["avg_hao"]:.1f}h</td>'
+            ceid_html += f'<td class="{"status-warn" if ceid["delay_hours"] > 0 else "status-good"}">+{ceid["delay_hours"]:.1f}h ({ceid["delay_pct"]:+.0f}%)</td>'
+            ceid_html += f'<td>{ceid["inv_prod"]:.0f}</td>'
+            ceid_html += f'<td>{ceid["inv_goal"]:.0f}</td>'
+            ceid_html += f'<td class="{inv_class}"><strong>{inv_status_text}</strong></td>'
+            ceid_html += f'</tr>'
+        
+        ceid_html += '</tbody></table>'
+    else:
+        ceid_html = '<p style="color: #22c55e;">✓ All CEIDs performing within targets</p>'
+    
+    # Prepare weekly trend chart HTML
+    if weekly_trends:
+        weeks_html = '<div style="margin: 20px 0;">'
+        max_ships = max([w["ships"] for w in weekly_trends["weeks_data"]] + [weekly_trends["required_weekly"]])
+        
+        weeks_html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 10px; margin-bottom: 20px;">'
+        for week in weekly_trends["weeks_data"]:
+            pct = (week["ships"] / max_ships) * 100 if max_ships > 0 else 0
+            color = "#22c55e" if week["ships"] >= OUTS_GOAL else "#f59e0b"
+            weeks_html += f'''
+            <div style="text-align: center;">
+                <div style="font-size: 0.75em; color: #666; margin-bottom: 4px;">W{week["week"]}</div>
+                <div style="height: 100px; background: #f0f0f0; border-radius: 4px; display: flex; flex-direction: column-reverse; overflow: hidden;">
+                    <div style="width: 100%; height: {pct}%; background: {color}; transition: height 0.3s;"></div>
+                </div>
+                <div style="font-size: 0.8em; font-weight: 600; margin-top: 4px;">{week["ships"]:,.0f}</div>
+            </div>
+            '''
+        weeks_html += '</div>'
+        
+        # Forecast
+        forecast_class = "status-good" if weekly_trends["will_hit_goal"] else "status-warn"
+        weeks_html += f'''
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px;">
+            <div class="stat-box">
+                <div class="stat-value">{weekly_trends["avg_weekly"]:,.0f}</div>
+                <div class="stat-label">Avg Weekly (Past)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">{weekly_trends["required_weekly"]:,.0f}</div>
+                <div class="stat-label">Required Weekly (Future)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value {forecast_class}">{weekly_trends["forecast_trend"]:,.0f}</div>
+                <div class="stat-label">Forecast (Quarter End)</div>
+            </div>
+        </div>
+        <div style="margin-top: 15px; padding: 12px; background: {'#dcfce7' if weekly_trends['will_hit_goal'] else '#fee2e2'}; border-radius: 6px;">
+            <strong style="color: {'#166534' if weekly_trends['will_hit_goal'] else '#991b1b'};">
+                Trend: {weekly_trends["trend"]} ({weekly_trends["slope"]:+.0f} wfrs/week)
+            </strong>
+            <p style="margin-top: 8px; color: #555;">
+                {f"✓ At current trend, we'll reach {weekly_trends['forecast_trend']:,.0f} wafers ({weekly_trends['gap_at_forecast']:+,.0f} vs goal). We're on track!" if weekly_trends["will_hit_goal"] else f"⚠ At current trend, we'll only reach {weekly_trends['forecast_trend']:,.0f} wafers ({weekly_trends['gap_at_forecast']:+,.0f} vs goal). Need to accelerate to {weekly_trends['required_weekly']:,.0f} wfrs/week."}
+            </p>
+        </div>
+        '''
+        weeks_html += '</div>'
+    else:
+        weeks_html = '<p>Weekly trend data unavailable</p>'
+    
+    config_js = f"""
+    const DEFAULT_CONFIG = {{
+        outs_goal: {OUTS_GOAL},
+        quarter_goal: {QUARTER_GOAL},
+        quarter_start: '{QUARTER_START.isoformat()}',
+        deadline: '{DEADLINE.isoformat()}',
+        commit_ww: {COMMIT_WW},
+        segment_day_end: {SEGMENT_DAY_END},
+        lookahead_hours: {LOOKAHEAD_HOURS},
+        be_lsb_operation: {BE_LSB_OPERATION},
+        catchup_ct_target: {CATCHUP_CT_TARGET}
+    }};
+    const CONFIG_SAVE_PATH = '{CONFIG_FILE.replace(chr(92), chr(92)+chr(92))}';
+    """
+    
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q4 Production Dashboard - WW{COMMIT_WW}</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }}
+        
+        .container {{ max-width: 1600px; margin: 0 auto; }}
+        
+        .header {{
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }}
+        
+        .header h1 {{ color: #0071c5; font-size: 2.5em; margin-bottom: 5px; }}
+        .timestamp {{ color: #666; font-size: 0.9em; }}
+        
+        .header-actions {{ display: flex; gap: 10px; align-items: center; }}
+        
+        .auto-refresh {{
+            background: #22c55e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }}
+        
+        .config-btn {{
+            background: #0071c5;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }}
+        
+        .config-btn:hover {{ background: #005a9c; }}
+        
+        .progress-viz {{
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }}
+        
+        .progress-viz h2 {{ color: #0071c5; margin-bottom: 20px; }}
+        
+        .progress-chart {{
+            position: relative;
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }}
+        
+        .progress-bar-ideal {{
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 40px;
+            background: linear-gradient(90deg, #94a3b8, #cbd5e1);
+            border-radius: 0 20px 20px 0;
+        }}
+        
+        .progress-bar-actual {{
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 60px;
+            background: linear-gradient(90deg, #22c55e, #0071c5);
+            border-radius: 0 30px 30px 0;
+            z-index: 2;
+        }}
+        
+        .progress-label {{
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9em;
+        }}
+        
+        .progress-gap {{
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 80px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px dashed #ef4444;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #991b1b;
+            font-weight: 600;
+            font-size: 0.85em;
+        }}
+        
+        .progress-stats {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }}
+        
+        .stat-box {{
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }}
+        
+        .stat-value {{
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #0071c5;
+        }}
+        
+        .stat-label {{
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }}
+        
+        .grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }}
+        
+        .card {{
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }}
+        
+        .card:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }}
+        
+        .card-header {{
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }}
+        
+        .metric {{
+            font-size: 3em;
+            font-weight: bold;
+            color: #0071c5;
+            margin: 10px 0;
+            line-height: 1;
+        }}
+        
+        .metric-small {{
+            font-size: 1.8em;
+            font-weight: 600;
+            margin: 8px 0;
+        }}
+        
+        .status-good {{ color: #22c55e; }}
+        .status-warn {{ color: #f59e0b; }}
+        .status-bad {{ color: #ef4444; }}
+        
+        .label {{
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }}
+        
+        .info-row {{
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }}
+        
+        .info-row:last-child {{ border-bottom: none; }}
+        
+        .info-label {{
+            color: #666;
+            font-size: 0.9em;
+        }}
+        
+        .info-value {{
+            font-weight: 600;
+            color: #333;
+        }}
+        
+        .progress-bar {{
+            width: 100%;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }}
+        
+        .progress-fill {{
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e 0%, #0071c5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: width 0.5s ease;
+        }}
+        
+        .limiter-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }}
+        
+        .limiter-table th {{
+            background: #f8f9fa;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #dee2e6;
+        }}
+        
+        .limiter-table td {{
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }}
+        
+        .limiter-table tr:hover {{ background: #f8f9fa; }}
+        
+        .severity-high {{ 
+            background: #fee2e2; 
+            color: #991b1b;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }}
+        
+        .severity-med {{ 
+            background: #fef3c7;
+            color: #92400e;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }}
+        
+        .severity-low {{ 
+            background: #dbeafe;
+            color: #1e3a8a;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }}
+        
+        .wide-card {{ grid-column: 1 / -1; }}
+        
+        .badge {{
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }}
+        
+        .badge-success {{ background: #dcfce7; color: #166534; }}
+        .badge-warning {{ background: #fef3c7; color: #92400e; }}
+        .badge-danger {{ background: #fee2e2; color: #991b1b; }}
+        
+        .modal {{
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }}
+        
+        .modal.active {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        
+        .modal-content {{
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }}
+        
+        @keyframes slideIn {{
+            from {{ transform: translateY(-50px); opacity: 0; }}
+            to {{ transform: translateY(0); opacity: 1; }}
+        }}
+        
+        .modal-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }}
+        
+        .modal-header h2 {{
+            color: #0071c5;
+            font-size: 1.8em;
+        }}
+        
+        .close-btn {{
+            background: none;
+            border: none;
+            font-size: 2em;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }}
+        
+        .close-btn:hover {{
+            background: #f0f0f0;
+            color: #333;
+        }}
+        
+        .form-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }}
+        
+        .form-group {{
+            display: flex;
+            flex-direction: column;
+        }}
+        
+        .form-group.full-width {{ grid-column: 1 / -1; }}
+        
+        .form-group label {{
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }}
+        
+        .form-group input {{
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }}
+        
+        .form-group input:focus {{
+            outline: none;
+            border-color: #0071c5;
+        }}
+        
+        .form-actions {{
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }}
+        
+        .btn {{
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+        
+        .btn-primary {{
+            background: #0071c5;
+            color: white;
+        }}
+        
+        .btn-primary:hover {{ background: #005a9c; }}
+        
+        .btn-secondary {{
+            background: #6b7280;
+            color: white;
+        }}
+        
+        .btn-secondary:hover {{ background: #4b5563; }}
+        
+        .btn-danger {{
+            background: #ef4444;
+            color: white;
+        }}
+        
+        .btn-danger:hover {{ background: #dc2626; }}
+        
+        .save-notification {{
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #22c55e;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+            animation: slideInRight 0.3s ease;
+        }}
+        
+        .save-notification.show {{ display: block; }}
+        
+        @keyframes slideInRight {{
+            from {{ transform: translateX(400px); opacity: 0; }}
+            to {{ transform: translateX(0); opacity: 1; }}
+        }}
+        
+        @media (max-width: 768px) {{
+            .grid {{ grid-template-columns: 1fr; }}
+            .header {{ flex-direction: column; text-align: center; }}
+            .header h1 {{ font-size: 1.8em; }}
+            .form-grid {{ grid-template-columns: 1fr; }}
+            .modal-content {{ padding: 20px; }}
+            .progress-stats {{ grid-template-columns: 1fr; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="saveNotification" class="save-notification">
+            ✓ Configuration saved! Dashboard will update on next refresh (every 15 minutes)
+        </div>
+        
+        <div class="header">
+            <div>
+                <h1>📊 Q4 Production Dashboard</h1>
+                <p class="timestamp">
+                    Last Updated: {data['timestamp']:%Y-%m-%d %H:%M:%S} | WW{COMMIT_WW}
+                </p>
+            </div>
+            <div class="header-actions">
+                <div class="auto-refresh">🔄 Auto-refresh: 5 min</div>
+                <button class="config-btn" onclick="openConfigModal()">⚙️ Configuration</button>
+            </div>
+        </div>
+        
+        <!-- Progress Visualization -->
+        <div class="progress-viz">
+            <h2>📈 Schedule Progress Analysis</h2>
+            <p style="color: #666; margin-bottom: 20px;">
+                <strong>Days Elapsed:</strong> Number of calendar days since quarter started (Sept 6, 2025) = <strong>{progress_data['days_elapsed']} days</strong><br>
+                <strong>Segment Day Progress:</strong> Pull point currently at SD{progress_data['segment_days_completed']} of SD{SEGMENT_DAY_END} total<br>
+                <strong>Key Metric:</strong> We have <strong>{progress_data['calendar_days_remaining']:.2f} calendar days</strong> to complete <strong>{progress_data['segment_days_remaining']} segment days</strong>
+            </p>
+            
+            <div class="progress-chart">
+                <div class="progress-bar-ideal" style="width: {progress_data['expected_pct']:.1f}%">
+                    <span class="progress-label">Expected: SD{progress_data['expected_segment_day']:.0f} ({progress_data['expected_pct']:.1f}%)</span>
+                </div>
+                <div class="progress-bar-actual" style="width: {progress_data['segment_day_pct']:.1f}%">
+                    <span class="progress-label">Actual: SD{progress_data['segment_days_completed']} ({progress_data['segment_day_pct']:.1f}%)</span>
+                </div>
+                {('<div class="progress-gap" style="left: ' + str(progress_data['segment_day_pct']) + '%; width: ' + str(progress_data['expected_pct'] - progress_data['segment_day_pct']) + '%;">Gap: SD' + str(abs(int(progress_data['segment_day_gap']))) + ' behind</div>') if progress_data['segment_day_gap'] > 0 else ''}
+            </div>
+            
+            <div class="progress-stats">
+                <div class="stat-box">
+                    <div class="stat-value">{progress_data['days_elapsed']}</div>
+                    <div class="stat-label">Days Since Quarter Start</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{progress_data['calendar_days_remaining']:.2f}</div>
+                    <div class="stat-label">Calendar Days Remaining</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">SD{progress_data['segment_days_completed']}</div>
+                    <div class="stat-label">Current Pull Point</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">SD{progress_data['expected_segment_day']:.0f}</div>
+                    <div class="stat-label">Expected Pull Point (Today)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value {progress_data['status_class']}">{progress_data['segment_days_remaining']}</div>
+                    <div class="stat-label">Segment Days Remaining</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value {progress_data['status_class']}">{progress_data['days_ahead_behind']:+.2f} days</div>
+                    <div class="stat-label">Schedule Status</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: {'#dcfce7' if progress_data['days_ahead_behind'] >= 0 else '#fee2e2'}; border-radius: 8px;">
+                <strong style="color: {'#166534' if progress_data['days_ahead_behind'] >= 0 else '#991b1b'};">
+                    {progress_data['status']}
+                </strong>
+                <p style="margin-top: 10px; color: #555;">
+                    {f"We need to complete {progress_data['segment_days_remaining']} more segment days with {progress_data['calendar_days_remaining']:.2f} calendar days available. We have {abs(progress_data['days_ahead_behind']):.2f} days of buffer!" if progress_data['days_ahead_behind'] >= 0 else f"We need to complete {progress_data['segment_days_remaining']} segment days but only have {progress_data['calendar_days_remaining']:.2f} calendar days remaining. We are {abs(progress_data['days_ahead_behind']):.2f} days behind schedule and need to accelerate."}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Weekly Trend & Forecast -->
+        <div class="card wide-card">
+            <div class="card-header">
+                📊 Weekly Trend & Forecast Analysis
+            </div>
+            <p style="margin-bottom: 15px; color: #666;">
+                Week-by-week shipment history, trend analysis, and forecast to determine if we'll hit our quarter goal.
+            </p>
+            {weeks_html}
+        </div>
+        
+        <!-- Dashboard Cards -->
+        <div class="grid">
+            <!-- Current Shift -->
+            <div class="card">
+                <div class="card-header">🕐 Current Shift: {data['shift_name']} Shift</div>
+                <div class="metric {'status-good' if data['shift_status'] == 'ON PACE' else 'status-warn'}">{data['current_shift_ships']:,}</div>
+                <div class="label">wafers shipped</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {min(100, data['current_shift_ships']/data['target_per_shift']*100):.1f}%">
+                        {data['current_shift_ships']/data['target_per_shift']*100:.1f}% of target
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Target:</span>
+                    <span class="info-value">{data['target_per_shift']:,.0f} wafers</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Hours into shift:</span>
+                    <span class="info-value">{data['hours_into_shift']:.1f} / {HOURS_PER_SHIFT} hrs</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Pace rate:</span>
+                    <span class="info-value">{data['shift_pace_rate']:.1f} wfrs/hr</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Projected end:</span>
+                    <span class="info-value {'status-good' if data['projected_shift_end'] >= data['target_per_shift'] else 'status-warn'}">
+                        {data['projected_shift_end']:,.0f} wafers
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Quarterly -->
+            <div class="card">
+                <div class="card-header">📈 Quarterly Progress</div>
+                <div class="metric">{data['quarter_ships']:,}</div>
+                <div class="label">of {QUARTER_GOAL:,} wafers</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {data['quarter_pct']:.1f}%">
+                        {data['quarter_pct']:.1f}%
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Remaining:</span>
+                    <span class="info-value">{data['quarter_remaining']:,} wafers</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Lots shipped:</span>
+                    <span class="info-value">{data['lot_count']:,}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Days elapsed:</span>
+                    <span class="info-value">{data['days_elapsed']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Avg daily rate:</span>
+                    <span class="info-value">{data['actual_daily_rate']:,.0f} wfrs/day</span>
+                </div>
+            </div>
+            
+            <!-- Last Week -->
+            <div class="card">
+                <div class="card-header">📅 Last Week (WW{COMMIT_WW-1})</div>
+                <div class="metric-small {'status-good' if data['last_week_ships'] >= OUTS_GOAL else 'status-warn'}">{data['last_week_ships']:,}</div>
+                <div class="label">wafers shipped</div>
+                <div class="info-row">
+                    <span class="info-label">Weekly goal:</span>
+                    <span class="info-value">{OUTS_GOAL:,}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Delta (Gap):</span>
+                    <span class="info-value {'status-good' if data['last_week_ships'] >= OUTS_GOAL else 'status-warn'}">
+                        {data['last_week_ships'] - OUTS_GOAL:+,} ({(data['last_week_ships']/OUTS_GOAL - 1)*100:+.1f}%)
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Last 24 Hours -->
+            <div class="card">
+                <div class="card-header">
+                    🕒 Last 24 Hours
+                    <span class="badge {'badge-success' if data['last_24h_status'] == 'HIT' else 'badge-danger'}">{data['last_24h_status']}</span>
+                </div>
+                <div class="metric-small">{data['last_24h_ships']:,}</div>
+                <div class="label">wafers shipped</div>
+                <div class="info-row">
+                    <span class="info-label">Target (2 shifts):</span>
+                    <span class="info-value">{data['target_per_shift'] * 2:,.0f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Delta (Gap):</span>
+                    <span class="info-value {'status-good' if data['last_24h_status'] == 'HIT' else 'status-warn'}">
+                        {data['last_24h_ships'] - (data['target_per_shift'] * 2):+,.0f}
+                    </span>
+                </div>
+                {f'''
+                <hr style="margin: 15px 0; border: none; border-top: 1px solid #e5e7eb;">
+                <div style="font-size: 0.85em; color: #666; margin-bottom: 8px;"><strong>24h Progress Tracking:</strong></div>
+                <div class="info-row">
+                    <span class="info-label">Current Position:</span>
+                    <span class="info-value">SD{progress_24h["start_sd"]:.0f} | {progress_24h["start_ceid"]}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Expected Position:</span>
+                    <span class="info-value">SD{progress_24h["expected_sd"]:.0f} | {progress_24h["expected_ceid"]}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Target CT Hours:</span>
+                    <span class="info-value">{progress_24h["target_ct_hours"]:.1f}h ({progress_24h["operations_in_target"]} ops)</span>
+                </div>
+                ''' if progress_24h else ''}
+            </div>
+            
+            <!-- This Week -->
+            <div class="card">
+                <div class="card-header">🎯 This Week Target (WW{COMMIT_WW})</div>
+                <div class="metric-small">{data['this_week_required']:,}</div>
+                <div class="label">wafers required</div>
+                <div class="info-row">
+                    <span class="info-label">Shipped so far:</span>
+                    <span class="info-value">{data['current_week_outs']:,}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Remaining:</span>
+                    <span class="info-value">{data['outs_remaining_this_week']:,}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Days left:</span>
+                    <span class="info-value">{data['days_left']:.2f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Need per shift:</span>
+                    <span class="info-value">{data['need_per_shift']:,.0f} wfrs</span>
+                </div>
+            </div>
+            
+            <!-- Pull Point -->
+            <div class="card">
+                <div class="card-header">🎯 Quarterly Pull Point</div>
+                <div class="info-row">
+                    <span class="info-label">Segment Day:</span>
+                    <span class="info-value">SD{data['pp_segment_day']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">CEID:</span>
+                    <span class="info-value">{data['pp_ceid']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Operation:</span>
+                    <span class="info-value">{data['pp_operation']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Description:</span>
+                    <span class="info-value">{data['pp_desc']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Additional WIP Needed:</span>
+                    <span class="info-value">{data['bump_inv']:,} wfrs</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Segment Days Remaining:</span>
+                    <span class="info-value">{progress_data['segment_days_remaining']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Calendar Days Remaining:</span>
+                    <span class="info-value">{progress_data['calendar_days_remaining']:.2f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Commit Status:</span>
+                    <span class="info-value {progress_data['status_class']}">
+                        {progress_data['days_ahead_behind']:+.2f} days {progress_data['status']}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- 24h Pull Point -->
+            <div class="card">
+                <div class="card-header">⏱️ Next 24-Hour Target</div>
+                <div class="info-row">
+                    <span class="info-label">Target CT Hours:</span>
+                    <span class="info-value">{CATCHUP_CT_TARGET:.1f} hrs</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Target Range:</span>
+                    <span class="info-value">SD{data['pp_24h_start_sd']} → SD{data['pp_24h_end_sd']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">End CEID:</span>
+                    <span class="info-value">{data['pp_24h_end_ceid']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">End Description:</span>
+                    <span class="info-value">{data['pp_24h_end_desc']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Operations:</span>
+                    <span class="info-value">{data['pp_24h_ops_count']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Inventory Reduction (24h):</span>
+                    <span class="info-value">{data['inventory_reduction_24h']:,} wfrs</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CEID Performance -->
+        <div class="card wide-card">
+            <div class="card-header">🔍 CEID Performance Deep Dive (Pull Point → Finish)</div>
+            <p style="margin-bottom: 15px; color: #666;">
+                Analysis of CEID performance from pull point to finish operation. Lower scores indicate delays or inventory issues.
+            </p>
+            {ceid_html}
+        </div>
+        
+        <!-- Limiters -->
+        <div class="card wide-card">
+            <div class="card-header">⚠️ Critical Limiters ({LOOKAHEAD_HOURS}h Look-Ahead)</div>
+            {data['limiters_html']}
+        </div>
+    </div>
+    
+    <!-- Config Modal -->
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Dashboard Configuration</h2>
+                <button class="close-btn" onclick="closeConfigModal()">&times;</button>
+            </div>
+            <form id="configForm" onsubmit="saveConfig(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="outs_goal">Weekly Outs Goal (wafers)</label>
+                        <input type="number" id="outs_goal" name="outs_goal" required min="1000" step="100" value="{OUTS_GOAL}">
+                    </div>
+                    <div class="form-group">
+                        <label for="quarter_goal">Quarter Goal (wafers)</label>
+                        <input type="number" id="quarter_goal" name="quarter_goal" required min="10000" step="1000" value="{QUARTER_GOAL}">
+                    </div>
+                    <div class="form-group">
+                        <label for="quarter_start">Quarter Start Date & Time</label>
+                        <input type="datetime-local" id="quarter_start" name="quarter_start" required value="{QUARTER_START.strftime('%Y-%m-%dT%H:%M')}">
+                    </div>
+                    <div class="form-group">
+                        <label for="deadline">Deadline Date & Time</label>
+                        <input type="datetime-local" id="deadline" name="deadline" required value="{DEADLINE.strftime('%Y-%m-%dT%H:%M')}">
+                    </div>
+                    <div class="form-group">
+                        <label for="commit_ww">Commit Work Week (YYYYWW)</label>
+                        <input type="number" id="commit_ww" name="commit_ww" required min="202401" max="209999" value="{COMMIT_WW}">
+                    </div>
+                    <div class="form-group">
+                        <label for="segment_day_end">Segment Day End</label>
+                        <input type="number" id="segment_day_end" name="segment_day_end" required min="1" max="200" value="{SEGMENT_DAY_END}">
+                    </div>
+                    <div class="form-group">
+                        <label for="lookahead_hours">Lookahead Hours</label>
+                        <input type="number" id="lookahead_hours" name="lookahead_hours" required min="1" max="100" step="1" value="{LOOKAHEAD_HOURS}">
+                    </div>
+                    <div class="form-group">
+                        <label for="catchup_ct_target">Catchup CT Target (hours)</label>
+                        <input type="number" id="catchup_ct_target" name="catchup_ct_target" required min="1" max="100" step="0.5" value="{CATCHUP_CT_TARGET}">
+                    </div>
+                    <div class="form-group">
+                        <label for="be_lsb_operation">BE LSB Operation (up to 8 digits)</label>
+                        <input type="number" id="be_lsb_operation" name="be_lsb_operation" required min="1000" max="99999999" value="{BE_LSB_OPERATION}">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-danger" onclick="resetConfig()">Reset to Defaults</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeConfigModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">💾 Save & Apply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        {config_js}
+        
+        function openConfigModal() {{ document.getElementById('configModal').classList.add('active'); }}
+        function closeConfigModal() {{ document.getElementById('configModal').classList.remove('active'); }}
+        
+        window.onclick = function(event) {{
+            if (event.target === document.getElementById('configModal')) closeConfigModal();
+        }}
+        
+        function resetConfig() {{
+            if (confirm('Reset all settings to defaults?')) {{
+                alert('Configuration reset requested. Wait for next dashboard update (every 15 minutes).');
+                closeConfigModal();
+            }}
+        }}
+        
+        function saveConfig(event) {{
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const newConfig = {{
+                outs_goal: parseFloat(formData.get('outs_goal')),
+                quarter_goal: parseFloat(formData.get('quarter_goal')),
+                quarter_start: formData.get('quarter_start') + ':00',
+                deadline: formData.get('deadline') + ':00',
+                commit_ww: parseInt(formData.get('commit_ww')),
+                segment_day_end: parseInt(formData.get('segment_day_end')),
+                lookahead_hours: parseFloat(formData.get('lookahead_hours')),
+                catchup_ct_target: parseFloat(formData.get('catchup_ct_target')),
+                be_lsb_operation: parseInt(formData.get('be_lsb_operation'))
+            }};
+            
+            const dataStr = JSON.stringify(newConfig, null, 2);
+            const dataBlob = new Blob([dataStr], {{ type: 'application/json' }});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'dashboard_config.json';
+            link.click();
+            
+            const notification = document.getElementById('saveNotification');
+            notification.classList.add('show');
+            setTimeout(() => notification.classList.remove('show'), 5000);
+            
+            closeConfigModal();
+            alert('Configuration saved!\\n\\nUpload dashboard_config.json to:\\n' + CONFIG_SAVE_PATH + '\\n\\nDashboard will use new settings on next run (every 15 min).');
+        }}
+        
+        setTimeout(() => location.reload(), 300000);
+    </script>
+</body>
+</html>
+"""
+    
+    return html
+
+# =============================================================================
+# MAIN EXECUTION
+# =============================================================================
+def main():
+    """Main execution"""
+    
+    print(f"\n{'='*80}")
+    print(f"🚀 Q4 PRODUCTION DASHBOARD GENERATOR - FINAL BULLETPROOF EDITION")
+    print(f"{'='*80}\n")
+    
+    try:
+        now = datetime.now()
+        print(f"📊 Loading data files...")
+        df_lineview = load_tsv(LINEVIEW_PATH)
+        df_ceid = load_tsv(CEID_PATH) if Path(CEID_PATH).exists() else pd.DataFrame()
+        db = get_db()
+        
+        df_lineview["FULL_LOOP_SEQ"] = pd.to_numeric(df_lineview.get("FULL_LOOP_SEQ", 0), errors="coerce").fillna(0)
+        df_lineview["INV_PROD"] = pd.to_numeric(df_lineview.get("INV_PROD", 0), errors="coerce").fillna(0)
+        if "SEGMENT_DAY" not in df_lineview.columns:
+            df_lineview["SEGMENT_DAY"] = 0
+        
+        print(f"✅ Loaded {len(df_lineview)} lineview records")
+        print(f"📋 Active Configuration:")
+        print(f"   Weekly Goal: {OUTS_GOAL:,} | Quarter Goal: {QUARTER_GOAL:,}")
+        print(f"   BE LSB Operation: {BE_LSB_OPERATION} | Deadline: {DEADLINE:%Y-%m-%d}")
+        
+        shift_start, shift_name, hours_into_shift = get_current_shift_info(now)
+        hours_remaining_shift = HOURS_PER_SHIFT - hours_into_shift
+        
+        print(f"\n🔄 Querying database...")
+        
+        # Current shift
+        current_shift_sql = f"""
+        SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_RUN_CARD
+        WHERE OUT_DATE >= TO_DATE('{shift_start:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND OUT_DATE <= SYSDATE
+            AND LOT_TYPE IN ('PROD','ENG')
+            AND (LOT LIKE 'L%' OR LOT LIKE 'N%') AND LOT NOT LIKE 'L9%'
+            AND OPERATION = {BE_LSB_OPERATION} AND WAFER_QTY > 0
+        """
+        shift_df = pd.read_sql(current_shift_sql, db)
+        current_shift_ships = safe_num(shift_df["TOTAL_WAFERS"].iloc[0], 0)
+        
+        # Quarterly
+        quarter_sql = f"""
+        SELECT
+            COUNT(LOT) AS LOT_COUNT,
+            MAX(FABOUT_TIME) AS LAST_SHIP_DATE,
+            MIN(FABOUT_TIME) AS FIRST_SHIP_DATE,
+            sum(FABOUT_WAFER_QTY) as TOTAL_WAFERS
+        from 
+            F_LOT_FABOUT_SUMMARY
+        where 
+            lot_TYPE in ('PROD','ENG')
+            AND FABOUT_ROUTE LIKE ('FL%')
+            AND LOT_PROCESS IN ('1274','1275')
+            AND FABOUT_TIME >= TO_DATE('{QUARTER_START:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            """
+        qdf = pd.read_sql(quarter_sql, db)
+        quarter_ships = safe_num(qdf["TOTAL_WAFERS"].iloc[0], 0)
+        lot_count = int(qdf["LOT_COUNT"].iloc[0] or 0)
+        first_ship = pd.to_datetime(qdf["FIRST_SHIP_DATE"].iloc[0])
+        last_ship = pd.to_datetime(qdf["LAST_SHIP_DATE"].iloc[0])
+        days_elapsed = max(1, (last_ship.normalize() - first_ship.normalize()).days + 1)
+        actual_daily_rate = quarter_ships / days_elapsed
+        
+        # Last week
+        cur_monday = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+        last_monday = cur_monday - timedelta(days=7)
+        
+        last_week_sql = f"""
+        SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_RUN_CARD
+        WHERE OUT_DATE >= TO_DATE('{last_monday:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND OUT_DATE < TO_DATE('{cur_monday:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND LOT_TYPE IN ('PROD','ENG')
+            AND (LOT LIKE 'L%' OR LOT LIKE 'N%') AND LOT NOT LIKE 'L9%'
+            AND OPERATION = {BE_LSB_OPERATION} AND WAFER_QTY > 0
+        """
+        lwd = pd.read_sql(last_week_sql, db)
+        last_week_ships = safe_num(lwd["TOTAL_WAFERS"].iloc[0], 0)
+        
+        # Last 24h
+        yesterday = now - timedelta(hours=24)
+        last_24h_sql = f"""
+        SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_RUN_CARD
+        WHERE OUT_DATE >= TO_DATE('{yesterday:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND OUT_DATE <= SYSDATE
+            AND LOT_TYPE IN ('PROD','ENG')
+            AND (LOT LIKE 'L%' OR LOT LIKE 'N%') AND LOT NOT LIKE 'L9%'
+            AND OPERATION = {BE_LSB_OPERATION} AND WAFER_QTY > 0
+        """
+        last_24h_df = pd.read_sql(last_24h_sql, db)
+        last_24h_ships = safe_num(last_24h_df["TOTAL_WAFERS"].iloc[0], 0)
+        
+        print(f"✅ Database queries complete")
+        
+        # Weekly trend analysis
+        print(f"📈 Analyzing weekly trends...")
+        weekly_trends = analyze_weekly_trends(db, now)
+        
+        # Metrics
+        target_per_shift = OUTS_GOAL / SHIFTS_PER_WEEK
+        shift_pace_rate = current_shift_ships / hours_into_shift if hours_into_shift > 0 else 0
+        projected_shift_end = current_shift_ships + (shift_pace_rate * hours_remaining_shift)
+        shift_status = "ON PACE" if projected_shift_end >= target_per_shift else "BEHIND PACE"
+        
+        quarter_remaining = max(0, QUARTER_GOAL - quarter_ships)
+        quarter_pct = (quarter_ships / QUARTER_GOAL) * 100
+        
+        # Weekly
+        ssafi_row = df_lineview[df_lineview["OPERATION"] == BE_LSB_OPERATION]
+        if "CW_OUTS_PROD" in df_lineview.columns and not ssafi_row.empty:
+            current_week_outs = float(ssafi_row["CW_OUTS_PROD"].values[0])
+        else:
+            current_week_outs = 0
+        
+        weeks_left = max(1, math.ceil((DEADLINE - now).days / 7))
+        total_shortfall = max(0, OUTS_GOAL - last_week_ships)
+        catchup_per_week = total_shortfall / weeks_left
+        this_week_required = OUTS_GOAL + catchup_per_week
+        outs_remaining_this_week = max(0, this_week_required - current_week_outs)
+        
+        hours_left_week = max(0, ((cur_monday + timedelta(days=7)) - now).total_seconds() / 3600)
+        days_left = max(1.0, hours_left_week / 24.0)
+        need_per_shift = (outs_remaining_this_week / days_left) / 2
+        
+        last_24h_target = target_per_shift * 2
+        last_24h_status = "HIT" if last_24h_ships >= last_24h_target else "MISS"
+        
+        # Pull Point
+        ssafi_lsb_fls = float(df_lineview.loc[df_lineview["OPERATION"] == BE_LSB_OPERATION, "FULL_LOOP_SEQ"].values[0])
+        
+        df_q = df_lineview.query(f"FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}").copy()
+        df_q["PP_INV"] = df_q["INV_PROD"].iloc[::-1].cumsum()[::-1]
+        df_q["PP_W"] = df_q["PP_INV"].apply(lambda x: x // quarter_remaining if quarter_remaining > 0 else np.nan)
+        df_q["PP_mod"] = df_q["PP_INV"].apply(lambda x: x % quarter_remaining if quarter_remaining > 0 else np.nan)
+        
+        quarter_pp = df_q.query("PP_W == 1").tail(1)
+        if quarter_remaining > 0 and not df_q.query("PP_W == 0").empty:
+            quarter_bump_inv = quarter_remaining - df_q.query("PP_W == 0").head(1)["PP_mod"].values[0]
+        else:
+            quarter_bump_inv = 0
+        
+        if quarter_pp.empty:
+            quarter_pp = df_q.tail(1)
+        
+        pp_segment_day = int(quarter_pp["SEGMENT_DAY"].values[0])
+        pp_full_loop_seq = float(quarter_pp["FULL_LOOP_SEQ"].values[0])
+        pp_ceid = quarter_pp.get("CEID", pd.Series(["N/A"])).values[0]
+        pp_operation = quarter_pp["OPERATION"].values[0] if "OPERATION" in quarter_pp.columns else "N/A"
+        pp_desc = quarter_pp.get("OPER_SHORT_DESC", pd.Series(["N/A"])).values[0]
+        
+        seconds_remaining = max(0.0, (DEADLINE - now).total_seconds())
+        calendar_days_remaining = max(0, int(math.ceil(seconds_remaining / 86400.0)))
+        segment_days_remaining = max(0, SEGMENT_DAY_END - pp_segment_day)
+        commit_ahead_behind_days = calendar_days_remaining - segment_days_remaining
+        commit_status = "AHEAD" if commit_ahead_behind_days >= 0 else "BEHIND"
+        
+        # Progress data
+        progress_data = calculate_progress_data(pp_segment_day, SEGMENT_DAY_END, QUARTER_START, DEADLINE, now)
+        
+        # 24h progress
+        progress_24h = analyze_24h_progress(df_lineview, pp_full_loop_seq, ssafi_lsb_fls, CATCHUP_CT_TARGET)
+        
+        # 24h pull point
+        next_24h_ops = df_lineview.query(
+            f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+        ).sort_values("FULL_LOOP_SEQ").copy()
+        
+        next_24h_ops["CT_GOAL"] = pd.to_numeric(next_24h_ops["CT_GOAL"], errors="coerce").fillna(0.0)
+        next_24h_ops["CUMULATIVE_CT"] = next_24h_ops["CT_GOAL"].cumsum()
+        next_24h_target_ops = next_24h_ops.query(f"CUMULATIVE_CT <= {CATCHUP_CT_TARGET}").copy()
+        
+        if not next_24h_target_ops.empty:
+            last_op_in_24h = next_24h_target_ops.tail(1)
+            pp_24h_end_sd = last_op_in_24h["SEGMENT_DAY"].values[0]
+            pp_24h_end_ceid = last_op_in_24h.get("CEID", pd.Series(["N/A"])).values[0]
+            pp_24h_end_desc = last_op_in_24h.get("OPER_SHORT_DESC", pd.Series(["N/A"])).values[0]
+            pp_24h_ops_count = len(next_24h_target_ops)
+            
+            first_op_in_24h = next_24h_target_ops.head(1)
+            pp_24h_start_sd = first_op_in_24h["SEGMENT_DAY"].values[0]
+        else:
+            pp_24h_end_sd = pp_segment_day
+            pp_24h_end_ceid = "N/A"
+            pp_24h_end_desc = "N/A"
+            pp_24h_ops_count = 0
+            pp_24h_start_sd = pp_segment_day
+        
+        # 24h inventory reduction
+        if not ssafi_row.empty:
+            ps_outs_24h = safe_num(ssafi_row["PS_OUTS"].values[0], 0)
+            pps_outs_24h = safe_num(ssafi_row["PPS_OUTS"].values[0], 0) if "PPS_OUTS" in ssafi_row.columns else 0
+            inventory_reduction_24h = ps_outs_24h + pps_outs_24h
+        else:
+            inventory_reduction_24h = 0
+        
+        # CEID analysis
+        print(f"🔍 Analyzing CEID performance...")
+        ceid_analysis = analyze_ceid_performance(df_lineview, df_ceid, pp_full_loop_seq, ssafi_lsb_fls)
+        
+        # Limiters
+        print(f"🔍 Analyzing limiters...")
+        lookahead_ops = df_lineview.query(
+            f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+        ).copy()
+        
+        if "LAYER_COUNT" in lookahead_ops.columns:
+            lookahead_ops = lookahead_ops.query(f"LAYER_COUNT >= {LAYER_COUNT_THRESHOLD}")
+        
+        lookahead_ops = lookahead_ops.sort_values("FULL_LOOP_SEQ").copy()
+        lookahead_ops["CT_GOAL"] = pd.to_numeric(lookahead_ops["CT_GOAL"], errors="coerce").fillna(0.0)
+        lookahead_ops["CUMULATIVE_CT"] = lookahead_ops["CT_GOAL"].cumsum()
+        lookahead_window = lookahead_ops.query(f"CUMULATIVE_CT <= {LOOKAHEAD_HOURS}").copy()
+        lookahead_window = lookahead_window.query(f"CT_GOAL >= {LIMITER_CT_MIN_THRESHOLD}").copy()
+        
+        limiters = []
+        for _, row in lookahead_window.iterrows():
+            reasons = []
+            severity = 0
+            ceid = row.get("CEID", "N/A")
+            ct_goal = safe_num(row.get("CT_GOAL", 0))
+            avg_hao = safe_num(row.get("AVG_HAO", np.nan))
+            inv_prod = safe_num(row.get("INV_PROD", np.nan))
+            inv_goal = safe_num(row.get("INV_GOAL", np.nan))
+            
+            if not math.isnan(avg_hao) and ct_goal > 0 and avg_hao >= (ct_goal * LIMITER_HAO_MULTIPLIER):
+                multiplier = avg_hao / ct_goal
+                reasons.append(f"HAO {multiplier:.1f}×CT")
+                severity += 40
+            
+            if (not math.isnan(inv_prod) and not math.isnan(inv_goal) and 
+                inv_goal > 0 and inv_prod >= (inv_goal * LIMITER_INV_MULTIPLIER) and 
+                inv_prod >= LIMITER_INV_MIN_THRESHOLD):
+                multiplier = inv_prod / inv_goal
+                reasons.append(f"INV {multiplier:.1f}×GOAL")
+                severity += 30
+            
+            if reasons:
+                limiters.append({
+                    "ceid": ceid,
+                    "operation": row.get("OPERATION"),
+                    "desc": row.get("OPER_SHORT_DESC", ""),
+                    "sd": row.get("SEGMENT_DAY"),
+                    "ct_goal": ct_goal,
+                    "avg_hao": avg_hao,
+                    "inv_prod": inv_prod,
+                    "severity": severity,
+                    "reasons": " | ".join(reasons)
+                })
+        
+        limiters = sorted(limiters, key=lambda x: x["severity"], reverse=True)[:LIMITER_MAX_DISPLAY]
+        
+        if limiters:
+            limiters_html = '<table class="limiter-table"><thead><tr>'
+            limiters_html += '<th>Severity</th><th>CEID</th><th>Operation</th><th>Description</th>'
+            limiters_html += '<th>SD</th><th>CT</th><th>HAO</th><th>INV</th><th>Issues</th></tr></thead><tbody>'
+            
+            for lim in limiters:
+                sev_class = "severity-high" if lim["severity"] >= 60 else ("severity-med" if lim["severity"] >= 30 else "severity-low")
+                limiters_html += f'<tr>'
+                limiters_html += f'<td><span class="{sev_class}">{lim["severity"]:.0f}</span></td>'
+                limiters_html += f'<td>{lim["ceid"]}</td>'
+                limiters_html += f'<td>{lim["operation"]}</td>'
+                limiters_html += f'<td>{lim["desc"][:30]}</td>'
+                limiters_html += f'<td>SD{lim["sd"]:.0f}</td>'
+                limiters_html += f'<td>{lim["ct_goal"]:.1f}</td>'
+                limiters_html += f'<td>{lim["avg_hao"]:.1f}</td>'
+                limiters_html += f'<td>{lim["inv_prod"]:.0f}</td>'
+                limiters_html += f'<td>{lim["reasons"]}</td>'
+                limiters_html += f'</tr>'
+            
+            limiters_html += '</tbody></table>'
+        else:
+            limiters_html = '<p style="color: #22c55e; font-weight: 600;">✓ No critical limiters identified</p>'
+        
+        # Compile data
+        data = {
+            'timestamp': now,
+            'shift_name': shift_name,
+            'current_shift_ships': current_shift_ships,
+            'target_per_shift': target_per_shift,
+            'hours_into_shift': hours_into_shift,
+            'shift_pace_rate': shift_pace_rate,
+            'projected_shift_end': projected_shift_end,
+            'shift_status': shift_status,
+            'quarter_ships': quarter_ships,
+            'quarter_remaining': quarter_remaining,
+            'quarter_pct': quarter_pct,
+            'lot_count': lot_count,
+            'days_elapsed': days_elapsed,
+            'actual_daily_rate': actual_daily_rate,
+            'last_week_ships': last_week_ships,
+            'last_24h_ships': last_24h_ships,
+            'last_24h_status': last_24h_status,
+            'current_week_outs': current_week_outs,
+            'this_week_required': this_week_required,
+            'outs_remaining_this_week': outs_remaining_this_week,
+            'days_left': days_left,
+            'need_per_shift': need_per_shift,
+            'pp_segment_day': pp_segment_day,
+            'pp_ceid': pp_ceid,
+            'pp_operation': pp_operation,
+            'pp_desc': pp_desc,
+            'bump_inv': quarter_bump_inv,
+            'segment_days_remaining': segment_days_remaining,
+            'calendar_days_remaining': calendar_days_remaining,
+            'commit_ahead_behind': commit_ahead_behind_days,
+            'commit_status': commit_status,
+            'pp_24h_start_sd': pp_24h_start_sd,
+            'pp_24h_end_sd': pp_24h_end_sd,
+            'pp_24h_end_ceid': pp_24h_end_ceid,
+            'pp_24h_end_desc': pp_24h_end_desc,
+            'pp_24h_ops_count': pp_24h_ops_count,
+            'inventory_reduction_24h': inventory_reduction_24h,
+            'limiters_html': limiters_html
+        }
+        
+        # Generate HTML
+        print(f"🎨 Generating bulletproof HTML dashboard...")
+        html = generate_html_dashboard(data, ceid_analysis, progress_data, progress_24h, weekly_trends)
+        
+        # Save
+        print(f"💾 Saving to NAZ...")
+        with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
+            f.write(html)
+        
+        print(f"\n{'='*80}")
+        print(f"✅ SUCCESS!")
+        print(f"{'='*80}")
+        print(f"📊 Dashboard Stats:")
+        print(f"   Quarter: {quarter_ships:,} / {QUARTER_GOAL:,} ({quarter_pct:.1f}%)")
+        print(f"   Schedule: {progress_data['days_ahead_behind']:+} days {progress_data['status']}")
+        print(f"   Trend: {weekly_trends['trend'] if weekly_trends else 'N/A'}")
+        if weekly_trends:
+            print(f"   Forecast: {weekly_trends['forecast_trend']:,.0f} wfrs")
+            print(f"   Will Hit Goal: {'YES ✓' if weekly_trends['will_hit_goal'] else 'NO ⚠'}")
+        print(f"\n🌐 URL: {OUTPUT_URL}")
+        print(f"{'='*80}\n")
+        
+    except Exception as e:
+        print(f"\n{'='*80}")
+        print(f"❌ ERROR: {str(e)}")
+        print(f"{'='*80}\n")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    return True
+
+
+if __name__ == "__main__":
+    success = main()
+    if not success:
+        exit(1)
