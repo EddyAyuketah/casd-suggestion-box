@@ -1,1 +1,60 @@
-LOL
+When i run the script host file, i get this 
+
+PS C:\Users\eddyayuk> & "C:/Users/eddyayuk/My Programs/SQLPathFinder3/Python3/python.exe" //SHUser-Prod.intel.com/SHProdUser$/eddyayuk/generate_dashboard20_html.py
+[INFO] Using default configuration
+
+================================================================================
+Q4 PRODUCTION DASHBOARD - WITH QUARTERLY CT IMPACT ANALYSIS
+================================================================================
+
+[INFO] Loading data files...
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:127: DtypeWarning: Columns (66,73,74,75,76,77,78) have mixed types. Specify dtype option on import or set low_memory=False.
+  return pd.read_csv(p, sep="\t")
+[OK] Loaded 4164 lineview records
+[OK] Loaded 8518 lot records
+[INFO] Active Configuration:
+   Weekly Goal: 8,300 | Quarter Goal: 96,000
+   BE LSB Operation: 9812 | Deadline: 2025-12-06
+
+[INFO] Querying database...
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1358: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1374: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+[OK] Last week ships from PW_OUTS_PROD: 6,162.0
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1402: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.    
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[OK] Database queries complete
+[INFO] Analyzing weekly trends...
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:274: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  week_df = pd.read_sql(week_sql, db)
+[INFO] Analyzing quarterly CT impact...
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:186: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  shipped_lots = pd.read_sql(shipped_lots_sql, db)
+[INFO] Analyzing CT impact across 4063 lots (active + shipped)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:209: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
+  lot_ct = pd.read_sql(lot_ct_sql, db)
