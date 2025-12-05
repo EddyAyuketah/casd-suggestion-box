@@ -1,5 +1,3 @@
-When i run the script host file, i get this 
-
 PS C:\Users\eddyayuk> & "C:/Users/eddyayuk/My Programs/SQLPathFinder3/Python3/python.exe" //SHUser-Prod.intel.com/SHProdUser$/eddyayuk/generate_dashboard20_html.py
 [INFO] Using default configuration
 
@@ -58,3 +56,40 @@ Q4 PRODUCTION DASHBOARD - WITH QUARTERLY CT IMPACT ANALYSIS
 [INFO] Analyzing CT impact across 4063 lots (active + shipped)
 \\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:209: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.     
   lot_ct = pd.read_sql(lot_ct_sql, db)
+[OK] Found 20 operations over CT goal
+[INFO] Analyzing CEID performance...
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:441: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path["CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:442: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path["AVG_HAO"] = pd.to_numeric(critical_path["AVG_HAO"], errors="coerce").fillna(0.0)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:443: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy    
+  critical_path["INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
+\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:444: SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy    
+  critical_path["INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
+[INFO] Analyzing limiters...
+[INFO] Generating dashboard...
+
+[ERROR] 'float' object is not subscriptable
+Traceback (most recent call last):
+  File "\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py", line 1625, in main
+    html = generate_html_dashboard(data, ceid_analysis, quarterly_ct, progress_data, progress_24h, weekly_trends)
+  File "\\SHUser-Prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py", line 573, in generate_html_dashboard
+    quarterly_html += f'<td>{item.get("OPER_SHORT_DESC", "N/A")[:30]}</td>'
+TypeError: 'float' object is not subscriptable
+PS C:\Users\eddyayuk> 
