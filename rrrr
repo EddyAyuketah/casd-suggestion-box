@@ -1,11 +1,87 @@
-how do i fix this so my script will always update when script host runs it
-Start Script: D:\Python-i39\python.exe "generate_dashboard20_html.py" 
+perfect, now there is aso a second script that i want to include in my code, that will create a second tab in the CEID Performance Deep Dive that looks at Quarterly volume and pulls the biggest impacts so far, telling us  telling us how long on average sit at CEID over the CT goal. 
 
-Traceback (most recent call last):
-  File "E:\ScriptHostJobs\476022369\generate_dashboard20_html.py", line 41, in <module>
-    CONFIG = load_user_config()
-  File "E:\ScriptHostJobs\476022369\generate_dashboard20_html.py", line 38, in load_user_config
-    print(f"\U0001f4cb Using default configuration")
-  File "D:\Python-i39\lib\encodings\cp1252.py", line 19, in encode
-    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
-UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4cb' in position 0: character maps to <undefined>
+i have a different python script that i used to run to test the concept and now i want you to incorporate it into my app. below is the script 
+i just need to add it in my app 
+
+
+import pandas as pd
+import numpy as np
+import PyUber
+
+
+pp =  "Enter pp here like 215325"
+quarter_start = "Enter quarter here like 202550" # as in 2025 work week 50
+
+
+
+df_lineview = pd.read_csv(r"\\azshfs.intel.com\AZanalysis$\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LineView.TXT", sep="\t")
+df_lots = pd.read_csv(r"\\azshfs.intel.com\AZanalysis$\1274_MAODATA\AZFSM_Production\COS_DB\Combined\Lots.TXT", sep="\t")
+
+
+pp_fls = df_lineview.loc[df_lineview["OPERATION"] == pp]["FULL_LOOP_SEQ"].values[0]
+
+lots_pp = (
+    df_lots
+    .loc[df_lots["FULL_LOOP_SEQ"] >= pp_fls]
+    .loc[(df_lots["LOT_STATE"] == "Active") | (df_lots["LOT_STATE"] == "StoresMerge")]
+    .loc[(df_lots["LOT_TYPE"] == "PROD") | (df_lots["LOT_TYPE"] == "ENG")]
+    .loc[(df_lots["PROCESS"] == 1274) | (df_lots["PROCESS"] == 1275)]
+    .filter(items = ["LOT"])
+
+)
+
+ct_goal = (df_lineview.filter(items = ["OPERATION", "CEID", "CT_GOAL"]))
+
+
+shipped_lots_sql = f'''
+
+SELECT  
+  LOT
+FROM
+  F_LOT_FABOUT_SUMMARY
+WHERE 
+  LOT_TYPE IN ('PROD','ENG')
+  AND FABOUT_ROUTE LIKE ('FL%')
+  AND LOT_PROCESS IN ('1274','1275')
+  AND FABOUT_WW >= {quarter_start}
+
+ '''
+
+shipped_lots = (
+            pd
+          .read_sql_query(shipped_lots_sql, PyUber.connect('F32_PROD_XEUS'))
+          )
+
+
+all_lots = list(lots_pp["LOT"].astype(str)) + list(shipped_lots["LOT"].astype(str))
+
+
+lot_ct_sql = f"""
+
+SELECT 
+  OPERATION, 
+  AVG(DECIMAL(TIMESTAMPDIFF(2, CHAR(OUT_DATE - PREVOUT_DATE)) / 3600.0, 10, 2)) AS AVG_CT_HOURS
+FROM 
+  F_LOT_RUN_CARD
+WHERE  
+  LOT IN ({ ', '.join([f"'{lot}'" for lot in all_lots])})
+  AND OPERATION != '0204'
+GROUP BY
+  OPERATION
+
+"""
+
+lot_ct = (pd
+          .read_sql_query(lot_ct_sql, PyUber.connect('F32_PROD_XEUS'))
+          .astype({ 'OPERATION': 'int32',
+                    'AVG_CT_HOURS': 'float32'}))
+
+
+df_ct_merged = (pd
+                .merge(lot_ct, ct_goal, on="OPERATION", how="left")
+                .assign(
+                    OVER_CT = lambda x: (x["AVG_CT_HOURS"] - x["CT_GOAL"])
+                    )
+                )
+
+final = df_ct_merged.loc[df_ct_merged["OVER_CT"] > 0].filter(items=["OPERATION", "CEID", "CT_GOAL", "OVER_CT"]).sort_values(by="OVER_CT", ascending=False)
