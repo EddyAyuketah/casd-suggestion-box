@@ -1,1 +1,6 @@
-LOL
+PS C:\Users\eddyayuk> & "C:/Users/eddyayuk/My Programs/SQLPathFinder3/Python3/python.exe" c:/Temp/CERT_LOT/generate_dashboard20_html.py
+  File "c:\Temp\CERT_LOT\generate_dashboard20_html.py", line 2293
+    limiters_html += f'{"<span style=\'color:#22c55e;font-weight:600;\'>✓ ON PACE</span>" if current_week_outs >= OUTS_GOAL else f"<span style=\'color:#ef4444;font-weight:600;\'>⚠️ BEHIND PACE ({OUTS_GOAL - current_week_outs:,.0f} wfrs deficit)</span>"}'
+                                                                                                                                                                                                                                                                    ^
+SyntaxError: f-string expression part cannot include a backslash
+PS C:\Users\eddyayuk> 
