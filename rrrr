@@ -1,305 +1,296 @@
-I made some other updates so look at this section 
+for some reason, script host does not refresh my script output properly and this is my script log. does this this tell you why or do you need to see my entire script again ??
 
-<!-- Wafer Shipments -->
-        <div class="progress-viz">
-            <h2>📦 Wafer Shipment Progress</h2>
-            <p style="color: #666; margin-bottom: 20px;">
-                <strong>Quarter Goal:</strong> {QUARTER_GOAL:,} wafers | 
-                <strong>Shipped to Date:</strong> {data['quarter_ships']:,} wafers ({data['quarter_pct']:.1f}%) | 
-                <strong>Remaining:</strong> {data['quarter_remaining']:,} wafers<br>
-                <strong>Lots Shipped:</strong> {data['lot_count']:,} PROD lots | 
-                <strong>Average Daily Rate:</strong> {data['actual_daily_rate']:,.0f} wfrs/day
-            </p>
-            
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: {data['quarter_pct']:.1f}%">
-                    {data['quarter_pct']:.1f}% Complete
-                </div>
-            </div>
-            
-            <div class="progress-stats">
+------------------------ Start of PreScripts --------------------------
+SCriptHost Farm: SCRIPTHOST-PROD
+EntryID: 477435993
+Log: EddyFistProdDashboard.log
+JobDir: E:\ScriptHostJobs\477435993\
+TempDir: E:\ScriptHostTemp\477435993
+Drone: CCEPAP1246V004
+Local DateTime: 2025 21 Dec 03:13:11
+GMT DateTime: 2025 21 Dec 10:13:11
+Script: generate_dashboard20_html.py
 
-                <div class="stat-box">
-                    <div class="stat-value">{data['quarter_goal']:,}</div>
-                    <div class="stat-label">Quarter Goal</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value">{data['quarter_ships']:,}</div>
-                    <div class="stat-label">Quarter to date Ships</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value">{commit_data['quarter_ships']:,}</div>
-                    <div class="stat-label">Commit Section Ships</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value">{data['quarter_remaining']:,}</div>
-                    <div class="stat-label">Wafers Remaining</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value {'status-good' if (data['quarter_remaining'] / progress_data['calendar_days_remaining'] * 7) <= OUTS_GOAL else 'status-warn'}">{(data['quarter_remaining'] / progress_data['calendar_days_remaining'] * 7):,.0f}</div>
-                    <div class="stat-label">Weekly Average Required</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value">{data['lot_count']:,}</div>
-                    <div class="stat-label">PROD Lots Shipped</div>
-                </div>
-            </div>
-            
-            <!-- Pull Point Details -->
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
-                <h3 style="color: #0071c5; margin-bottom: 15px;">🎯 Quarterly Pull Point Status</h3>
-                <div class="progress-stats">
-                    <div class="stat-box">
-                        <div class="stat-value">SD{data['pp_segment_day']}</div>
-                        <div class="stat-label">Current Segment Day</div>
-                    </div>
-                    
-                    <div class="stat-box">
-                        <div class="stat-value">SD{progress_data['segment_day_end']}</div>
-                        <div class="stat-label">Target by Deadline</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value">{progress_data['segment_days_remaining']}</div>
-                        <div class="stat-label">Segment Days Remaining</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value {progress_data['status_class']}">{progress_data['days_ahead_behind']:+.2f}</div>
-                        <div class="stat-label">Days Ahead/Behind</div>
-                    </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px;">
-                    <div class="stat-box">
-                        <div class="info-row">
-                            <span class="info-label">CEID:</span>
-                            <span class="info-value">{data['pp_ceid']}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Operation:</span>
-                            <span class="info-value">{data['pp_operation']}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Description:</span>
-                            <span class="info-value">{data['pp_desc']}</span>
-                        </div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="info-row">
-                            <span class="info-label">Additional WIP Needed from PP location:</span>
-                            <span class="info-value">{data['bump_inv']:,} wfrs</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Calendar Days Remaining:</span>
-                            <span class="info-value">{progress_data['calendar_days_remaining']:.2f}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Schedule Status:</span>
-                            <span class="info-value {progress_data['status_class']}">
-                                {progress_data['status']}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 15px; padding: 15px; background: {'#dcfce7' if progress_data['days_ahead_behind'] >= 0 else '#fee2e2'}; border-radius: 8px;">
-                    <strong style="color: {'#166534' if progress_data['days_ahead_behind'] >= 0 else '#991b1b'};">
-                        {progress_data['status']}
-                    </strong>
-                    <p style="margin-top: 10px; color: #555;">
-                        Pull point at SD{data['pp_segment_day']} needs {progress_data['segment_days_remaining']} more segment days to reach SD{progress_data['segment_day_end']}, 
-                        with {progress_data['calendar_days_remaining']:.2f} calendar days available. 
-                        {'We have ' + str(abs(progress_data['days_ahead_behind'])) + ' days of buffer!' if progress_data['days_ahead_behind'] >= 0 else 'We are ' + str(abs(progress_data['days_ahead_behind'])) + ' days behind schedule!'}
-                    </p>
-                </div>
-            </div>
-        </div>
+------------------------- End of PreScripts ---------------------------
 
-now look at my output with the errors.  
-PS C:\Users\eddyayuk> & "C:/Users/eddyayuk/My Programs/SQLPathFinder3/Python3/python.exe" //shuser-prod.intel.com/SHProdUser$/eddyayuk/generate_dashboard20_html.py
+Start Script: D:\Python-i39\python.exe "generate_dashboard20_html.py" 
+
+2025/12/21;03:13:24.399;477435993;Logger::LogProcessInfo;INFO;Logger::LogProcessInfo:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Process = {D:\Python-i39\python.exe}, Arguments = {generate_dashboard20_html.py}, PID = {18376}, LoggedOnUser = {AMR\eddyayuk}, WorkingDirectory = {E:\ScriptHostJobs\477435993}, dotNETFWVersion = 4.5. Other = [python.exe {v4.8.60126.0308} {64-bit}]
+2025/12/21;03:13:24.415;477435993;UberUtility::LogAppDir;INFO;UberUtility::LogAppDir:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Local app dir is [C:\Users\eddyayuk\AppData\Local\Uber4.8] (Exists=True)
+2025/12/21;03:13:24.431;477435993;UberUtility::UpdateDataSourceMappingXml;INFO;UberUtility::UpdateDataSourceMappingXml:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Targeting rule has been changed from hash [] to [1b3cf9e45a]...13 rules found.
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:1512: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+2025/12/21;03:13:24.980;477435993;UniqeClientHelper::ConnectToUNIQE#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:24.980;477435993;UNIQEAdapter::InitializeConfig#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:24.980;477435993;UniqeClient::UniqeClient;INFO;UniqeClient::UniqeClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;ThreadPool Max: Original workerThreads=32767, completionPortThreads=1000, Updated workerThreads=32767, completionPortThreads=1600
+2025/12/21;03:13:24.980;477435993;UniqeClient::UniqeClient;INFO;UniqeClient::UniqeClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;ThreadPool Min: Original workerThreads=8, completionPortThreads=8, Updated workerThreads=40, completionPortThreads=40
+2025/12/21;03:13:24.980;477435993;UberUtility::GetTargetedServer#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:24.995;477435993;UniqeClient::GetBestSite#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:24.995;477435993;UniqeClient::GetNewProxy#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=9401579d9177c30c].
+2025/12/21;03:13:25.011;477435993;UniqeClientPrivate::LoadBalance#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is CDCPROD4 with ActiveQueries = 5 and RoundTripTime = 34 ms which is 1975 seconds old]. Healthcheck data from F32PROD5 used which is 1976 seconds old.
+2025/12/21;03:13:25.090;477435993;Client::OpenClient#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Open client connection [7fca6a87e76cffb8] [OpenTimeOut=20sec][url=net.tcp://ccepap420n4.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:25.090;477435993;ConnectionManager::NewConnection#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Added new connection with key [ccepap420n4.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=43eecd451abb674b]
+2025/12/21;03:13:25.090;477435993;UniqeClientPrivate::InitializeServer#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [ccepap420n4.cdcprod.mfg.intel.com] successful.
+2025/12/21;03:13:25.105;477435993;UniqeClientPrivate::PingServer#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Pinging server [ccepap420n4.cdcprod.mfg.intel.com] took 22 ms. {Mode = READ, GetApplication = 17 ms with 5498 bytes returned, ServerHealthCheckInfo = 0 ms [99 seconds old], Total = 22 ms} [ConnectionID=43eecd451abb674b][UsageCount=1]
+2025/12/21;03:13:25.105;477435993;UniqeClientPrivate::GetConfigParams#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Submitting job [70ad2ee1-306d-4857-8dd1-722d8653157d] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:25.132;477435993;UniqeClientPrivate::ExecuteJobPrivate#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;70ad2ee1-306d-4857-8dd1-722d8653157d: submitted job with 1 operations to [ccepap420n4.cdcprod.mfg.intel.com] which took 124 ms.
+2025/12/21;03:13:26.923;477435993;DataConversion::GetObjectsFromBytes#70ad2ee1-306d-4857-8dd1-722d8653157d:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Extracting 1 rows and 1 columns from 9 bytes
+2025/12/21;03:13:26.923;477435993;UberTable::GetNextChunk2DPrivate#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 1] [id=0001] Obtained 1 rows and 1 columns [9 bytes].
+2025/12/21;03:13:26.923;477435993;UberTable::GetNextChunk2DPrivate#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 1] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+2025/12/21;03:13:26.939;477435993;ConnectionManager::CloseClient#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Closing connection with state [Opened] that is 1 seconds old with key [ccepap420n4.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=43eecd451abb674b][ConnectionUsageCount=1]
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:1528: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+2025/12/21;03:13:26.939;477435993;Client::CloseClient#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Close client connection [7fca6a87e76cffb8] [Source=ConnectionManager][url=net.tcp://ccepap420n4.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:26.939;477435993;UniqeClientHelper::ConnectToUNIQE#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:26.939;477435993;UNIQEAdapter::InitializeConfig#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:26.939;477435993;UberUtility::GetTargetedServer#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:26.939;477435993;UniqeClient::GetBestSite#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:26.939;477435993;UniqeClient::GetNewProxy#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=a2190623f91a47d7].
+2025/12/21;03:13:26.939;477435993;UniqeClientPrivate::CloseProxy#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 5 ms). [Called from OnJobCompleteEvent][ID=#000001][DataSources=F32_PROD_XEUS][ConnectionID=43eecd451abb674b]
+2025/12/21;03:13:26.939;477435993;UniqeClientPrivate::OnJobCompleteEvent#70ad2ee1-306d-4857-8dd1-722d8653157d;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Job 70ad2ee1-306d-4857-8dd1-722d8653157d having 1 operations completed with status CompletedSuccessfully and took 1929 ms and returned 1 rows and 1 columns and 9 bytes. DataSources=[F32_PROD_XEUS] [Server=ccepap420n4.cdcprod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = CDCPROD4] [CompressedSize = 8 bytes] [DBFirstRowTime = 1747 ms] [NumThreads = 1] [ConnectTime = 103 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=43eecd451abb674b][InstanceID=9401579d9177c30c][PrivateInstanceID=#000001] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:26.939;477435993;UniqeClientPrivate::LoadBalance#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is F32PROD3 with ActiveQueries = 27 and RoundTripTime = 29 ms which is 100 seconds old]. Healthcheck data from CDCPROD4 used which is 101 seconds old.
+2025/12/21;03:13:26.970;477435993;Client::OpenClient#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Open client connection [27ccf0e644ea22d7] [OpenTimeOut=20sec][url=net.tcp://f32pap420n3.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:26.970;477435993;ConnectionManager::NewConnection#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Added new connection with key [f32pap420n3.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=aac2dc719ea2839a]
+2025/12/21;03:13:26.970;477435993;UniqeClientPrivate::InitializeServer#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [f32pap420n3.f32prod.mfg.intel.com] successful.
+2025/12/21;03:13:26.970;477435993;UniqeClientPrivate::PingServer#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Pinging server [f32pap420n3.f32prod.mfg.intel.com] took 13 ms. {Mode = READ, GetApplication = 10 ms with 5514 bytes returned, ServerHealthCheckInfo = 0 ms [22 seconds old], Total = 13 ms} [ConnectionID=aac2dc719ea2839a][UsageCount=1]
+2025/12/21;03:13:26.970;477435993;UniqeClientPrivate::GetConfigParams#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Submitting job [b21846eb-fa84-42cc-8555-192ed4b98c52] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:26.986;477435993;UniqeClientPrivate::ExecuteJobPrivate#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;b21846eb-fa84-42cc-8555-192ed4b98c52: submitted job with 1 operations to [f32pap420n3.f32prod.mfg.intel.com] which took 42 ms.
+2025/12/21;03:13:28.051;477435993;DataConversion::GetObjectsFromBytes#b21846eb-fa84-42cc-8555-192ed4b98c52:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Extracting 1 rows and 4 columns from 32 bytes
+2025/12/21;03:13:28.052;477435993;UberTable::GetNextChunk2DPrivate#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 2] [id=0001] Obtained 1 rows and 4 columns [32 bytes].
+2025/12/21;03:13:28.053;477435993;UberTable::GetNextChunk2DPrivate#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 2] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+2025/12/21;03:13:28.054;477435993;ConnectionManager::CloseClient#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Closing connection with state [Opened] that is 1 seconds old with key [f32pap420n3.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=aac2dc719ea2839a][ConnectionUsageCount=1]
+2025/12/21;03:13:28.054;477435993;Client::CloseClient#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Close client connection [27ccf0e644ea22d7] [Source=ConnectionManager][url=net.tcp://f32pap420n3.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:1554: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+2025/12/21;03:13:28.055;477435993;UniqeClientPrivate::CloseProxy#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 4 ms). [Called from OnJobCompleteEvent][ID=#000002][DataSources=F32_PROD_XEUS][ConnectionID=aac2dc719ea2839a]
+2025/12/21;03:13:28.058;477435993;UniqeClientHelper::ConnectToUNIQE#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:28.058;477435993;UniqeClientPrivate::OnJobCompleteEvent#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Job b21846eb-fa84-42cc-8555-192ed4b98c52 having 1 operations completed with status CompletedSuccessfully and took 1110 ms and returned 1 rows and 4 columns and 32 bytes. DataSources=[F32_PROD_XEUS] [Server=f32pap420n3.f32prod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = F32PROD3] [CompressedSize = 32 bytes] [DBFirstRowTime = 1057 ms] [NumThreads = 1] [ConnectTime = 41 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=aac2dc719ea2839a][InstanceID=a2190623f91a47d7][PrivateInstanceID=#000002] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:28.058;477435993;UNIQEAdapter::InitializeConfig#b21846eb-fa84-42cc-8555-192ed4b98c52;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:28.058;477435993;UberUtility::GetTargetedServer#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:28.058;477435993;UniqeClient::GetBestSite#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:28.058;477435993;UniqeClient::GetNewProxy#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=82ae976038f98fd1].
+2025/12/21;03:13:28.058;477435993;UniqeClientPrivate::LoadBalance#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is CDCPROD3 with ActiveQueries = 11 and RoundTripTime = 45 ms which is 23 seconds old]. Healthcheck data from F32PROD3 used which is 23 seconds old.
+2025/12/21;03:13:28.076;477435993;Client::OpenClient#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Open client connection [d81cef654ae207d1] [OpenTimeOut=20sec][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:28.077;477435993;ConnectionManager::NewConnection#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Added new connection with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=7b3a0f499fc7449d]
+2025/12/21;03:13:28.078;477435993;UniqeClientPrivate::InitializeServer#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [ccepap420n3.cdcprod.mfg.intel.com] successful.
+2025/12/21;03:13:28.093;477435993;UniqeClientPrivate::PingServer#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Pinging server [ccepap420n3.cdcprod.mfg.intel.com] took 15 ms. {Mode = READ, GetApplication = 10 ms with 5502 bytes returned, ServerHealthCheckInfo = 0 ms [62 seconds old], Total = 15 ms} [ConnectionID=7b3a0f499fc7449d][UsageCount=1]
+2025/12/21;03:13:28.095;477435993;UniqeClientPrivate::GetConfigParams#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Submitting job [e6e4411f-5573-4b43-ad0c-484b61d34878] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:28.095;477435993;UniqeClientPrivate::ExecuteJobPrivate#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;e6e4411f-5573-4b43-ad0c-484b61d34878: submitted job with 1 operations to [ccepap420n3.cdcprod.mfg.intel.com] which took 32 ms.
+2025/12/21;03:13:29.624;477435993;DataConversion::GetObjectsFromBytes#e6e4411f-5573-4b43-ad0c-484b61d34878:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Extracting 1 rows and 1 columns from 9 bytes
+2025/12/21;03:13:29.624;477435993;UberTable::GetNextChunk2DPrivate#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 3] [id=0001] Obtained 1 rows and 1 columns [9 bytes].
+2025/12/21;03:13:29.624;477435993;UberTable::GetNextChunk2DPrivate#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 3] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+2025/12/21;03:13:29.624;477435993;ConnectionManager::CloseClient#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Closing connection with state [Opened] that is 1 seconds old with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=7b3a0f499fc7449d][ConnectionUsageCount=1]
+2025/12/21;03:13:29.624;477435993;Client::CloseClient#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Close client connection [d81cef654ae207d1] [Source=ConnectionManager][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:524: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+2025/12/21;03:13:29.624;477435993;UniqeClientHelper::ConnectToUNIQE#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:29.624;477435993;UNIQEAdapter::InitializeConfig#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:29.624;477435993;UniqeClientPrivate::CloseProxy#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 3 ms). [Called from OnJobCompleteEvent][ID=#000003][DataSources=F32_PROD_XEUS][ConnectionID=7b3a0f499fc7449d]
+2025/12/21;03:13:29.624;477435993;UniqeClientPrivate::OnJobCompleteEvent#e6e4411f-5573-4b43-ad0c-484b61d34878;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Job e6e4411f-5573-4b43-ad0c-484b61d34878 having 1 operations completed with status CompletedSuccessfully and took 1564 ms and returned 1 rows and 1 columns and 9 bytes. DataSources=[F32_PROD_XEUS] [Server=ccepap420n3.cdcprod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = CDCPROD3] [CompressedSize = 9 bytes] [DBFirstRowTime = 1522 ms] [NumThreads = 1] [ConnectTime = 31 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=7b3a0f499fc7449d][InstanceID=82ae976038f98fd1][PrivateInstanceID=#000003] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:29.624;477435993;UberUtility::GetTargetedServer#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:29.624;477435993;UniqeClientPrivate::~UniqeClientPrivate;INFO;UniqeClientPrivate::~UniqeClientPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-2;[,]TID:2;Dispose not called, hence finalizer is kicking in for clean-up [ID=#000003]. Lifetime of object = 1571 ms.
+2025/12/21;03:13:29.624;477435993;UniqeClient::GetBestSite#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:29.624;477435993;UniqeClient::GetNewProxy#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=d6b5d54c67ee25b7].
+2025/12/21;03:13:29.624;477435993;UniqeClientPrivate::LoadBalance#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is F32PROD5 with ActiveQueries = 27 and RoundTripTime = 36 ms which is 63 seconds old]. Healthcheck data from CDCPROD3 used which is 63 seconds old.
+2025/12/21;03:13:29.639;477435993;Client::OpenClient#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Open client connection [ae5c0129438ef2b7] [OpenTimeOut=20sec][url=net.tcp://f32pap420n5.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:29.639;477435993;ConnectionManager::NewConnection#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Added new connection with key [f32pap420n5.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=8604f4610321eab0]
+2025/12/21;03:13:29.639;477435993;UniqeClientPrivate::InitializeServer#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [f32pap420n5.f32prod.mfg.intel.com] successful.
+2025/12/21;03:13:29.655;477435993;UniqeClientPrivate::PingServer#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Pinging server [f32pap420n5.f32prod.mfg.intel.com] took 12 ms. {Mode = READ, GetApplication = 7 ms with 5482 bytes returned, ServerHealthCheckInfo = 0 ms [62 seconds old], Total = 12 ms} [ConnectionID=8604f4610321eab0][UsageCount=1]
+2025/12/21;03:13:29.655;477435993;UniqeClientPrivate::GetConfigParams#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Submitting job [7122c653-0802-4be5-840f-4b1d13a6312b] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:29.655;477435993;UniqeClientPrivate::ExecuteJobPrivate#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;7122c653-0802-4be5-840f-4b1d13a6312b: submitted job with 1 operations to [f32pap420n5.f32prod.mfg.intel.com] which took 30 ms.
+2025/12/21;03:13:30.878;477435993;DataConversion::GetObjectsFromBytes#7122c653-0802-4be5-840f-4b1d13a6312b:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Extracting 1 rows and 1 columns from 9 bytes
+2025/12/21;03:13:30.878;477435993;UberTable::GetNextChunk2DPrivate#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 4] [id=0001] Obtained 1 rows and 1 columns [9 bytes].
+2025/12/21;03:13:30.878;477435993;UberTable::GetNextChunk2DPrivate#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 4] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+2025/12/21;03:13:30.878;477435993;ConnectionManager::CloseClient#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Closing connection with state [Opened] that is 1 seconds old with key [f32pap420n5.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=8604f4610321eab0][ConnectionUsageCount=1]
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:540: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_24h_df = pd.read_sql(commit_24h_sql, db)
+2025/12/21;03:13:30.878;477435993;Client::CloseClient#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Close client connection [ae5c0129438ef2b7] [Source=ConnectionManager][url=net.tcp://f32pap420n5.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:30.878;477435993;UniqeClientHelper::ConnectToUNIQE#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:30.878;477435993;UNIQEAdapter::InitializeConfig#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:30.878;477435993;UberUtility::GetTargetedServer#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:30.878;477435993;UniqeClientPrivate::CloseProxy#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 4 ms). [Called from OnJobCompleteEvent][ID=#000004][DataSources=F32_PROD_XEUS][ConnectionID=8604f4610321eab0]
+2025/12/21;03:13:30.878;477435993;UniqeClient::GetBestSite#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:30.878;477435993;UniqeClientPrivate::OnJobCompleteEvent#7122c653-0802-4be5-840f-4b1d13a6312b;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Job 7122c653-0802-4be5-840f-4b1d13a6312b having 1 operations completed with status CompletedSuccessfully and took 1247 ms and returned 1 rows and 1 columns and 9 bytes. DataSources=[F32_PROD_XEUS] [Server=f32pap420n5.f32prod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = F32PROD5] [CompressedSize = 9 bytes] [DBFirstRowTime = 1207 ms] [NumThreads = 1] [ConnectTime = 28 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=8604f4610321eab0][InstanceID=d6b5d54c67ee25b7][PrivateInstanceID=#000004] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:30.878;477435993;UniqeClient::GetNewProxy#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=4a1a40eba58fbff7].
+2025/12/21;03:13:30.878;477435993;UniqeClientPrivate::LoadBalance#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is CDCPROD3 with ActiveQueries = 10 and RoundTripTime = 32 ms which is 61 seconds old]. Healthcheck data from F32PROD5 used which is 63 seconds old.
+2025/12/21;03:13:30.893;477435993;Client::OpenClient#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Open client connection [56536ce106e5137] [OpenTimeOut=20sec][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:30.893;477435993;ConnectionManager::NewConnection#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Added new connection with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=dd96a68acf2d3691]
+2025/12/21;03:13:30.893;477435993;UniqeClientPrivate::InitializeServer#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [ccepap420n3.cdcprod.mfg.intel.com] successful.
+2025/12/21;03:13:30.910;477435993;UniqeClientPrivate::PingServer#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Pinging server [ccepap420n3.cdcprod.mfg.intel.com] took 10 ms. {Mode = READ, GetApplication = 6 ms with 5494 bytes returned, ServerHealthCheckInfo = 0 ms [65 seconds old], Total = 10 ms} [ConnectionID=dd96a68acf2d3691][UsageCount=1]
+2025/12/21;03:13:30.910;477435993;UniqeClientPrivate::GetConfigParams#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Submitting job [626da362-d5e1-47e0-af8c-d1ad8b0f12ac] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:30.910;477435993;UniqeClientPrivate::ExecuteJobPrivate#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;626da362-d5e1-47e0-af8c-d1ad8b0f12ac: submitted job with 1 operations to [ccepap420n3.cdcprod.mfg.intel.com] which took 22 ms.
+2025/12/21;03:13:31.615;477435993;DataConversion::GetObjectsFromBytes#626da362-d5e1-47e0-af8c-d1ad8b0f12ac:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Extracting 1 rows and 1 columns from 9 bytes
+2025/12/21;03:13:31.615;477435993;UberTable::GetNextChunk2DPrivate#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 5] [id=0001] Obtained 1 rows and 1 columns [9 bytes].
+2025/12/21;03:13:31.615;477435993;UberTable::GetNextChunk2DPrivate#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 5] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+2025/12/21;03:13:31.615;477435993;UniqeClientPrivate::~UniqeClientPrivate;INFO;UniqeClientPrivate::~UniqeClientPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-2;[,]TID:2;Dispose not called, hence finalizer is kicking in for clean-up [ID=#000004]. Lifetime of object = 1994 ms.
+2025/12/21;03:13:31.615;477435993;UniqeClientPrivate::~UniqeClientPrivate;INFO;UniqeClientPrivate::~UniqeClientPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-2;[,]TID:2;Dispose not called, hence finalizer is kicking in for clean-up [ID=#000002]. Lifetime of object = 4686 ms.
+2025/12/21;03:13:31.630;477435993;UniqeClientPrivate::~UniqeClientPrivate;INFO;UniqeClientPrivate::~UniqeClientPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-2;[,]TID:2;Dispose not called, hence finalizer is kicking in for clean-up [ID=#000001]. Lifetime of object = 6633 ms.
+2025/12/21;03:13:31.630;477435993;ConnectionManager::CloseClient#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Closing connection with state [Opened] that is 0 seconds old with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=dd96a68acf2d3691][ConnectionUsageCount=1]
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:555: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
+2025/12/21;03:13:31.630;477435993;Client::CloseClient#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Close client connection [56536ce106e5137] [Source=ConnectionManager][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:31.630;477435993;UniqeClientHelper::ConnectToUNIQE#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:31.630;477435993;UNIQEAdapter::InitializeConfig#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:31.630;477435993;UberUtility::GetTargetedServer#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:31.630;477435993;UniqeClientPrivate::CloseProxy#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 3 ms). [Called from OnJobCompleteEvent][ID=#000005][DataSources=F32_PROD_XEUS][ConnectionID=dd96a68acf2d3691]
+2025/12/21;03:13:31.630;477435993;UniqeClient::GetBestSite#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:31.630;477435993;UniqeClientPrivate::OnJobCompleteEvent#626da362-d5e1-47e0-af8c-d1ad8b0f12ac;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Job 626da362-d5e1-47e0-af8c-d1ad8b0f12ac having 1 operations completed with status CompletedSuccessfully and took 741 ms and returned 1 rows and 1 columns and 9 bytes. DataSources=[F32_PROD_XEUS] [Server=ccepap420n3.cdcprod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = CDCPROD3] [CompressedSize = 9 bytes] [DBFirstRowTime = 699 ms] [NumThreads = 1] [ConnectTime = 21 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=dd96a68acf2d3691][InstanceID=4a1a40eba58fbff7][PrivateInstanceID=#000005] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:31.630;477435993;UniqeClient::GetNewProxy#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=82893aebb9c24173].
+2025/12/21;03:13:31.630;477435993;UniqeClientPrivate::LoadBalance#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is F32PROD5 with ActiveQueries = 27 and RoundTripTime = 36 ms which is 65 seconds old]. Healthcheck data from CDCPROD3 used which is 65 seconds old.
+2025/12/21;03:13:31.630;477435993;Client::OpenClient#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Open client connection [7eed9f763d000173] [OpenTimeOut=20sec][url=net.tcp://f32pap420n5.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:31.630;477435993;ConnectionManager::NewConnection#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Added new connection with key [f32pap420n5.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=40b18fc5c1f90173]
+2025/12/21;03:13:31.630;477435993;UniqeClientPrivate::InitializeServer#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [f32pap420n5.f32prod.mfg.intel.com] successful.
+2025/12/21;03:13:31.646;477435993;UniqeClientPrivate::PingServer#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Pinging server [f32pap420n5.f32prod.mfg.intel.com] took 12 ms. {Mode = READ, GetApplication = 9 ms with 5486 bytes returned, ServerHealthCheckInfo = 0 ms [64 seconds old], Total = 12 ms} [ConnectionID=40b18fc5c1f90173][UsageCount=1]
+2025/12/21;03:13:31.646;477435993;UniqeClientPrivate::GetConfigParams#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Submitting job [3ff8dd6a-8ec1-4a03-907b-964405ef5674] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:31.646;477435993;UniqeClientPrivate::ExecuteJobPrivate#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;3ff8dd6a-8ec1-4a03-907b-964405ef5674: submitted job with 1 operations to [f32pap420n5.f32prod.mfg.intel.com] which took 23 ms.
+2025/12/21;03:13:32.805;477435993;DataConversion::GetObjectsFromBytes#3ff8dd6a-8ec1-4a03-907b-964405ef5674:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Extracting 1 rows and 1 columns from 9 bytes
+2025/12/21;03:13:32.805;477435993;UberTable::GetNextChunk2DPrivate#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 6] [id=0001] Obtained 1 rows and 1 columns [9 bytes].
+2025/12/21;03:13:32.805;477435993;UberTable::GetNextChunk2DPrivate#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 6] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:287: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  week_df = pd.read_sql(week_sql, db)
+2025/12/21;03:13:32.805;477435993;ConnectionManager::CloseClient#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Closing connection with state [Opened] that is 1 seconds old with key [f32pap420n5.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=40b18fc5c1f90173][ConnectionUsageCount=1]
+2025/12/21;03:13:32.805;477435993;UniqeClientHelper::ConnectToUNIQE#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:32.805;477435993;Client::CloseClient#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Close client connection [7eed9f763d000173] [Source=ConnectionManager][url=net.tcp://f32pap420n5.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:32.805;477435993;UNIQEAdapter::InitializeConfig#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:32.805;477435993;UberUtility::GetTargetedServer#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:32.805;477435993;UniqeClient::GetBestSite#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:32.805;477435993;UniqeClientPrivate::CloseProxy#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 4 ms). [Called from OnJobCompleteEvent][ID=#000006][DataSources=F32_PROD_XEUS][ConnectionID=40b18fc5c1f90173]
+2025/12/21;03:13:32.805;477435993;UniqeClient::GetNewProxy#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=476391ea5b8fbb5e].
+2025/12/21;03:13:32.805;477435993;UniqeClientPrivate::OnJobCompleteEvent#3ff8dd6a-8ec1-4a03-907b-964405ef5674;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Job 3ff8dd6a-8ec1-4a03-907b-964405ef5674 having 1 operations completed with status CompletedSuccessfully and took 1177 ms and returned 1 rows and 1 columns and 9 bytes. DataSources=[F32_PROD_XEUS] [Server=f32pap420n5.f32prod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = F32PROD5] [CompressedSize = 11 bytes] [DBFirstRowTime = 1144 ms] [NumThreads = 1] [ConnectTime = 21 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=40b18fc5c1f90173][InstanceID=82893aebb9c24173][PrivateInstanceID=#000006] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:32.805;477435993;UniqeClientPrivate::LoadBalance#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is CDCPROD3 with ActiveQueries = 10 and RoundTripTime = 32 ms which is 63 seconds old]. Healthcheck data from F32PROD5 used which is 65 seconds old.
+2025/12/21;03:13:32.821;477435993;Client::OpenClient#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Open client connection [9b8383d51ecdbb5e] [OpenTimeOut=20sec][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:32.821;477435993;ConnectionManager::NewConnection#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Added new connection with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=bacaf3401875c947]
+2025/12/21;03:13:32.821;477435993;UniqeClientPrivate::InitializeServer#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [ccepap420n3.cdcprod.mfg.intel.com] successful.
+2025/12/21;03:13:32.836;477435993;UniqeClientPrivate::~UniqeClientPrivate;INFO;UniqeClientPrivate::~UniqeClientPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-2;[,]TID:2;Dispose not called, hence finalizer is kicking in for clean-up [ID=#000006]. Lifetime of object = 1206 ms.
+2025/12/21;03:13:32.836;477435993;UniqeClientPrivate::PingServer#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Pinging server [ccepap420n3.cdcprod.mfg.intel.com] took 14 ms. {Mode = READ, GetApplication = 6 ms with 5502 bytes returned, ServerHealthCheckInfo = 0 ms [66 seconds old], Total = 14 ms} [ConnectionID=bacaf3401875c947][UsageCount=1]
+2025/12/21;03:13:32.836;477435993;UniqeClientPrivate::GetConfigParams#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Submitting job [55208d0c-9900-40bd-96f5-3799fe5b834c] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:32.836;477435993;UniqeClientPrivate::ExecuteJobPrivate#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;55208d0c-9900-40bd-96f5-3799fe5b834c: submitted job with 1 operations to [ccepap420n3.cdcprod.mfg.intel.com] which took 25 ms.
+2025/12/21;03:13:33.057;477435993;DataConversion::GetObjectsFromBytes#55208d0c-9900-40bd-96f5-3799fe5b834c:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Extracting 1 rows and 1 columns from 9 bytes
+2025/12/21;03:13:33.057;477435993;UberTable::GetNextChunk2DPrivate#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 7] [id=0001] Obtained 1 rows and 1 columns [9 bytes].
+2025/12/21;03:13:33.057;477435993;UberTable::GetNextChunk2DPrivate#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 7] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+2025/12/21;03:13:33.057;477435993;ConnectionManager::CloseClient#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Closing connection with state [Opened] that is 0 seconds old with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=bacaf3401875c947][ConnectionUsageCount=1]
+2025/12/21;03:13:33.057;477435993;Client::CloseClient#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Close client connection [9b8383d51ecdbb5e] [Source=ConnectionManager][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:287: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  week_df = pd.read_sql(week_sql, db)
+2025/12/21;03:13:33.057;477435993;UniqeClientHelper::ConnectToUNIQE#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:33.057;477435993;UNIQEAdapter::InitializeConfig#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:33.057;477435993;UniqeClientPrivate::CloseProxy#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 3 ms). [Called from OnJobCompleteEvent][ID=#000007][DataSources=F32_PROD_XEUS][ConnectionID=bacaf3401875c947]
+2025/12/21;03:13:33.057;477435993;UniqeClientPrivate::OnJobCompleteEvent#55208d0c-9900-40bd-96f5-3799fe5b834c;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Job 55208d0c-9900-40bd-96f5-3799fe5b834c having 1 operations completed with status CompletedSuccessfully and took 250 ms and returned 1 rows and 1 columns and 9 bytes. DataSources=[F32_PROD_XEUS] [Server=ccepap420n3.cdcprod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = CDCPROD3] [CompressedSize = 9 bytes] [DBFirstRowTime = 216 ms] [NumThreads = 1] [ConnectTime = 23 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=bacaf3401875c947][InstanceID=476391ea5b8fbb5e][PrivateInstanceID=#000007] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:33.072;477435993;UberUtility::GetTargetedServer#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:33.073;477435993;UniqeClient::GetBestSite#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:33.073;477435993;UniqeClient::GetNewProxy#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=6c4f2478c1a253db].
+2025/12/21;03:13:33.073;477435993;UniqeClientPrivate::LoadBalance#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is F32PROD5 with ActiveQueries = 27 and RoundTripTime = 36 ms which is 66 seconds old]. Healthcheck data from CDCPROD3 used which is 67 seconds old.
+2025/12/21;03:13:33.073;477435993;Client::OpenClient#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Open client connection [18d3e02c9e26dc4a] [OpenTimeOut=20sec][url=net.tcp://f32pap420n5.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:33.073;477435993;ConnectionManager::NewConnection#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Added new connection with key [f32pap420n5.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=7124737af99edc4a]
+2025/12/21;03:13:33.073;477435993;UniqeClientPrivate::InitializeServer#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [f32pap420n5.f32prod.mfg.intel.com] successful.
+2025/12/21;03:13:33.089;477435993;UniqeClientPrivate::PingServer#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Pinging server [f32pap420n5.f32prod.mfg.intel.com] took 12 ms. {Mode = READ, GetApplication = 7 ms with 5494 bytes returned, ServerHealthCheckInfo = 0 ms [65 seconds old], Total = 12 ms} [ConnectionID=7124737af99edc4a][UsageCount=1]
+2025/12/21;03:13:33.089;477435993;UniqeClientPrivate::GetConfigParams#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Submitting job [3a2cfb7e-deff-4fa9-8e9f-f9e129f43765] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:33.089;477435993;UniqeClientPrivate::ExecuteJobPrivate#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;3a2cfb7e-deff-4fa9-8e9f-f9e129f43765: submitted job with 1 operations to [f32pap420n5.f32prod.mfg.intel.com] which took 24 ms.
+2025/12/21;03:13:35.741;477435993;DataConversion::GetObjectsFromBytes#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Extracting 1 rows and 1 columns from 17 bytes
+2025/12/21;03:13:35.741;477435993;UberTable::GetNextChunk2DPrivate#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 8] [id=0001] Obtained 1 rows and 1 columns [17 bytes].
+2025/12/21;03:13:35.741;477435993;UberTable::GetNextChunk2DPrivate#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 8] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+2025/12/21;03:13:35.741;477435993;ConnectionManager::CloseClient#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Closing connection with state [Opened] that is 2 seconds old with key [f32pap420n5.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=7124737af99edc4a][ConnectionUsageCount=1]
+2025/12/21;03:13:35.741;477435993;Client::CloseClient#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Close client connection [18d3e02c9e26dc4a] [Source=ConnectionManager][url=net.tcp://f32pap420n5.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:287: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  week_df = pd.read_sql(week_sql, db)
+2025/12/21;03:13:35.741;477435993;UniqeClientHelper::ConnectToUNIQE#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:35.741;477435993;UNIQEAdapter::InitializeConfig#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:35.741;477435993;UberUtility::GetTargetedServer#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:35.741;477435993;UniqeClient::GetBestSite#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:35.741;477435993;UniqeClient::GetNewProxy#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=35f77026120dc246].
+2025/12/21;03:13:35.741;477435993;UniqeClientPrivate::CloseProxy#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 3 ms). [Called from OnJobCompleteEvent][ID=#000008][DataSources=F32_PROD_XEUS][ConnectionID=7124737af99edc4a]
+2025/12/21;03:13:35.741;477435993;UniqeClientPrivate::OnJobCompleteEvent#3a2cfb7e-deff-4fa9-8e9f-f9e129f43765;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Job 3a2cfb7e-deff-4fa9-8e9f-f9e129f43765 having 1 operations completed with status CompletedSuccessfully and took 2674 ms and returned 1 rows and 1 columns and 17 bytes. DataSources=[F32_PROD_XEUS] [Server=f32pap420n5.f32prod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = F32PROD5] [CompressedSize = 17 bytes] [DBFirstRowTime = 2640 ms] [NumThreads = 1] [ConnectTime = 22 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=7124737af99edc4a][InstanceID=6c4f2478c1a253db][PrivateInstanceID=#000008] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:35.741;477435993;UniqeClientPrivate::LoadBalance#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is CDCPROD3 with ActiveQueries = 10 and RoundTripTime = 32 ms which is 66 seconds old]. Healthcheck data from F32PROD5 used which is 68 seconds old.
+2025/12/21;03:13:35.757;477435993;Client::OpenClient#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Open client connection [7fe1709eda0d8246] [OpenTimeOut=20sec][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:35.757;477435993;ConnectionManager::NewConnection#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Added new connection with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=83fa7c985b4430f2]
+2025/12/21;03:13:35.757;477435993;UniqeClientPrivate::InitializeServer#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [ccepap420n3.cdcprod.mfg.intel.com] successful.
+2025/12/21;03:13:35.757;477435993;UniqeClientPrivate::~UniqeClientPrivate;INFO;UniqeClientPrivate::~UniqeClientPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-2;[,]TID:2;Dispose not called, hence finalizer is kicking in for clean-up [ID=#000008]. Lifetime of object = 2697 ms.
+2025/12/21;03:13:35.772;477435993;UniqeClientPrivate::PingServer#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Pinging server [ccepap420n3.cdcprod.mfg.intel.com] took 12 ms. {Mode = READ, GetApplication = 6 ms with 5506 bytes returned, ServerHealthCheckInfo = 0 ms [69 seconds old], Total = 12 ms} [ConnectionID=83fa7c985b4430f2][UsageCount=1]
+2025/12/21;03:13:35.772;477435993;UniqeClientPrivate::GetConfigParams#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;Submitting job [b87ea06b-6f93-4360-81b9-3662237b12cd] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:35.772;477435993;UniqeClientPrivate::ExecuteJobPrivate#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-5;[,]TID:5;b87ea06b-6f93-4360-81b9-3662237b12cd: submitted job with 1 operations to [ccepap420n3.cdcprod.mfg.intel.com] which took 21 ms.
+2025/12/21;03:13:36.496;477435993;DataConversion::GetObjectsFromBytes#b87ea06b-6f93-4360-81b9-3662237b12cd:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Extracting 1 rows and 1 columns from 9 bytes
+2025/12/21;03:13:36.501;477435993;UberTable::GetNextChunk2DPrivate#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 9] [id=0001] Obtained 1 rows and 1 columns [9 bytes].
+2025/12/21;03:13:36.501;477435993;UberTable::GetNextChunk2DPrivate#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 9] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+2025/12/21;03:13:36.502;477435993;ConnectionManager::CloseClient#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Closing connection with state [Opened] that is 0 seconds old with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=83fa7c985b4430f2][ConnectionUsageCount=1]
+2025/12/21;03:13:36.503;477435993;Client::CloseClient#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;Close client connection [7fe1709eda0d8246] [Source=ConnectionManager][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:36.506;477435993;UniqeClientPrivate::CloseProxy#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 3 ms). [Called from OnJobCompleteEvent][ID=#000009][DataSources=F32_PROD_XEUS][ConnectionID=83fa7c985b4430f2]
+2025/12/21;03:13:36.506;477435993;UniqeClientPrivate::OnJobCompleteEvent#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-6;[,]TID:6;[python.exe {v4.8.60126.0308} {64-bit}] Job b87ea06b-6f93-4360-81b9-3662237b12cd having 1 operations completed with status CompletedSuccessfully and took 749 ms and returned 1 rows and 1 columns and 9 bytes. DataSources=[F32_PROD_XEUS] [Server=ccepap420n3.cdcprod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = CDCPROD3] [CompressedSize = 8 bytes] [DBFirstRowTime = 718 ms] [NumThreads = 1] [ConnectTime = 20 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=83fa7c985b4430f2][InstanceID=35f77026120dc246][PrivateInstanceID=#000009] {AuthMode = IWA[AMR\eddyayuk]}
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:188: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shipped_lots = pd.read_sql(shipped_lots_sql, db)
+2025/12/21;03:13:36.526;477435993;UniqeClientHelper::ConnectToUNIQE#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:36.526;477435993;UNIQEAdapter::InitializeConfig#b87ea06b-6f93-4360-81b9-3662237b12cd;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:36.526;477435993;UberUtility::GetTargetedServer#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:36.536;477435993;UniqeClient::GetBestSite#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:36.536;477435993;UniqeClient::GetNewProxy#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=f6af454cdad2e851].
+2025/12/21;03:13:36.536;477435993;UniqeClientPrivate::LoadBalance#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is F32PROD5 with ActiveQueries = 27 and RoundTripTime = 36 ms which is 70 seconds old]. Healthcheck data from CDCPROD3 used which is 70 seconds old.
+2025/12/21;03:13:36.542;477435993;Client::OpenClient#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Open client connection [44c5559cfb5bea52] [OpenTimeOut=20sec][url=net.tcp://f32pap420n5.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:36.542;477435993;ConnectionManager::NewConnection#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Added new connection with key [f32pap420n5.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=651e13c680f7528a]
+2025/12/21;03:13:36.542;477435993;UniqeClientPrivate::InitializeServer#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [f32pap420n5.f32prod.mfg.intel.com] successful.
+2025/12/21;03:13:36.557;477435993;UniqeClientPrivate::PingServer#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Pinging server [f32pap420n5.f32prod.mfg.intel.com] took 13 ms. {Mode = READ, GetApplication = 8 ms with 5502 bytes returned, ServerHealthCheckInfo = 0 ms [68 seconds old], Total = 13 ms} [ConnectionID=651e13c680f7528a][UsageCount=1]
+2025/12/21;03:13:36.557;477435993;UniqeClientPrivate::GetConfigParams#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Submitting job [1593cbbb-8c63-4e50-8b21-c51348733385] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:36.557;477435993;UniqeClientPrivate::ExecuteJobPrivate#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;1593cbbb-8c63-4e50-8b21-c51348733385: submitted job with 1 operations to [f32pap420n5.f32prod.mfg.intel.com] which took 25 ms.
+2025/12/21;03:13:36.776;477435993;DataConversion::GetObjectsFromBytes#1593cbbb-8c63-4e50-8b21-c51348733385:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Extracting 613 rows and 1 columns from 5517 bytes
+2025/12/21;03:13:36.776;477435993;UberTable::GetNextChunk2DPrivate#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 10] [id=0001] Obtained 613 rows and 1 columns [5517 bytes].
+2025/12/21;03:13:36.776;477435993;ConnectionManager::CloseClient#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Closing connection with state [Opened] that is 0 seconds old with key [f32pap420n5.f32prod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=651e13c680f7528a][ConnectionUsageCount=1]
+2025/12/21;03:13:36.776;477435993;Client::CloseClient#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;Close client connection [44c5559cfb5bea52] [Source=ConnectionManager][url=net.tcp://f32pap420n5.f32prod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:36.776;477435993;UberTable::GetNextChunk2DPrivate#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 10] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+E:\ScriptHostJobs\477435993\generate_dashboard20_html.py:208: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  lot_ct = pd.read_sql(lot_ct_sql, db)
+2025/12/21;03:13:36.776;477435993;UniqeClientPrivate::CloseProxy#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 4 ms). [Called from OnJobCompleteEvent][ID=#000010][DataSources=F32_PROD_XEUS][ConnectionID=651e13c680f7528a]
+2025/12/21;03:13:36.776;477435993;UniqeClientHelper::ConnectToUNIQE#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClientHelper::ConnectToUNIQE:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No explicit Site specified
+2025/12/21;03:13:36.776;477435993;UniqeClientPrivate::OnJobCompleteEvent#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-9;[,]TID:9;[python.exe {v4.8.60126.0308} {64-bit}] Job 1593cbbb-8c63-4e50-8b21-c51348733385 having 1 operations completed with status CompletedSuccessfully and took 245 ms and returned 613 rows and 1 columns and 5517 bytes. DataSources=[F32_PROD_XEUS] [Server=f32pap420n5.f32prod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = F32PROD5] [CompressedSize = 1532 bytes] [DBFirstRowTime = 209 ms] [NumThreads = 1] [ConnectTime = 23 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=651e13c680f7528a][InstanceID=f6af454cdad2e851][PrivateInstanceID=#000010] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:36.776;477435993;UNIQEAdapter::InitializeConfig#1593cbbb-8c63-4e50-8b21-c51348733385;INFO;UNIQEAdapter::InitializeConfig:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Original site input [rf3pap420n1.rf3prod.mfg.intel.com;rf3pap420n2.rf3prod.mfg.intel.com;rf3pap420n3.rf3prod.mfg.intel.com;rf3pap420n4.rf3prod.mfg.intel.com;rf3pap420n5.rf3prod.mfg.intel.com;rf3pap420n6.rf3prod.mfg.intel.com;rf3pap420n7.rf3prod.mfg.intel.com] converted to [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com].
+2025/12/21;03:13:36.776;477435993;UberUtility::GetTargetedServer#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UberUtility::GetTargetedServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;No targeting rules matched...13 rules evaluated.
+2025/12/21;03:13:36.792;477435993;UniqeClient::GetBestSite#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UniqeClient::GetBestSite:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Best site is [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com] for datasources: F32_PROD_XEUS.
+2025/12/21;03:13:36.792;477435993;UniqeClient::GetNewProxy#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UniqeClient::GetNewProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;Resolved original site [BEST;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] to [f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com] [ID=282719e704371c29].
+2025/12/21;03:13:36.792;477435993;UniqeClientPrivate::LoadBalance#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UniqeClientPrivate::LoadBalance:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Ordering nodes took 0 ms [Fixed site list with 1 nodes {f32pap420n3.f32prod.mfg.intel.com;f32pap420n4.f32prod.mfg.intel.com;f32pap420n5.f32prod.mfg.intel.com;f32pap420n6.f32prod.mfg.intel.com;ccepap420n3.cdcprod.mfg.intel.com;ccepap420n4.cdcprod.mfg.intel.com;ccepap420n5.cdcprod.mfg.intel.com;ccepap420n6.cdcprod.mfg.intel.com} specified....top node is CDCPROD3 with ActiveQueries = 10 and RoundTripTime = 32 ms which is 67 seconds old]. Healthcheck data from F32PROD5 used which is 69 seconds old.
+2025/12/21;03:13:36.792;477435993;UniqeClientPrivate::~UniqeClientPrivate;INFO;UniqeClientPrivate::~UniqeClientPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-2;[,]TID:2;Dispose not called, hence finalizer is kicking in for clean-up [ID=#000010]. Lifetime of object = 266 ms.
+2025/12/21;03:13:36.792;477435993;Client::OpenClient#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;Client::OpenClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Open client connection [d035198527c569fd] [OpenTimeOut=20sec][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:36.792;477435993;ConnectionManager::NewConnection#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;ConnectionManager::NewConnection:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Added new connection with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=286d6b7a2c2bedfd]
+2025/12/21;03:13:36.792;477435993;UniqeClientPrivate::InitializeServer#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UniqeClientPrivate::InitializeServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;[python.exe {v4.8.60126.0308} {64-bit}] Client connect to [ccepap420n3.cdcprod.mfg.intel.com] successful.
+2025/12/21;03:13:36.807;477435993;UniqeClientPrivate::PingServer#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UniqeClientPrivate::PingServer:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Pinging server [ccepap420n3.cdcprod.mfg.intel.com] took 11 ms. {Mode = READ, GetApplication = 6 ms with 5506 bytes returned, ServerHealthCheckInfo = 0 ms [70 seconds old], Total = 11 ms} [ConnectionID=286d6b7a2c2bedfd][UsageCount=1]
+2025/12/21;03:13:36.807;477435993;UniqeClientPrivate::GetConfigParams#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UniqeClientPrivate::GetConfigParams:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;Submitting job [1598f95c-c254-4c0c-bc79-021b6af57fce] with 1 operations {F32_PROD_XEUS} with credentials IWA[AMR\eddyayuk].
+2025/12/21;03:13:36.807;477435993;UniqeClientPrivate::ExecuteJobPrivate#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UniqeClientPrivate::ExecuteJobPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-4;[,]TID:4;1598f95c-c254-4c0c-bc79-021b6af57fce: submitted job with 1 operations to [ccepap420n3.cdcprod.mfg.intel.com] which took 25 ms.
+2025/12/21;03:13:53.374;477435993;DataConversion::GetObjectsFromBytes#1598f95c-c254-4c0c-bc79-021b6af57fce:0;INFO;DataConversion::GetObjectsFromBytes:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-15;[,]TID:15;Extracting 4398 rows and 2 columns from 71618 bytes
+2025/12/21;03:13:53.374;477435993;UberTable::GetNextChunk2DPrivate#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 11] [id=0001] Obtained 4398 rows and 2 columns [71618 bytes].
+2025/12/21;03:13:53.374;477435993;ConnectionManager::CloseClient#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;ConnectionManager::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-15;[,]TID:15;Closing connection with state [Opened] that is 16 seconds old with key [ccepap420n3.cdcprod.mfg.intel.com:8135#amr\eddyayuk] [ConnectionID=286d6b7a2c2bedfd][ConnectionUsageCount=1]
+2025/12/21;03:13:53.374;477435993;Client::CloseClient#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;Client::CloseClient:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-15;[,]TID:15;Close client connection [d035198527c569fd] [Source=ConnectionManager][url=net.tcp://ccepap420n3.cdcprod.mfg.intel.com:8135/UniqeWCFService/NoRSKrb]
+2025/12/21;03:13:53.374;477435993;UniqeClientPrivate::CloseProxy#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UniqeClientPrivate::CloseProxy:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-15;[,]TID:15;[python.exe {v4.8.60126.0308} {64-bit}] Close completed successfully (took 3 ms). [Called from OnJobCompleteEvent][ID=#000011][DataSources=F32_PROD_XEUS][ConnectionID=286d6b7a2c2bedfd]
+2025/12/21;03:13:53.374;477435993;UniqeClientPrivate::OnJobCompleteEvent#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UniqeClientPrivate::OnJobCompleteEvent:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-15;[,]TID:15;[python.exe {v4.8.60126.0308} {64-bit}] Job 1598f95c-c254-4c0c-bc79-021b6af57fce having 1 operations completed with status CompletedSuccessfully and took 16586 ms and returned 4398 rows and 2 columns and 71618 bytes. DataSources=[F32_PROD_XEUS] [Server=ccepap420n3.cdcprod.mfg.intel.com] [DataAccessor = DB2] [ServerFriendlyName = CDCPROD3] [CompressedSize = 40965 bytes] [DBFirstRowTime = 16526 ms] [NumThreads = 1] [ConnectTime = 23 ms] [ReliableSessions = False] [Kerberos = True] [OAuth = False] [ActualDataSource = F32_PROD_DIS_LOCAL] [RunAsUserID = AMR\eddyayuk] [ClientDispositionRule = ] [DispositionRule = OtherXeusToDISLocal] [#[DispositionRuleTag = Rule {OtherXeusToDISLocal:F32_PROD_XEUS=>F32_PROD_DIS_LOCAL} satisfied]#] [ConnectionID=286d6b7a2c2bedfd][InstanceID=282719e704371c29][PrivateInstanceID=#000011] {AuthMode = IWA[AMR\eddyayuk]}
+2025/12/21;03:13:53.391;477435993;UberTable::GetNextChunk2DPrivate#1598f95c-c254-4c0c-bc79-021b6af57fce;INFO;UberTable::GetNextChunk2DPrivate:af33533cb99dd45c-18376-1:af33533cb99dd45c-18376-1;[,]TID:1;[Table 11] [id=0002] Obtained 0 rows and 0 columns [0 bytes].
+Traceback (most recent call last):
+  File "E:\ScriptHostJobs\477435993\generate_dashboard20_html.py", line 1627, in main
+    print(f"   SD{progress_data['current_segment_day']} \u2192 SD{progress_data['segment_day_end']}")
+  File "D:\Python-i39\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 8: character maps to <undefined>
 [INFO] Using default configuration
 
 ================================================================================
 Q1 PRODUCTION DASHBOARD
 ================================================================================
 
-[INFO] Current: 2025-12-18 10:28:38 (WW202551)
+[INFO] Current: 2025-12-21 03:13:23 (WW202552)
 [INFO] Deadline: 2026-03-07 06:00 PM
 [INFO] Loading data...
-[OK] Loaded 4160 lineview, 8639 lots
+[OK] Loaded 4015 lineview, 8660 lots
 [INFO] BE LSB: 9812, Commit LSB: 175084
 
 [INFO] Querying database...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1517: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  shift_df = pd.read_sql(current_shift_sql, db)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1533: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  qdf = pd.read_sql(quarter_sql, db)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1559: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  last_24h_df = pd.read_sql(last_24h_sql, db)
 [INFO] Tracking commit section...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:524: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  commit_shift_df = pd.read_sql(commit_shift_sql, db)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:540: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  commit_24h_df = pd.read_sql(commit_24h_sql, db)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:555: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
-[OK] Commit section (Op 175084): Shift=75.0, 24h=487.0, Quarter=9,702.0
+[OK] Commit section (Op 175084): Shift=426.0, 24h=850.0, Quarter=12,251.0
 [INFO] Analyzing weekly trends...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:287: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  week_df = pd.read_sql(week_sql, db)
 [DEBUG] Week 2025-12-06 to 2025-12-13 = WW50, Ships: 7,445
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:287: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  week_df = pd.read_sql(week_sql, db)
-[DEBUG] Week 2025-12-13 to 2025-12-18 = WW51, Ships: 4,345
-[INFO] Total shipped so far: 11,790.0 over 2 weeks, avg = 5,895/week
-[INFO] Forecast: 11,790.0 + (5,895 × 12) = 82,530
-[INFO] Gap: 82,530 - 97,278 = -14,748
+[DEBUG] Week 2025-12-13 to 2025-12-20 = WW51, Ships: 7,427
+[DEBUG] Week 2025-12-20 to 2025-12-21 = WW52, Ships: 256
+[INFO] Total shipped so far: 15,128.0 over 3 weeks, avg = 5,043/week
+[INFO] Forecast: 15,128.0 + (5,043 � 11) = 70,597
+[INFO] Gap: 70,597 - 97,278 = -26,681
 [INFO] Analyzing quarterly CT...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:188: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  shipped_lots = pd.read_sql(shipped_lots_sql, db)
-[INFO] Analyzing CT impact across 495 PROD lots (active + shipped)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:208: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  lot_ct = pd.read_sql(lot_ct_sql, db)
+[INFO] Analyzing CT impact across 620 PROD lots (active + shipped)
 [OK] Found 17 operations over CT goal
 [OK] Database queries complete
 
 [INFO] Pull Point:
-   SD23 → SD104
-   Segment Days Remaining: 81
-   Calendar Days Remaining: 79.31
-   Status: -1.69 days BEHIND SCHEDULE
-[INFO] Analyzing CEIDs...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:453: SettingWithCopyWarning: 
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:208: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  lot_ct = pd.read_sql(lot_ct_sql, db)
-[OK] Found 17 operations over CT goal
-[OK] Database queries complete
 
-[INFO] Pull Point:
-   SD23 → SD104
-   Segment Days Remaining: 81
-   Calendar Days Remaining: 79.31
-   Status: -1.69 days BEHIND SCHEDULE
-[INFO] Analyzing CEIDs...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:453: SettingWithCopyWarning:
-PI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  lot_ct = pd.read_sql(lot_ct_sql, db)
-[OK] Found 17 operations over CT goal
-[OK] Database queries complete
-
-[INFO] Pull Point:
-   SD23 → SD104
-   Segment Days Remaining: 81
-   Calendar Days Remaining: 79.31
-   Status: -1.69 days BEHIND SCHEDULE
-[INFO] Analyzing CEIDs...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:453: SettingWithCopyWarning:
-  lot_ct = pd.read_sql(lot_ct_sql, db)
-[OK] Found 17 operations over CT goal
-[OK] Database queries complete
-
-[INFO] Pull Point:
-   SD23 → SD104
-   Segment Days Remaining: 81
-   Calendar Days Remaining: 79.31
-   Status: -1.69 days BEHIND SCHEDULE
-[INFO] Analyzing CEIDs...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:453: SettingWithCopyWarning:
-[OK] Database queries complete
-
-[INFO] Pull Point:
-   SD23 → SD104
-   Segment Days Remaining: 81
-   Calendar Days Remaining: 79.31
-   Status: -1.69 days BEHIND SCHEDULE
-[INFO] Analyzing CEIDs...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:453: SettingWithCopyWarning:
-   SD23 → SD104
-   Segment Days Remaining: 81
-   Calendar Days Remaining: 79.31
-   Status: -1.69 days BEHIND SCHEDULE
-[INFO] Analyzing CEIDs...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:453: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-  critical_path.loc[:, "CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
-   Status: -1.69 days BEHIND SCHEDULE
-[INFO] Analyzing CEIDs...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:453: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-  critical_path.loc[:, "CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:454: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:453: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-  critical_path.loc[:, "CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:454: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-  critical_path.loc[:, "CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:454: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:454: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-  critical_path.loc[:, "AVG_HAO"] = pd.to_numeric(critical_path["AVG_HAO"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:455: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-  critical_path.loc[:, "AVG_HAO"] = pd.to_numeric(critical_path["AVG_HAO"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:455: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-  critical_path.loc[:, "AVG_HAO"] = pd.to_numeric(critical_path["AVG_HAO"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:455: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:455: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-  critical_path.loc[:, "INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:456: SettingWithCopyWarning:
-A value is trying to be set on a copy of a slice from a DataFrame.
-Try using .loc[row_indexer,col_indexer] = value instead
-
-See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-  critical_path.loc[:, "INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
-[INFO] Analyzing limiters...
-[INFO] Generating dashboard...
-
-[ERROR] 'quarter_goal'
-Traceback (most recent call last):
-  File "\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py", line 1792, in main
-    html = generate_html_dashboard(data, ceid_analysis, quarterly_ct, progress_data, progress_24h, weekly_trends, commit_data)
-  File "\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py", line 1063, in generate_html_dashboard
-    <div class="stat-value">{data['quarter_goal']:,}</div>
-KeyError: 'quarter_goal'
-PS C:\Users\eddyayuk>
+[ERROR] 'charmap' codec can't encode character '\u2192' in position 8: character maps to <undefined>
