@@ -55,6 +55,8 @@ LOOKAHEAD_HOURS = CONFIG["lookahead_hours"]
 
 OUTPUT_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\MfgEng\COS_DB\dashboard.html"
 OUTPUT_URL = "https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html"
+BASELINE_STORAGE_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\MfgEng\COS_DB\shift_baseline.json"
+
 
 SHIFT_START_HOURS = [6, 18]
 HOURS_PER_SHIFT = 12
@@ -127,6 +129,71 @@ def safe_num(value, default=np.nan):
         return float(value)
     except Exception:
         return default
+    
+
+def read_shift_baseline():
+    """Read the stored 6am baseline from file"""
+    try:
+        if Path(BASELINE_STORAGE_PATH).exists():
+            with open(BASELINE_STORAGE_PATH, 'r') as f:
+                baseline = json.load(f)
+                print(f"[OK] Loaded baseline from {baseline['date']} at {baseline['shift_start']}")
+                return baseline
+    except Exception as e:
+        print(f"[WARNING] Could not read baseline: {e}")
+    return None
+
+def write_shift_baseline(date_str, shift_start_time, segment_day, ceid, operation, full_loop_seq):
+    """Write the 6am baseline to file"""
+    try:
+        baseline = {
+            "date": date_str,
+            "shift_start": shift_start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "baseline_sd": float(segment_day),
+            "baseline_ceid": str(ceid),
+            "baseline_operation": int(operation) if operation != "N/A" else "N/A",
+            "baseline_fls": float(full_loop_seq),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        with open(BASELINE_STORAGE_PATH, 'w') as f:
+            json.dump(baseline, f, indent=2)
+        print(f"[OK] Stored baseline: SD{segment_day} at {shift_start_time:%Y-%m-%d %H:%M:%S}")
+        return baseline
+    except Exception as e:
+        print(f"[ERROR] Could not write baseline: {e}")
+        return None
+
+def should_update_baseline(now, existing_baseline):
+    """
+    Determine if we should update the baseline
+    Update if:
+    1. No baseline exists
+    2. It's between 5:45am-6:15am and baseline is from previous day
+    """
+    # Check if we're in the update window (5:45am - 6:15am)
+    in_update_window = (now.hour == 5 and now.minute >= 45) or (now.hour == 6 and now.minute <= 15)
+    
+    if not in_update_window:
+        return False
+    
+    # No existing baseline - create one
+    if not existing_baseline:
+        return True
+    
+    # Check if existing baseline is from today
+    try:
+        baseline_date = datetime.strptime(existing_baseline['date'], "%Y-%m-%d").date()
+        today = now.date()
+        
+        # If baseline is from a previous day, update it
+        if baseline_date < today:
+            return True
+    except Exception:
+        return True
+    
+    return False
+
+
 
 def load_tsv(path: str) -> pd.DataFrame:
     """Load TSV file"""
@@ -389,9 +456,9 @@ def calculate_progress_data(pp_segment_day, segment_day_end, quarter_start, dead
         "status_class": status_class
     }
 
-def calculate_24h_shift_progress(pp_segment_day, pp_full_loop_seq, ssafi_lsb_fls, df_lineview, now, catchup_ct_target):
+def calculate_24h_shift_progress(pp_segment_day, pp_ceid, pp_operation, pp_full_loop_seq, ssafi_lsb_fls, df_lineview, now, catchup_ct_target):
     """
-    Calculate 24-hour shift progress from 6am baseline
+    Calculate 24-hour shift progress from STORED 6am baseline
     Stretch goal: 35 CT hours in 24 calendar hours
     """
     
@@ -404,64 +471,74 @@ def calculate_24h_shift_progress(pp_segment_day, pp_full_loop_seq, ssafi_lsb_fls
     else:
         shift_baseline_time = today_6am
     
+    # Read existing baseline
+    stored_baseline = read_shift_baseline()
+    
+    # Check if we should update the baseline
+    if should_update_baseline(now, stored_baseline):
+        print(f"[INFO] Updating 6am baseline...")
+        stored_baseline = write_shift_baseline(
+            shift_baseline_time.strftime("%Y-%m-%d"),
+            shift_baseline_time,
+            pp_segment_day,
+            pp_ceid,
+            pp_operation,
+            pp_full_loop_seq
+        )
+    
+    # Use stored baseline or fall back to current position
+    if stored_baseline:
+        baseline_sd = stored_baseline["baseline_sd"]
+        baseline_ceid = stored_baseline["baseline_ceid"]
+        baseline_operation = stored_baseline.get("baseline_operation", "N/A")
+        print(f"[INFO] Using stored baseline: SD{baseline_sd} from {stored_baseline['shift_start']}")
+    else:
+        # Fallback: use current position as baseline
+        baseline_sd = pp_segment_day
+        baseline_ceid = pp_ceid
+        baseline_operation = pp_operation
+        print(f"[WARNING] No baseline found, using current position as baseline")
+    
     # Hours elapsed since 6am shift start
     hours_elapsed = (now - shift_baseline_time).total_seconds() / 3600.0
     
     # Expected progress: (hours_elapsed / 24) × 35 CT hours
     expected_ct_progress = (hours_elapsed / 24.0) * catchup_ct_target
     
-    # Get operations from current pull point forward
+    # Get operations from baseline forward
+    baseline_fls = stored_baseline["baseline_fls"] if stored_baseline else pp_full_loop_seq
+    
     path_forward = df_lineview.query(
-        f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+        f"FULL_LOOP_SEQ > {baseline_fls} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
     ).sort_values("FULL_LOOP_SEQ").copy()
     
     path_forward["CT_AVG_4WW"] = pd.to_numeric(path_forward["CT_AVG_4WW"], errors="coerce").fillna(0.0)
     path_forward["CUMULATIVE_CT"] = path_forward["CT_AVG_4WW"].cumsum()
     
-    # Get operations behind current pull point (to estimate 6am position)
-    path_behind = df_lineview.query(
-        f"FULL_LOOP_SEQ <= {pp_full_loop_seq} & OPERATION not in {EXCLUDED_OPERATIONS}"
-    ).sort_values("FULL_LOOP_SEQ", ascending=False).copy()
-    
-    path_behind["CT_AVG_4WW"] = pd.to_numeric(path_behind["CT_AVG_4WW"], errors="coerce").fillna(0.0)
-    path_behind["CUMULATIVE_CT_BACK"] = path_behind["CT_AVG_4WW"].cumsum()
-    
-    # Estimate 6am baseline position (work backwards from current position)
-    estimated_6am_ops = path_behind.query(f"CUMULATIVE_CT_BACK <= {expected_ct_progress}")
-    
-    if not estimated_6am_ops.empty:
-        baseline_6am_op = estimated_6am_ops.tail(1)
-        baseline_sd = safe_num(baseline_6am_op["SEGMENT_DAY"].values[0], pp_segment_day)
-        baseline_ceid = baseline_6am_op.get("CEID", pd.Series(["N/A"])).values[0]
-    else:
-        # If we haven't moved enough, baseline is current position
-        baseline_sd = pp_segment_day
-        baseline_ceid = "N/A"
-    
-    # Expected position now: 6am baseline + expected CT progress
+    # Expected position now: baseline + expected CT progress
     expected_now_ops = path_forward.query(f"CUMULATIVE_CT <= {expected_ct_progress}")
     
     if not expected_now_ops.empty:
         expected_now_op = expected_now_ops.tail(1)
-        expected_sd = safe_num(expected_now_op["SEGMENT_DAY"].values[0], pp_segment_day)
+        expected_sd = safe_num(expected_now_op["SEGMENT_DAY"].values[0], baseline_sd)
         expected_ceid = expected_now_op.get("CEID", pd.Series(["N/A"])).values[0]
         expected_op = expected_now_op["OPERATION"].values[0] if "OPERATION" in expected_now_op.columns else "N/A"
     else:
         expected_sd = baseline_sd
         expected_ceid = baseline_ceid
-        expected_op = "N/A"
+        expected_op = baseline_operation
     
-    # Target by 6am tomorrow: current position + 35 CT hours
+    # Target by 6am tomorrow: baseline + 35 CT hours
     target_ops = path_forward.query(f"CUMULATIVE_CT <= {catchup_ct_target}")
     
     if not target_ops.empty:
         target_op = target_ops.tail(1)
-        target_sd = safe_num(target_op["SEGMENT_DAY"].values[0], pp_segment_day)
+        target_sd = safe_num(target_op["SEGMENT_DAY"].values[0], baseline_sd)
         target_ceid = target_op.get("CEID", pd.Series(["N/A"])).values[0]
         target_operation = target_op["OPERATION"].values[0] if "OPERATION" in target_op.columns else "N/A"
         ops_in_target = len(target_ops)
     else:
-        target_sd = pp_segment_day
+        target_sd = baseline_sd
         target_ceid = "N/A"
         target_operation = "N/A"
         ops_in_target = 0
@@ -496,7 +573,8 @@ def calculate_24h_shift_progress(pp_segment_day, pp_full_loop_seq, ssafi_lsb_fls
         "expected_progress_sd": expected_progress_sd,
         "pace_status": pace_status,
         "pace_class": pace_class,
-        "ct_target": catchup_ct_target
+        "ct_target": catchup_ct_target,
+        "using_stored_baseline": stored_baseline is not None
     }
 
 
@@ -1814,7 +1892,7 @@ def main():
 
         # 24-hour shift tracking
         print(f"[INFO] Calculating 24h shift progress...")
-        shift_24h = calculate_24h_shift_progress(pp_segment_day, pp_full_loop_seq, ssafi_lsb_fls, df_lineview, now, CATCHUP_CT_TARGET)
+        shift_24h = calculate_24h_shift_progress(pp_segment_day, pp_ceid, pp_operation, pp_full_loop_seq, ssafi_lsb_fls, df_lineview, now, CATCHUP_CT_TARGET)
 
         
         # Limiters
