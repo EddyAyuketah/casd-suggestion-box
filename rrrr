@@ -6,25 +6,25 @@ PS C:\Users\eddyayuk> & "C:/Users/eddyayuk/My Programs/SQLPathFinder3/Python3/py
 Q1 PRODUCTION DASHBOARD
 ================================================================================
 
-[INFO] Current: 2025-12-22 20:02:59 (WW202552)
+[INFO] Current: 2025-12-22 20:18:02 (WW202552)
 [INFO] Deadline: 2026-03-07 06:00 PM
 [INFO] Loading data...
-[OK] Loaded 4046 lineview, 8633 lots
+[OK] Loaded 4052 lineview, 8628 lots
 [INFO] BE LSB: 9812, Commit LSB: 175084
 
 [INFO] Querying database...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1747: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1751: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   shift_df = pd.read_sql(current_shift_sql, db)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1763: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1767: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   qdf = pd.read_sql(quarter_sql, db)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1789: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1793: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   last_24h_df = pd.read_sql(last_24h_sql, db)
 [INFO] Tracking commit section...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:727: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:731: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   commit_shift_df = pd.read_sql(commit_shift_sql, db)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:743: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:747: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   commit_24h_df = pd.read_sql(commit_24h_sql, db)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:758: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:762: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
 [OK] Commit section (Op 175084): Shift=50.0, 24h=1,024.0, Quarter=13,975.0
 [INFO] Analyzing weekly trends...
@@ -52,28 +52,28 @@ Q1 PRODUCTION DASHBOARD
 [INFO] Pull Point:
    SD28 to SD104
    Segment Days Remaining: 76
-   Calendar Days Remaining: 74.91
-   Status: -1.09 days BEHIND SCHEDULE
+   Calendar Days Remaining: 74.90
+   Status: -1.10 days BEHIND SCHEDULE
 [INFO] Analyzing CEIDs...
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:656: SettingWithCopyWarning: 
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:660: SettingWithCopyWarning: 
 A value is trying to be set on a copy of a slice from a DataFrame.
 Try using .loc[row_indexer,col_indexer] = value instead
 
 See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
   critical_path.loc[:, "CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:657: SettingWithCopyWarning:
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:661: SettingWithCopyWarning: 
 A value is trying to be set on a copy of a slice from a DataFrame.
 Try using .loc[row_indexer,col_indexer] = value instead
 
 See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
   critical_path.loc[:, "AVG_HAO"] = pd.to_numeric(critical_path["AVG_HAO"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:658: SettingWithCopyWarning:
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:662: SettingWithCopyWarning:
 A value is trying to be set on a copy of a slice from a DataFrame.
 Try using .loc[row_indexer,col_indexer] = value instead
 
 See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
   critical_path.loc[:, "INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:659: SettingWithCopyWarning: 
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:663: SettingWithCopyWarning:
 A value is trying to be set on a copy of a slice from a DataFrame.
 Try using .loc[row_indexer,col_indexer] = value instead
 
@@ -87,26 +87,26 @@ See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stab
   Baseline: SD22.0 at FLS 1234.5
   Current: SD28
   Looking for 35 CT hours from baseline...
-  Found 12 operations in range
+  Found 10 operations in range
 
   First 5 operations in target path:
-    1. FLS=4090000, SD=22, CEID=DVDxi, CT=0.8h
-    2. FLS=4090500, SD=22, CEID=DVDxi, CT=0.6h
-    3. FLS=4100000, SD=22, CEID=RVIst, CT=2.1h
-    4. FLS=4110000, SD=22, CEID=BPDdm, CT=0.3h
-    5. FLS=4120000, SD=22, CEID=SRCdm, CT=0.6h
+    1. FLS=5230500, SD=28, CEID=SAUli, CT=7.1h
+    2. FLS=5240000, SD=28, CEID=TBEbc, CT=0.2h
+    3. FLS=5260000, SD=28, CEID=CDKli, CT=0.1h
+    4. FLS=5270000, SD=28, CEID=REGfe, CT=1.3h
+    5. FLS=5270500, SD=28, CEID=REGfe, CT=3.3h
 
   Target (last operation in 35h):
-    FLS=4190000
-    SD=22
-    CEID=NSTwn
+    FLS=5350000
+    SD=29
+    CEID=STOsd
 [INFO] Analyzing limiters...
 [INFO] Generating dashboard...
 
 ================================================================================
 [SUCCESS] DEPLOYED!
 ================================================================================
-[STATS] Pull Point: SD28 (-1.09 days)
+[STATS] Pull Point: SD28 (-1.10 days)
 [STATS] Quarter: 15,990.0/97,278 (16.4%)
 [STATS] Commit: 13,975.0 from Op 175084
 [STATS] Forecast: 76,893 (gap: -20,385)
