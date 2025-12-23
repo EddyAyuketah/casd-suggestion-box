@@ -61,14 +61,57 @@ Try using .loc[row_indexer,col_indexer] = value instead
 See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
   critical_path.loc[:, "CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
 \\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:654: SettingWithCopyWarning:
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:656: SettingWithCopyWarning:
 A value is trying to be set on a copy of a slice from a DataFrame.
 Try using .loc[row_indexer,col_indexer] = value instead
 
 See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-  critical_path.loc[:, "AVG_HAO"] = pd.to_numeric(critical_path["AVG_HAO"], errors="coerce").fillna(0.0)
-\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:655: SettingWithCopyWarning:
+  critical_path.loc[:, "INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
+[INFO] Calculating 24h shift progress...
+[OK] Loaded baseline from 2025-12-22 at 2025-12-22 06:00:00
+[INFO] Using stored baseline: SD22.0 from 2025-12-22 06:00:00
+[INFO] Analyzing limiters...
+[INFO] Generating dashboard...
+
+================================================================================
+[SUCCESS] DEPLOYED!
+================================================================================
+[STATS] Pull Point: SD28 (-1.07 days)
+[STATS] Quarter: 15,990.0/97,278 (16.4%)
+[STATS] Commit: 13,975.0 from Op 175084
+[STATS] Forecast: 76,893 (gap: -20,385)
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:656: SettingWithCopyWarning:
 A value is trying to be set on a copy of a slice from a DataFrame.
 Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
+[INFO] Calculating 24h shift progress...
+[OK] Loaded baseline from 2025-12-22 at 2025-12-22 06:00:00
+[INFO] Using stored baseline: SD22.0 from 2025-12-22 06:00:00
+[INFO] Analyzing limiters...
+[INFO] Generating dashboard...
+
+================================================================================
+[SUCCESS] DEPLOYED!
+================================================================================
+[STATS] Pull Point: SD28 (-1.07 days)
+[STATS] Quarter: 15,990.0/97,278 (16.4%)
+[STATS] Commit: 13,975.0 from Op 175084
+[STATS] Forecast: 76,893 (gap: -20,385)
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
+================================================================================
+
+PS C:\Users\eddyayuk>
+
+
+
+
 
 See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
   critical_path.loc[:, "INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
@@ -93,3 +136,193 @@ See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stab
 [STATS] Forecast: 76,893 (gap: -20,385)
 [URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
 ================================================================================
+
+PS C:\Users\eddyayuk>
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:656: SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
+[INFO] Calculating 24h shift progress...
+[OK] Loaded baseline from 2025-12-22 at 2025-12-22 06:00:00
+[INFO] Using stored baseline: SD22.0 from 2025-12-22 06:00:00
+[INFO] Analyzing limiters...
+[INFO] Generating dashboard...
+
+================================================================================
+[SUCCESS] DEPLOYED!
+================================================================================
+[STATS] Pull Point: SD28 (-1.07 days)
+[STATS] Quarter: 15,990.0/97,278 (16.4%)
+[STATS] Commit: 13,975.0 from Op 175084
+[STATS] Forecast: 76,893 (gap: -20,385)
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
+[INFO] Calculating 24h shift progress...
+[OK] Loaded baseline from 2025-12-22 at 2025-12-22 06:00:00
+[INFO] Using stored baseline: SD22.0 from 2025-12-22 06:00:00
+[INFO] Analyzing limiters...
+[INFO] Generating dashboard...
+
+================================================================================
+[SUCCESS] DEPLOYED!
+================================================================================
+[STATS] Pull Point: SD28 (-1.07 days)
+[STATS] Quarter: 15,990.0/97,278 (16.4%)
+[STATS] Commit: 13,975.0 from Op 175084
+[STATS] Forecast: 76,893 (gap: -20,385)
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
+[INFO] Calculating 24h shift progress...
+[OK] Loaded baseline from 2025-12-22 at 2025-12-22 06:00:00
+[INFO] Using stored baseline: SD22.0 from 2025-12-22 06:00:00
+[INFO] Analyzing limiters...
+[INFO] Generating dashboard...
+
+================================================================================
+[SUCCESS] DEPLOYED!
+================================================================================
+[STATS] Pull Point: SD28 (-1.07 days)
+[STATS] Quarter: 15,990.0/97,278 (16.4%)
+[STATS] Commit: 13,975.0 from Op 175084
+[STATS] Forecast: 76,893 (gap: -20,385)
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
+================================================================================
+[SUCCESS] DEPLOYED!
+================================================================================
+[STATS] Pull Point: SD28 (-1.07 days)
+[STATS] Quarter: 15,990.0/97,278 (16.4%)
+[STATS] Commit: 13,975.0 from Op 175084
+[STATS] Forecast: 76,893 (gap: -20,385)
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
+[STATS] Pull Point: SD28 (-1.07 days)
+[STATS] Quarter: 15,990.0/97,278 (16.4%)
+[STATS] Commit: 13,975.0 from Op 175084
+[STATS] Forecast: 76,893 (gap: -20,385)
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
+================================================================================
+
+PS C:\Users\eddyayuk> ^C
+PS C:\Users\eddyayuk> & "C:/Users/eddyayuk/My Programs/SQLPathFinder3/Python3/python.exe" //shuser-prod.intel.com/SHProdUser$/eddyayuk/generate_dashboard20_html.py
+
+[INFO] Using default configuration
+
+================================================================================
+Q1 PRODUCTION DASHBOARD
+================================================================================
+
+[INFO] Current: 2025-12-22 19:45:36 (WW202552)
+[INFO] Deadline: 2026-03-07 06:00 PM
+[INFO] Loading data...
+[OK] Loaded 4048 lineview, 8629 lots
+[INFO] BE LSB: 9812, Commit LSB: 175084
+
+[INFO] Querying database...
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1747: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1763: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1789: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:727: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:743: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_24h_df = pd.read_sql(commit_24h_sql, db)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:758: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
+[OK] Commit section (Op 175084): Shift=50.0, 24h=1,024.0, Quarter=13,975.0
+[INFO] Analyzing weekly trends...
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:354: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  week_df = pd.read_sql(week_sql, db)
+[DEBUG] Week 2025-12-06 to 2025-12-13 = WW50, Ships: 7,445
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:354: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  week_df = pd.read_sql(week_sql, db)
+[DEBUG] Week 2025-12-13 to 2025-12-20 = WW51, Ships: 7,427
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:354: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  week_df = pd.read_sql(week_sql, db)
+[DEBUG] Week 2025-12-20 to 2025-12-22 = WW52, Ships: 1,605
+[INFO] Total shipped so far: 16,477.0 over 3 weeks, avg = 5,492/week
+[INFO] Forecast: 16,477.0 + (5,492 × 11) = 76,893
+[INFO] Gap: 76,893 - 97,278 = -20,385
+[INFO] Analyzing quarterly CT...
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:255: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shipped_lots = pd.read_sql(shipped_lots_sql, db)
+[INFO] Analyzing CT impact across 686 PROD lots (active + shipped)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:275: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  lot_ct = pd.read_sql(lot_ct_sql, db)
+[OK] Found 17 operations over CT goal
+[OK] Database queries complete
+
+[INFO] Pull Point:
+   SD28 to SD104
+   Segment Days Remaining: 76
+   Calendar Days Remaining: 74.93
+   Status: -1.07 days BEHIND SCHEDULE
+[INFO] Analyzing CEIDs...
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:656: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:657: SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "AVG_HAO"] = pd.to_numeric(critical_path["AVG_HAO"], errors="coerce").fillna(0.0)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:658: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:659: SettingWithCopyWarning:
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  critical_path.loc[:, "INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
+[INFO] Calculating 24h shift progress...
+[OK] Loaded baseline from 2025-12-22 at 2025-12-22 06:00:00
+[INFO] Using stored baseline: SD22.0 from 2025-12-22 06:00:00
+
+[DEBUG] 24h Target Calculation:
+  Baseline: SD22.0 at FLS 1234.5
+  Current: SD28
+  Looking for 35 CT hours from baseline...
+  Found 11 operations in range
+
+  First 5 operations in target path:
+    1. FLS=20000, SD=0, CEID=PC-PS-STG, CT=0.0h
+    2. FLS=30000, SD=1, CEID=UDCdx, CT=1.3h
+    3. FLS=40000, SD=1, CEID=DM-LOGIC, CT=0.0h
+    4. FLS=50000, SD=1, CEID=VFAdi, CT=11.4h
+    5. FLS=60000, SD=1, CEID=DRTnc, CT=0.2h
+
+  Target (last operation in 35h):
+    FLS=120000
+    SD=1
+    CEID=DRTnc
+[INFO] Analyzing limiters...
+[INFO] Generating dashboard...
+
+================================================================================
+[SUCCESS] DEPLOYED!
+================================================================================
+[STATS] Pull Point: SD28 (-1.07 days)
+[STATS] Quarter: 15,990.0/97,278 (16.4%)
+[STATS] Commit: 13,975.0 from Op 175084
+[STATS] Forecast: 76,893 (gap: -20,385)
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
+================================================================================
+
+PS C:\Users\eddyayuk> 
