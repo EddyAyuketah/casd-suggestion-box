@@ -1,131 +1,29 @@
-looking at our file, lets replace the way we pull the number of wafers we shippped in the 🛰️ Weekly Trend & Forecast - Quarter Analysis
-section lets use this functionality instead. 
+remeber how we were working on the intel semiconductor dashboard, project, now i wanna create a new report
+that helps the line because right now, we have a lot static lots in the line, that can be seen through the
+lot path we used in our other project. and we need to find a way to pull these lots. 
 
-SELECT
-  FABOUT_WW, 
-  SUM(FABOUT_WAFER_QTY) as TOTAL_SHIPS
-FROM 
-  F_LOT_FABOUT_SUMMARY
-WHERE 
-  LOT_TYPE = 'PROD'
-  AND FABOUT_ROUTE LIKE ('FL%')
-  AND LOT_PROCESS IN ('1274','1275')
-  and FABOUT_WW > 202550
-GROUP BY 
-  FABOUT_WW
+i made this, 
 
-so printing out from the work week denoted as 202550 till our current work week
-and it should auto update every week.  
+lots = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LOTS.TXT"
+df_lots = pd.read_csv(lots, sep="\t")
+ 
+ 
+statics = (df_lots
+           .loc[(df_lots['LOT_TYPE'] == 'PROD')]
+           .loc[(df_lots['STOP_FLAG'] == 'S')]
+           .loc[(df_lots['LOT_STATE'] == 'Active') | (df_lots['LOT_STATE'] == 'StoresMerge')]
+           .loc[(df_lots['HAO'] >= 12)]
+           .filter(["LOT","PRODUCT", "OPERATION", "OPER_SHORT_DESC","CEID", "AREA", 'LOT_PRIORITY',  'WAFER_QTY', "HAO", ])
+)
 
-Secondly, since we already pull where we were supposed to be yesterda with our pull point
-saying weather we missed or not. now i want to add functionality to put blame on who is the 
-reason for us missing. helping us to put blame on those who are a reason. 
-so analyze what i have written below and implement it in a proper way and we would 
-need to also save this obviously in our json file where we store where we were at 
-at 6am so please rewrite the entire code with these updates and make sure everything concerning the functionality of this report is 
-bullet proof and working properly.  
+however, its so limited because
+we need  something that will print out COMMENTS on the lots that are impacting us. 
 
-def find_lost_time_pp(df_lineview, yesterday_actual, today_actual, day_ct_goal):
-    """
-    Calculate the gap vs. daily CT goal and identify operations driving lost time.
- 
-    Parameters
-    ----------
-    df_lineview : pandas.DataFrame
-        Line-level data containing at least the following columns:
-        ["OPERATION", "OPER_SHORT_DESC", "CEID",
-         "FULL_LOOP_SEQ", "CT_GOAL", "LAYER_COUNT", "CW_CT", "PS_CT"]
-    yesterday_actual : str or int
-        Identifier for the "yesterday actual" operation used as the start bound.
-        Must match values in df_lineview["OPERATION"].
-    today_actual : str or int
-        Identifier for the "today actual" operation used as the end bound and
-        to start prediction from. Must match values in df_lineview["OPERATION"].
-    day_ct_goal : int or float
-        Target cumulative normalized cycle time for a full day.
- 
-    Returns
-    -------
-    actual_ct_progress_gap : float
-        Difference between actual cumulative normalized CT and the day CT goal
-        over the period [yesterday_actual, today_actual).
-        Positive => over target, negative => behind target.
-    gap_driver : pandas.DataFrame
-        Subset of df_lineview for the range
-        FULL_LOOP_SEQ in [FULL_LOOP_SEQ(yesterday_actual),
-                          FULL_LOOP_SEQ(today_actual)),
-        with the following columns:
-        ["OPERATION", "OPER_SHORT_DESC", "CEID", "LOST_TIME"],
-        where LOST_TIME = NORM_CT_GOAL - (PS_CT * LAYER_COUNT).
-    """
- 
-    def get_full_loop_seq(operation):
-        """
-        Return FULL_LOOP_SEQ value for a given operation.
- 
-        Assumes the operation exists and is unique in df_lineview["OPERATION"].
-        """
-        return (
-            df_lineview
-            .loc[df_lineview["OPERATION"] == operation, "FULL_LOOP_SEQ"]
-            .values[0]
-        )
- 
-    # Precompute sequence boundaries for the period of interest
-    seq_yesterday = get_full_loop_seq(yesterday_actual)
-    seq_today = get_full_loop_seq(today_actual)
- 
-    # ---- Predict today's completion point vs. daily CT goal ----
-    # Start from today's actual operation and compute cumulative normalized CT.
-    pred_df = (
-        df_lineview
-        .query("FULL_LOOP_SEQ >= @seq_today")
-        .filter(["OPERATION", "OPER_SHORT_DESC", "CEID",
-                 "CT_GOAL", "LAYER_COUNT", "CW_CT"])
-        .assign(
-            # Normalized CT goal per row = CT goal * number of layers
-            NORM_CT_GOAL=lambda x: x["CT_GOAL"] * x["LAYER_COUNT"],
-            # Cumulative normalized CT
-            NORM_CT_CUMSUM=lambda x: x["NORM_CT_GOAL"].cumsum(),
-            # Remainder vs. daily goal, to determine position within the day
-            DAY_MOD=lambda x: x["NORM_CT_CUMSUM"] % day_ct_goal,
-            # Number of full days' worth of CT accumulated
-            DAY_FULL=lambda x: x["NORM_CT_CUMSUM"] // day_ct_goal,
-        )
-    )
- 
-    # ---- Actual CT progress vs. daily goal ----
-    # Compute cumulative normalized CT between yesterday_actual and today_actual.
-    actual_ct_progress = (
-        df_lineview
-        .query("FULL_LOOP_SEQ >= @seq_yesterday and FULL_LOOP_SEQ < @seq_today")
-        .filter(["OPERATION", "OPER_SHORT_DESC", "CEID",
-                 "CT_GOAL", "LAYER_COUNT", "CW_CT"])
-        .assign(
-            NORM_CT_GOAL=lambda x: x["CT_GOAL"] * x["LAYER_COUNT"],
-            NORM_CT_CUMSUM=lambda x: x["NORM_CT_GOAL"].cumsum(),
-        )
-        .tail(1)[["NORM_CT_CUMSUM"]]
-    )
- 
-    # Gap vs. daily CT goal (actual minus target)
-    actual_ct_progress_gap = actual_ct_progress.iloc[0, 0] - day_ct_goal
- 
-    # ---- Lost time driver analysis ----
-    # For the same range, compute lost time by operation.
-    gap_driver = (
-        df_lineview
-        .query("FULL_LOOP_SEQ >= @seq_yesterday and FULL_LOOP_SEQ < @seq_today")
-        .filter(["OPERATION", "OPER_SHORT_DESC", "CEID",
-                 "CT_GOAL", "LAYER_COUNT", "PS_CT"])
-        .assign(
-            NORM_CT_GOAL=lambda x: x["CT_GOAL"] * x["LAYER_COUNT"],
-            NORM_CT_CUMSUM=lambda x: x["NORM_CT_GOAL"].cumsum(),
-            # Lost time = planned normalized CT - produced normalized CT
-            LOST_TIME=lambda x: x["NORM_CT_GOAL"] - (x["PS_CT"] * x["LAYER_COUNT"]),
-        )
-        .sort_values("LOST_TIME", ascending=False)  # largest lost time first
-    )
- 
-    return actual_ct_progress_gap, gap_driver[["OPERATION", "OPER_SHORT_DESC", "CEID", "LOST_TIME"]]
- 
+
+[ERROR] name 'dynamic_ct_target' is not defined
+Traceback (most recent call last):
+  File "c:\Temp\CERT_LOT\generate_dashboard20_html.py", line 2401, in main
+    html = generate_html_dashboard(data, ceid_analysis, quarterly_ct, progress_data, weekly_trends, commit_data, shift_24h, blame_analysis)
+  File "c:\Temp\CERT_LOT\generate_dashboard20_html.py", line 1158, in generate_html_dashboard
+    • Focus on <strong>high impact operations</strong> within the {dynamic_ct_target * 2:.1f}h lookahead window<br>
+NameError: name 'dynamic_ct_target' is not defined
