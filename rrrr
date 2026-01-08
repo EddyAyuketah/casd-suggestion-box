@@ -1,1 +1,176 @@
-lol
+this is my output 
+
+================================================================================
+Q1 PRODUCTION DASHBOARD
+================================================================================
+
+[INFO] Current: 2026-01-08 11:31:17 (WW202602)
+[INFO] Deadline: 2026-03-07 06:00 PM
+[INFO] Loading data...
+[OK] Loaded 4165 lineview, 8818 lots
+[INFO] BE LSB: 9812, Commit LSB: 175084
+
+[INFO] Querying database...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2130: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2146: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2172: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+================================================================================
+
+[INFO] Current: 2026-01-08 11:31:17 (WW202602)
+[INFO] Deadline: 2026-03-07 06:00 PM
+[INFO] Loading data...
+[OK] Loaded 4165 lineview, 8818 lots
+[INFO] BE LSB: 9812, Commit LSB: 175084
+
+[INFO] Querying database...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2130: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2146: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2172: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+[INFO] Current: 2026-01-08 11:31:17 (WW202602)
+[INFO] Deadline: 2026-03-07 06:00 PM
+[INFO] Loading data...
+[OK] Loaded 4165 lineview, 8818 lots
+[INFO] BE LSB: 9812, Commit LSB: 175084
+
+[INFO] Querying database...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2130: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2146: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2172: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+[OK] Loaded 4165 lineview, 8818 lots
+[INFO] BE LSB: 9812, Commit LSB: 175084
+
+[INFO] Querying database...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2130: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2146: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2172: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+
+[INFO] Querying database...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2130: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2146: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2172: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2146: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2172: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2146: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2172: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+  qdf = pd.read_sql(quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:2172: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:908: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_24h_df = pd.read_sql(commit_24h_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:922: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string Uc:\Temp\CERT_LOT\generate_dashboard20_html.py:2172: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:908: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_24h_df = pd.read_sql(commit_24h_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:922: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:893: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:908: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_24h_df = pd.read_sql(commit_24h_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:922: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:908: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_24h_df = pd.read_sql(commit_24h_sql, db)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:922: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
+[OK] Commit section (Op 175084): Shift=298.0, 24h=1,010.0, Quarter=27,212.0
+[INFO] Analyzing weekly trends...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:463: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
+[OK] Commit section (Op 175084): Shift=298.0, 24h=1,010.0, Quarter=27,212.0
+[INFO] Analyzing weekly trends...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:463: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string U[OK] Commit section (Op 175084): Shift=298.0, 24h=1,010.0, Quarter=27,212.0
+[INFO] Analyzing weekly trends...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:463: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string Uc:\Temp\CERT_LOT\generate_dashboard20_html.py:463: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  weeks_df = pd.read_sql(weekly_sql, db)
+RI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  weeks_df = pd.read_sql(weekly_sql, db)
+  weeks_df = pd.read_sql(weekly_sql, db)
+[DEBUG] WW50: 7,402 wafers
+[DEBUG] WW51: 7,108 wafers
+[DEBUG] WW52: 7,727 wafers
+[DEBUG] WW1: 5,807 wafers
+[DEBUG] WW2: 3,676 wafers
+[INFO] Total shipped: 31,720.0 over 5 work weeks, avg = 6,344/week
+[INFO] Forecast: 31,720.0 + (6,344 × 9) = 88,816
+[INFO] Gap: 88,816 - 92,900 = -4,084
+[OK] Database queries complete
+[INFO] Dynamic 24h CT target: 26.4 hours (based on schedule needs)
+[INFO] Calculating segment inventory...
+[INFO] Analyzing quarterly CT...
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:365: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shipped_lots = pd.read_sql(shipped_lots_sql, db)
+[INFO] Analyzing CT impact across 4245 PROD lots (active + shipped)
+c:\Temp\CERT_LOT\generate_dashboard20_html.py:385: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  lot_ct = pd.read_sql(lot_ct_sql, db)
+[OK] Found 13 operations over CT goal
+
+[INFO] Pull Point:
+   SD40 to SD104
+   Segment Days Remaining: 64
+   Calendar Days Remaining: 58.27
+   Status: -5.73 days BEHIND SCHEDULE
+[INFO] Analyzing CEIDs...
+[INFO] CEID Performance analyzing 51 operations within 52.7h lookahead
+[INFO] Calculating 24h shift progress...
+[OK] Loaded baseline from 2026-01-07 at 2026-01-07 06:00:00
+[INFO] Using stored previous day performance: HIT TARGET
+[INFO] Using stored baseline: SD39.0 from 2026-01-07 06:00:00
+[INFO] Analyzing limiters...
+[INFO] Using dynamic limiter lookahead: 26.4 hours
+[INFO] Generating dashboard...
+
+[ERROR] generate_html_dashboard() takes from 7 to 8 positional arguments but 9 were given
+Traceback (most recent call last):
+  File "c:\Temp\CERT_LOT\generate_dashboard20_html.py", line 2402, in main
+    html = generate_html_dashboard(data, ceid_analysis, quarterly_ct, progress_data, weekly_trends, commit_data, shift_24h, blame_analysis, dynamic_ct_target)
+TypeError: generate_html_dashboard() takes from 7 to 8 positional arguments but 9 were given
+PS C:\Users\eddyayuk>
