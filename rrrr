@@ -22,7 +22,8 @@ saying weather we missed or not. now i want to add functionality to put blame on
 reason for us missing. helping us to put blame on those who are a reason. 
 so analyze what i have written below and implement it in a proper way and we would 
 need to also save this obviously in our json file where we store where we were at 
-at 6am so please rewrite the entire code with these updates. 
+at 6am so please rewrite the entire code with these updates and make sure everything concerning the functionality of this report is 
+bullet proof and working properly.  
 
 def find_lost_time_pp(df_lineview, yesterday_actual, today_actual, day_ct_goal):
     """
