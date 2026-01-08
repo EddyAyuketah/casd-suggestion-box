@@ -1,8 +1,13 @@
-so this is how i fixed the script but the problem here is 
-this prints general stats but does not show us who we should be holding accountable.
-as in what CEIDs have high statics, whats their total number of statics, are their lots behind schedule 
-who is our biggest impact with static lots etc 
+please look at my code as a top level python engineer and rewrite it completely to make sure everything runs perfectly and report generates at that location, but also, the
+i think the risk score makes sense but actually printing out those scores to users makes the report confusing and tedious. 
+when we pull a lot as a problem based on the criteria that still uses the risk score functionality, there should 
+be a reason button that if the user clicks, they can see exactly why they were called out on the report. 
 
+"""
+Static Lots Accountability Report
+Tracks static lots, identifies at-risk products, and holds teams accountable
+Run hourly via scheduler to maintain pressure on clearing statics
+"""
 
 import pandas as pd
 import numpy as np
@@ -17,7 +22,9 @@ from pathlib import Path
 
 LOTS_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LOTS.TXT"
 HISTORY_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\static_lots_history.json"
-OUTPUT_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\MfgEng\COS_DB\static_lots_report.html"
+OUTPUT_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\static_lots_report.html"
+
+# Risk thresholds
 CRITICAL_HAO = 48  # Hours at operation
 HIGH_HAO = 24
 CRITICAL_BEHIND = -2  # Days behind schedule
@@ -29,7 +36,7 @@ HIGH_BEHIND = -1
 
 def load_lots_data():
     """Load and filter lots data"""
-    df = pd.read_csv(LOTS_PATH, sep="\t")
+    df = pd.read_csv(LOTS_PATH, sep="\t", low_memory=False)
     
     # Filter for static production lots
     statics = df[
@@ -337,6 +344,11 @@ def generate_html_report(df, metrics, trends, chronic_lots):
     top_critical = df.nlargest(20, 'RISK_SCORE')
     top_critical_json = top_critical.to_json(orient='records')
     
+    # Top 5 lots needing immediate attention
+    immediate_attention_lots = df[(df['HAO'] >= 24) | (df['XETA_LOT_AHEAD_BEHIND'] < -1)].nlargest(5, 'RISK_SCORE')
+    immediate_attention_json = immediate_attention_lots.to_json(orient='records')
+    immediate_count = len(immediate_attention_lots)
+    
     # Summary statistics
     total_statics = len(df)
     critical_count = len(df[df['CATEGORY'].str.contains('CRITICAL')])
@@ -349,9 +361,62 @@ def generate_html_report(df, metrics, trends, chronic_lots):
     late_lots = df[df['XETA_LOT_AHEAD_BEHIND'] < 0]
     late_count = len(late_lots)
     
-    # Lots needing immediate attention (>24h HAO or late)
-    immediate_attention = df[(df['HAO'] >= 24) | (df['XETA_LOT_AHEAD_BEHIND'] < -1)]
-    immediate_count = len(immediate_attention)
+    # Generate top/bottom performers data for Hall of Shame
+    top_3_worst_ceids = metrics['by_ceid'].head(3)
+    hall_of_shame_html = ""
+    
+    if not top_3_worst_ceids.empty:
+        hall_of_shame_rows = ""
+        for rank, (ceid, row) in enumerate(top_3_worst_ceids.iterrows(), 1):
+            emoji = "🥇" if rank == 1 else "🥈" if rank == 2 else "🥉"
+            performance = "🔴 CRITICAL" if row['Avg_Risk'] > 100 else "🟠 POOR" if row['Avg_Risk'] > 60 else "🟡 MARGINAL"
+            hall_of_shame_rows += f"""
+                <tr class="critical-row">
+                    <td style="font-size: 24px;">{emoji} #{rank}</td>
+                    <td><strong style="font-size: 18px;">{ceid}</strong></td>
+                    <td><strong style="font-size: 18px;">{int(row['Total_Lots'])}</strong></td>
+                    <td style="color: red; font-weight: bold; font-size: 18px;">{int(row['Critical_Lots'])}</td>
+                    <td><strong style="font-size: 18px;">{row['Avg_Risk']:.1f}</strong></td>
+                    <td style="font-size: 18px;">{row['Avg_HAO']:.1f}h</td>
+                    <td style="color: {'red' if row['Avg_Behind'] < 0 else 'green'}; font-weight: bold; font-size: 18px;">
+                        {row['Avg_Behind']:.2f} days
+                    </td>
+                    <td><span class="badge badge-critical" style="font-size: 14px;">{performance}</span></td>
+                </tr>
+            """
+        
+        hall_of_shame_html = f"""
+        <div style="padding: 40px; background: #fff3cd;">
+            <h2 style="color: #856404; font-size: 32px; margin-bottom: 20px; text-align: center;">
+                ⚠️ ACCOUNTABILITY ALERT - TOP 3 CEIDs NEEDING IMMEDIATE ATTENTION ⚠️
+            </h2>
+            <p style="text-align: center; font-size: 16px; color: #856404; margin-bottom: 30px;">
+                These CEIDs are responsible for the highest-risk static lots and are holding up production.
+            </p>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead style="background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);">
+                        <tr>
+                            <th>Rank</th>
+                            <th>CEID</th>
+                            <th>Total Statics</th>
+                            <th>🔴 Critical</th>
+                            <th>Avg Risk</th>
+                            <th>Avg HAO</th>
+                            <th>Avg Behind</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {hall_of_shame_rows}
+                    </tbody>
+                </table>
+            </div>
+            <p style="text-align: center; margin-top: 20px; font-size: 14px; color: #856404;">
+                📊 Click the "CEID ACCOUNTABILITY" tab below for complete rankings and detailed metrics
+            </p>
+        </div>
+        """
     
     html = f"""
 <!DOCTYPE html>
@@ -363,7 +428,6 @@ def generate_html_report(df, metrics, trends, chronic_lots):
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {{
             margin: 0;
@@ -614,19 +678,12 @@ def generate_html_report(df, metrics, trends, chronic_lots):
             color: white;
         }}
         
-        .chart-container {{
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }}
-        
         .tabs {{
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
             border-bottom: 2px solid #e9ecef;
+            flex-wrap: wrap;
         }}
         
         .tab {{
@@ -671,13 +728,23 @@ def generate_html_report(df, metrics, trends, chronic_lots):
             color: #6c757d;
             font-size: 18px;
         }}
+        
+        .debug-info {{
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #dee2e6;
+        }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🏭 STATIC LOTS ACCOUNTABILITY REPORT</h1>
-            <div class="subtitle">Real-time Production Line Performance Monitoring</div>
+            <div class="subtitle">Who's Holding Up Production? - Hourly Performance Tracking</div>
             <div class="timestamp">Last Updated: {timestamp}</div>
         </div>
         
@@ -733,350 +800,473 @@ def generate_html_report(df, metrics, trends, chronic_lots):
             </div>
         </div>
         
-        <div id="root"></div>
+        {hall_of_shame_html}
+        
+        <!-- Debug Information -->
+        <div class="debug-info">
+            <h3>📊 Report Status:</h3>
+            <p>✅ Data loaded successfully</p>
+            <p>📈 Total Lots: {total_statics}</p>
+            <p>🚨 Immediate Attention: {immediate_count}</p>
+            <p>🔴 Critical: {critical_count}</p>
+            <p>🟠 High Risk: {high_risk_count}</p>
+            <p>⏳ Chronic Lots: {len(chronic_lots)}</p>
+            <p>👤 CEIDs Tracked: {len(metrics['by_ceid'])}</p>
+        </div>
+        
+        <div id="root">
+            <div style="padding: 40px; text-align: center;">
+                <h2>🔄 Loading Interactive Dashboard...</h2>
+                <p>If this message persists, check browser console (F12) for JavaScript errors.</p>
+            </div>
+        </div>
         
         <div class="footer">
             <p>This report runs hourly. Teams are accountable for clearing their static lots.</p>
-            <p>Report generated by FIST Production Control</p>
+            <p>Report generated by FIST Production Control - {timestamp}</p>
         </div>
     </div>
     
     <script type="text/babel">
-        const {{ useState, useEffect, useMemo }} = React;
-        
-        // Data
-        const lotsData = {lots_data_json};
-        const ceidMetrics = {ceid_metrics_json};
-        const areaMetrics = {area_metrics_json};
-        const productMetrics = {product_metrics_json};
-        const chronicLotsData = {chronic_lots_json};
-        const topCritical = {top_critical_json};
-        
-        function App() {{
-            const [activeTab, setActiveTab] = useState('critical');
-            const [searchTerm, setSearchTerm] = useState('');
-            const [filterCategory, setFilterCategory] = useState('ALL');
-            const [sortConfig, setSortConfig] = useState({{ key: 'RISK_SCORE', direction: 'desc' }});
+        try {{
+            console.log('🚀 Starting Static Lots Accountability Dashboard...');
             
-            const filteredLots = useMemo(() => {{
-                let filtered = lotsData;
+            const {{{{ useState, useEffect, useMemo }}}} = React;
+            
+            // Data loading with error checking
+            console.log('📊 Loading data...');
+            const lotsData = {lots_data_json};
+            const ceidMetrics = {ceid_metrics_json};
+            const areaMetrics = {area_metrics_json};
+            const productMetrics = {product_metrics_json};
+            const chronicLotsData = {chronic_lots_json};
+            const topCritical = {top_critical_json};
+            const immediateAttentionLots = {immediate_attention_json};
+            
+            console.log('✅ Data loaded successfully:', {{
+                totalLots: lotsData.length,
+                immediateAttention: immediateAttentionLots.length,
+                ceids: ceidMetrics.length,
+                chronicLots: chronicLotsData.length
+            }});
+            
+            function App() {{
+                console.log('🎨 Rendering main application...');
                 
-                // Search filter
-                if (searchTerm) {{
-                    const term = searchTerm.toLowerCase();
-                    filtered = filtered.filter(lot =>
-                        lot.LOT?.toLowerCase().includes(term) ||
-                        lot.PRODUCT?.toLowerCase().includes(term) ||
-                        lot.CEID?.toLowerCase().includes(term) ||
-                        lot.AREA?.toLowerCase().includes(term)
-                    );
-                }}
+                const [activeTab, setActiveTab] = useState('immediate');
+                const [searchTerm, setSearchTerm] = useState('');
+                const [filterCategory, setFilterCategory] = useState('ALL');
+                const [sortConfig, setSortConfig] = useState({{ key: 'RISK_SCORE', direction: 'desc' }});
                 
-                // Category filter
-                if (filterCategory !== 'ALL') {{
-                    filtered = filtered.filter(lot => lot.CATEGORY?.includes(filterCategory));
-                }}
-                
-                // Sort
-                filtered = [...filtered].sort((a, b) => {{
-                    let aVal = a[sortConfig.key];
-                    let bVal = b[sortConfig.key];
+                const filteredLots = useMemo(() => {{
+                    let filtered = lotsData;
                     
-                    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-                    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+                    if (searchTerm) {{
+                        const term = searchTerm.toLowerCase();
+                        filtered = filtered.filter(lot =>
+                            lot.LOT?.toLowerCase().includes(term) ||
+                            lot.PRODUCT?.toLowerCase().includes(term) ||
+                            lot.CEID?.toLowerCase().includes(term) ||
+                            lot.AREA?.toLowerCase().includes(term)
+                        );
+                    }}
                     
-                    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-                    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-                    return 0;
-                }});
+                    if (filterCategory !== 'ALL') {{
+                        filtered = filtered.filter(lot => lot.CATEGORY?.includes(filterCategory));
+                    }}
+                    
+                    filtered = [...filtered].sort((a, b) => {{
+                        let aVal = a[sortConfig.key];
+                        let bVal = b[sortConfig.key];
+                        
+                        if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+                        if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+                        
+                        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+                        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+                        return 0;
+                    }});
+                    
+                    return filtered;
+                }}, [searchTerm, filterCategory, sortConfig]);
                 
-                return filtered;
-            }}, [searchTerm, filterCategory, sortConfig]);
-            
-            const handleSort = (key) => {{
-                setSortConfig(prev => ({{
-                    key,
-                    direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-                }}));
-            }};
-            
-            const getCategoryBadge = (category) => {{
-                if (category?.includes('CRITICAL')) return 'badge-critical';
-                if (category?.includes('HIGH')) return 'badge-high';
-                if (category?.includes('AT RISK')) return 'badge-warning';
-                return 'badge-normal';
-            }};
-            
-            const getRowClass = (category) => {{
-                if (category?.includes('CRITICAL')) return 'critical-row';
-                if (category?.includes('HIGH')) return 'high-risk-row';
-                return '';
-            }};
-            
-            return (
-                <div className="content">
-                    <div className="tabs">
-                        <button className={{`tab ${{activeTab === 'critical' ? 'active' : ''}}`}} onClick={{() => setActiveTab('critical')}}>
-                            🔴 Critical Lots
-                        </button>
-                        <button className={{`tab ${{activeTab === 'all' ? 'active' : ''}}`}} onClick={{() => setActiveTab('all')}}>
-                            📊 All Static Lots
-                        </button>
-                        <button className={{`tab ${{activeTab === 'ceid' ? 'active' : ''}}`}} onClick={{() => setActiveTab('ceid')}}>
-                            👤 By CEID (Accountability)
-                        </button>
-                        <button className={{`tab ${{activeTab === 'product' ? 'active' : ''}}`}} onClick={{() => setActiveTab('product')}}>
-                            🔧 By Product
-                        </button>
-                        <button className={{`tab ${{activeTab === 'chronic' ? 'active' : ''}}`}} onClick={{() => setActiveTab('chronic')}}>
-                            ⏳ Chronic Statics
-                        </button>
-                    </div>
-                    
-                    <div className={{`tab-content ${{activeTab === 'critical' ? 'active' : ''}}`}}>
-                        <div className="section">
-                            <h2 className="section-title">🔴 Top 20 Critical Lots - IMMEDIATE ACTION REQUIRED</h2>
-                            <div style={{{{{{overflowX: 'auto'}}}}}}>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Risk</th>
-                                            <th>Lot ID</th>
-                                            <th>Product</th>
-                                            <th>CEID</th>
-                                            <th>Operation</th>
-                                            <th>Area</th>
-                                            <th>HAO</th>
-                                            <th>Days Behind</th>
-                                            <th>Commit WW</th>
-                                            <th>Wafers</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {{topCritical.map((lot, idx) => (
-                                            <tr key={{idx}} className={{getRowClass(lot.CATEGORY)}}>
-                                                <td><strong>{{lot.RISK_SCORE}}</strong></td>
-                                                <td><strong>{{lot.LOT}}</strong></td>
-                                                <td>{{lot.PRODUCT}}</td>
-                                                <td><strong>{{lot.CEID}}</strong></td>
-                                                <td>{{lot.OPERATION}} - {{lot.OPER_SHORT_DESC}}</td>
-                                                <td>{{lot.AREA}}</td>
-                                                <td><strong>{{lot.HAO?.toFixed(1)}}h</strong></td>
-                                                <td style={{{{{{color: lot.XETA_LOT_AHEAD_BEHIND < 0 ? 'red' : 'green'}}}}}}>
-                                                    <strong>{{{{lot.XETA_LOT_AHEAD_BEHIND?.toFixed(2)}}}} days</strong>
-                                                </td>
-                                                <td>{{lot.COMMIT_WW}}</td>
-                                                <td>{{lot.WAFER_QTY}}</td>
-                                                <td><span className={{`badge ${{getCategoryBadge(lot.CATEGORY)}}`}}>{{lot.CATEGORY}}</span></td>
-                                            </tr>
-                                        ))}}
-                                    </tbody>
-                                </table>
+                const handleSort = (key) => {{
+                    setSortConfig(prev => ({{
+                        key,
+                        direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+                    }}));
+                }};
+                
+                const getCategoryBadge = (category) => {{
+                    if (category?.includes('CRITICAL')) return 'badge-critical';
+                    if (category?.includes('HIGH')) return 'badge-high';
+                    if (category?.includes('AT RISK')) return 'badge-warning';
+                    return 'badge-normal';
+                }};
+                
+                const getRowClass = (category) => {{
+                    if (category?.includes('CRITICAL')) return 'critical-row';
+                    if (category?.includes('HIGH')) return 'high-risk-row';
+                    return '';
+                }};
+                
+                return (
+                    <div className="content">
+                        <div className="tabs">
+                            <button className={{`tab ${{activeTab === 'immediate' ? 'active' : ''}}`}} onClick={{() => setActiveTab('immediate')}}>
+                                🚨 NEEDS ATTENTION ({{immediateAttentionLots.length}})
+                            </button>
+                            <button className={{`tab ${{activeTab === 'ceid' ? 'active' : ''}}`}} onClick={{() => setActiveTab('ceid')}}>
+                                👤 CEID ACCOUNTABILITY
+                            </button>
+                            <button className={{`tab ${{activeTab === 'critical' ? 'active' : ''}}`}} onClick={{() => setActiveTab('critical')}}>
+                                🔴 Critical Lots ({{topCritical.length}})
+                            </button>
+                            <button className={{`tab ${{activeTab === 'all' ? 'active' : ''}}`}} onClick={{() => setActiveTab('all')}}>
+                                📊 All Static Lots ({{lotsData.length}})
+                            </button>
+                            <button className={{`tab ${{activeTab === 'product' ? 'active' : ''}}`}} onClick={{() => setActiveTab('product')}}>
+                                🔧 By Product
+                            </button>
+                            <button className={{`tab ${{activeTab === 'chronic' ? 'active' : ''}}`}} onClick={{() => setActiveTab('chronic')}}>
+                                ⏳ Chronic Statics ({{chronicLotsData.length}})
+                            </button>
+                        </div>
+                        
+                        <div className={{`tab-content ${{activeTab === 'immediate' ? 'active' : ''}}`}}>
+                            <div className="section">
+                                <h2 className="section-title">🚨 Top 5 Lots Needing Immediate Attention</h2>
+                                <p style={{{{{{marginBottom: '20px', fontSize: '16px', color: '#856404'}}}}}}>
+                                    <strong>These lots have been at operation ≥24 hours OR are more than 1 day behind schedule.</strong>
+                                    They require immediate action to prevent further delays.
+                                </p>
+                                {{immediateAttentionLots.length > 0 ? (
+                                    <div style={{{{{{overflowX: 'auto'}}}}}}>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Priority</th>
+                                                    <th>Risk Score</th>
+                                                    <th>Lot ID</th>
+                                                    <th>Product</th>
+                                                    <th>CEID</th>
+                                                    <th>Operation</th>
+                                                    <th>Area</th>
+                                                    <th>HAO (Hours)</th>
+                                                    <th>Days Behind</th>
+                                                    <th>Wafers</th>
+                                                    <th>Status</th>
+                                                    <th>Action Required</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{immediateAttentionLots.map((lot, idx) => (
+                                                    <tr key={{idx}} className="critical-row">
+                                                        <td style={{{{{{fontSize: '18px', fontWeight: 'bold'}}}}}}>#{{idx + 1}}</td>
+                                                        <td><strong style={{{{{{color: 'red', fontSize: '18px'}}}}}}}>{{lot.RISK_SCORE}}</strong></td>
+                                                        <td><strong style={{{{{{fontSize: '16px'}}}}}}}>{{lot.LOT}}</strong></td>
+                                                        <td>{{lot.PRODUCT}}</td>
+                                                        <td><strong style={{{{{{color: 'blue'}}}}}}}>{{lot.CEID}}</strong></td>
+                                                        <td>{{lot.OPERATION}} - {{lot.OPER_SHORT_DESC}}</td>
+                                                        <td>{{lot.AREA}}</td>
+                                                        <td style={{{{{{color: lot.HAO >= 24 ? 'red' : 'orange', fontWeight: 'bold'}}}}}}>
+                                                            {{lot.HAO?.toFixed(1)}}h
+                                                        </td>
+                                                        <td style={{{{{{color: lot.XETA_LOT_AHEAD_BEHIND < 0 ? 'red' : 'green', fontWeight: 'bold'}}}}}}>
+                                                            {{{{lot.XETA_LOT_AHEAD_BEHIND?.toFixed(2)}}}} days
+                                                        </td>
+                                                        <td>{{lot.WAFER_QTY}}</td>
+                                                        <td><span className={{`badge ${{getCategoryBadge(lot.CATEGORY)}}`}}>{{lot.CATEGORY}}</span></td>
+                                                        <td>
+                                                            <span style={{{{{{color: 'red', fontWeight: 'bold', fontSize: '14px'}}}}}}>
+                                                                {{lot.HAO >= 48 ? '🔴 CRITICAL - MOVE NOW' : 
+                                                                  lot.HAO >= 24 ? '🟠 HIGH - MOVE TODAY' : 
+                                                                  lot.XETA_LOT_AHEAD_BEHIND < -2 ? '🔴 VERY LATE' : 
+                                                                  '🟡 MONITOR CLOSELY'}}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="no-data">
+                                        ✅ No lots currently need immediate attention. Great job!
+                                    </div>
+                                )}}
+                                
+                                <div style={{{{{{marginTop: '30px', padding: '20px', backgroundColor: '#fff3cd', borderRadius: '10px'}}}}}}>
+                                    <h3 style={{{{{{color: '#856404', marginBottom: '15px'}}}}}}>📋 Action Items for CEIDs:</h3>
+                                    <ul style={{{{{{color: '#856404', fontSize: '14px'}}}}}}>
+                                        <li><strong>HAO ≥ 48 hours:</strong> Lot must move within 2 hours - escalate to management if blocked</li>
+                                        <li><strong>HAO ≥ 24 hours:</strong> Lot must move today - identify and resolve blockers immediately</li>
+                                        <li><strong>Days Behind ≤ -2:</strong> Very late lots - prioritize over other work</li>
+                                        <li><strong>Days Behind ≤ -1:</strong> Late lots - ensure movement within 8 hours</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div className={{`tab-content ${{activeTab === 'all' ? 'active' : ''}}`}}>
-                        <div className="section">
-                            <h2 className="section-title">📊 All Static Lots - Searchable & Filterable</h2>
-                            
-                            <input
-                                type="text"
-                                className="search-box"
-                                placeholder="🔍 Search by Lot ID, Product, CEID, or Area..."
-                                value={{searchTerm}}
-                                onChange={{(e) => setSearchTerm(e.target.value)}}
-                            />
-                            
-                            <div className="filters">
-                                <button className={{`filter-btn ${{filterCategory === 'ALL' ? 'active' : ''}}`}} onClick={{() => setFilterCategory('ALL')}}>
-                                    All ({{lotsData.length}})
-                                </button>
-                                <button className={{`filter-btn ${{filterCategory === 'CRITICAL' ? 'active' : ''}}`}} onClick={{() => setFilterCategory('CRITICAL')}}>
-                                    🔴 Critical
-                                </button>
-                                <button className={{`filter-btn ${{filterCategory === 'HIGH RISK' ? 'active' : ''}}`}} onClick={{() => setFilterCategory('HIGH RISK')}}>
-                                    🟠 High Risk
-                                </button>
-                                <button className={{`filter-btn ${{filterCategory === 'AT RISK' ? 'active' : ''}}`}} onClick={{() => setFilterCategory('AT RISK')}}>
-                                    🟡 At Risk
-                                </button>
-                            </div>
-                            
-                            <div style={{{{{{overflowX: 'auto'}}}}}}>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th onClick={{() => handleSort('RISK_SCORE')}}>Risk Score ⇅</th>
-                                            <th onClick={{() => handleSort('LOT')}}>Lot ID ⇅</th>
-                                            <th onClick={{() => handleSort('PRODUCT')}}>Product ⇅</th>
-                                            <th onClick={{() => handleSort('CEID')}}>CEID ⇅</th>
-                                            <th onClick={{() => handleSort('AREA')}}>Area ⇅</th>
-                                            <th onClick={{() => handleSort('HAO')}}>HAO ⇅</th>
-                                            <th onClick={{() => handleSort('XETA_LOT_AHEAD_BEHIND')}}>Days Behind ⇅</th>
-                                            <th onClick={{() => handleSort('WAFER_QTY')}}>Wafers ⇅</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {{filteredLots.map((lot, idx) => (
-                                            <tr key={{idx}} className={{getRowClass(lot.CATEGORY)}}>
-                                                <td><strong>{{lot.RISK_SCORE}}</strong></td>
-                                                <td><strong>{{lot.LOT}}</strong></td>
-                                                <td>{{lot.PRODUCT}}</td>
-                                                <td><strong>{{lot.CEID}}</strong></td>
-                                                <td>{{lot.AREA}}</td>
-                                                <td>{{lot.HAO?.toFixed(1)}}h</td>
-                                                <td style={{{{{{color: lot.XETA_LOT_AHEAD_BEHIND < 0 ? 'red' : 'green'}}}}}}>
-                                                    {{{{lot.XETA_LOT_AHEAD_BEHIND?.toFixed(2)}}}} days
-                                                </td>
-                                                <td>{{lot.WAFER_QTY}}</td>
-                                                <td><span className={{`badge ${{getCategoryBadge(lot.CATEGORY)}}`}}>{{lot.CATEGORY}}</span></td>
-                                            </tr>
-                                        ))}}
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <p style={{{{{{textAlign: 'center', marginTop: '20px', color: '#6c757d'}}}}}}>
-                                Showing {{{{filteredLots.length}}}} of {{{{lotsData.length}}}} lots
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div className={{`tab-content ${{activeTab === 'ceid' ? 'active' : ''}}`}}>
-                        <div className="section">
-                            <h2 className="section-title">👤 Accountability by CEID - Who's Holding Up Production?</h2>
-                            <p style={{{{{{marginBottom: '20px', fontSize: '16px', color: '#6c757d'}}}}}}>
-                                CEIDs are ranked by average risk score. Higher scores = more accountability needed.
-                            </p>
-                            <div style={{{{{{overflowX: 'auto'}}}}}}>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Rank</th>
-                                            <th>CEID</th>
-                                            <th>Total Lots</th>
-                                            <th>🔴 Critical</th>
-                                            <th>Avg Risk Score</th>
-                                            <th>Max Risk</th>
-                                            <th>Avg HAO</th>
-                                            <th>Avg Days Behind</th>
-                                            <th>Total Wafers</th>
-                                            <th>Performance</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {{ceidMetrics.map((ceid, idx) => (
-                                            <tr key={{idx}} className={{ceid.Critical_Lots > 0 ? 'critical-row' : ''}}>
-                                                <td><strong>#{{idx + 1}}</strong></td>
-                                                <td><strong>{{ceid.CEID}}</strong></td>
-                                                <td><strong>{{ceid.Total_Lots}}</strong></td>
-                                                <td style={{{{color: 'red', fontWeight: 'bold'}}}}>{{ceid.Critical_Lots || 0}}</td>
-                                                <td><strong>{{ceid.Avg_Risk?.toFixed(1)}}</strong></td>
-                                                <td>{{ceid.Max_Risk}}</td>
-                                                <td>{{ceid.Avg_HAO?.toFixed(1)}}h</td>
-                                                <td style={{{{{{color: ceid.Avg_Behind < 0 ? 'red' : 'green'}}}}}}>
-                                                    {{{{ceid.Avg_Behind?.toFixed(2)}}}} days
-                                                </td>
-                                                <td>{{ceid.Total_Wafers}}</td>
-                                                <td>
-                                                    <span className={{`badge ${{ceid.Avg_Risk > 100 ? 'badge-critical' : ceid.Avg_Risk > 60 ? 'badge-high' : 'badge-warning'}}`}}>
-                                                        {{ceid.Avg_Risk > 100 ? '🔴 NEEDS IMPROVEMENT' : ceid.Avg_Risk > 60 ? '🟠 MARGINAL' : '🟡 ADEQUATE'}}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className={{`tab-content ${{activeTab === 'product' ? 'active' : ''}}`}}>
-                        <div className="section">
-                            <h2 className="section-title">🔧 Static Lots by Product</h2>
-                            <div style={{{{{{overflowX: 'auto'}}}}}}>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Product</th>
-                                            <th>Total Lots</th>
-                                            <th>Avg Risk Score</th>
-                                            <th>Max Risk</th>
-                                            <th>Avg HAO</th>
-                                            <th>Avg Days Behind</th>
-                                            <th>Total Wafers</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {{productMetrics.map((prod, idx) => (
-                                            <tr key={{idx}}>
-                                                <td><strong>{{prod.PRODUCT}}</strong></td>
-                                                <td>{{prod.Total_Lots}}</td>
-                                                <td><strong>{{prod.Avg_Risk?.toFixed(1)}}</strong></td>
-                                                <td>{{prod.Max_Risk}}</td>
-                                                <td>{{prod.Avg_HAO?.toFixed(1)}}h</td>
-                                                <td style={{{{{{color: prod.Avg_Behind < 0 ? 'red' : 'green'}}}}}}>
-                                                    {{{{prod.Avg_Behind?.toFixed(2)}}}} days
-                                                </td>
-                                                <td>{{prod.Total_Wafers}}</td>
-                                            </tr>
-                                        ))}}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className={{`tab-content ${{activeTab === 'chronic' ? 'active' : ''}}`}}>
-                        <div className="section">
-                            <h2 className="section-title">⏳ Chronic Static Lots - Been Stuck 48+ Hours</h2>
-                            {{chronicLotsData.length > 0 ? (
+                        
+                        <div className={{`tab-content ${{activeTab === 'ceid' ? 'active' : ''}}`}}>
+                            <div className="section">
+                                <h2 className="section-title">👤 CEID ACCOUNTABILITY - Who's Holding Up Production?</h2>
+                                <p style={{{{{{marginBottom: '20px', fontSize: '16px', color: '#6c757d'}}}}}}>
+                                    <strong>All CEIDs ranked by performance.</strong> Higher risk scores = more accountability needed. 
+                                    Red rows indicate CEIDs with critical lots requiring immediate attention.
+                                </p>
                                 <div style={{{{{{overflowX: 'auto'}}}}}}>
                                     <table>
                                         <thead>
                                             <tr>
-                                                <th>Lot ID</th>
-                                                <th>Product</th>
+                                                <th>Rank</th>
                                                 <th>CEID</th>
-                                                <th>Hours Static</th>
-                                                <th>Current HAO</th>
-                                                <th>Current Risk</th>
-                                                <th>Days Behind</th>
-                                                <th>Status</th>
+                                                <th>Total Statics</th>
+                                                <th>🔴 Critical</th>
+                                                <th>Avg Risk Score</th>
+                                                <th>Max Risk</th>
+                                                <th>Avg HAO</th>
+                                                <th>Avg Days Behind</th>
+                                                <th>Total Wafers</th>
+                                                <th>Performance</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {{chronicLotsData.map((lot, idx) => (
-                                                <tr key={{idx}} className="critical-row">
-                                                    <td><strong>{{lot.LOT}}</strong></td>
-                                                    <td>{{lot.PRODUCT}}</td>
-                                                    <td><strong>{{lot.CEID}}</strong></td>
-                                                    <td style={{{{{{color: 'red', fontWeight: 'bold'}}}}}}>{{{{lot.HOURS_STATIC}}}} hours</td>
-                                                    <td>{{lot.CURRENT_HAO?.toFixed(1)}}h</td>
-                                                    <td><strong>{{lot.CURRENT_RISK}}</strong></td>
-                                                    <td>{{lot.BEHIND?.toFixed(2)}} days</td>
-                                                    <td><span className="badge badge-critical">🚨 CHRONIC</span></td>
+                                            {{ceidMetrics.map((ceid, idx) => (
+                                                <tr key={{idx}} className={{ceid.Critical_Lots > 0 ? 'critical-row' : ''}}>
+                                                    <td><strong>#{{idx + 1}}</strong></td>
+                                                    <td><strong>{{ceid.CEID}}</strong></td>
+                                                    <td><strong>{{ceid.Total_Lots}}</strong></td>
+                                                    <td style={{{{color: 'red', fontWeight: 'bold'}}}}>{{ceid.Critical_Lots || 0}}</td>
+                                                    <td><strong>{{ceid.Avg_Risk?.toFixed(1)}}</strong></td>
+                                                    <td>{{ceid.Max_Risk}}</td>
+                                                    <td>{{ceid.Avg_HAO?.toFixed(1)}}h</td>
+                                                    <td style={{{{{{color: ceid.Avg_Behind < 0 ? 'red' : 'green'}}}}}}>
+                                                        {{{{ceid.Avg_Behind?.toFixed(2)}}}} days
+                                                    </td>
+                                                    <td>{{ceid.Total_Wafers}}</td>
+                                                    <td>
+                                                        <span className={{`badge ${{ceid.Avg_Risk > 100 ? 'badge-critical' : ceid.Avg_Risk > 60 ? 'badge-high' : 'badge-warning'}}`}}>
+                                                            {{ceid.Avg_Risk > 100 ? '🔴 NEEDS IMPROVEMENT' : ceid.Avg_Risk > 60 ? '🟠 MARGINAL' : '🟡 ADEQUATE'}}
+                                                        </span>
+                                                    </td>
                                                 </tr>
                                             ))}}
                                         </tbody>
                                     </table>
                                 </div>
-                            ) : (
-                                <div className="no-data">
-                                    ✅ No chronic static lots (48+ hours). Great job keeping lots moving!
+                            </div>
+                        </div>
+                        
+                        <div className={{`tab-content ${{activeTab === 'critical' ? 'active' : ''}}`}}>
+                            <div className="section">
+                                <h2 className="section-title">🔴 Top 20 Critical Lots - IMMEDIATE ACTION REQUIRED</h2>
+                                <div style={{{{{{overflowX: 'auto'}}}}}}>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Risk</th>
+                                                <th>Lot ID</th>
+                                                <th>Product</th>
+                                                <th>CEID</th>
+                                                <th>Operation</th>
+                                                <th>Area</th>
+                                                <th>HAO</th>
+                                                <th>Days Behind</th>
+                                                <th>Commit WW</th>
+                                                <th>Wafers</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{topCritical.map((lot, idx) => (
+                                                <tr key={{idx}} className={{getRowClass(lot.CATEGORY)}}>
+                                                    <td><strong>{{lot.RISK_SCORE}}</strong></td>
+                                                    <td><strong>{{lot.LOT}}</strong></td>
+                                                    <td>{{lot.PRODUCT}}</td>
+                                                    <td><strong>{{lot.CEID}}</strong></td>
+                                                    <td>{{lot.OPERATION}} - {{lot.OPER_SHORT_DESC}}</td>
+                                                    <td>{{lot.AREA}}</td>
+                                                    <td><strong>{{lot.HAO?.toFixed(1)}}h</strong></td>
+                                                    <td style={{{{{{color: lot.XETA_LOT_AHEAD_BEHIND < 0 ? 'red' : 'green'}}}}}}>
+                                                        <strong>{{{{lot.XETA_LOT_AHEAD_BEHIND?.toFixed(2)}}}} days</strong>
+                                                    </td>
+                                                    <td>{{lot.COMMIT_WW}}</td>
+                                                    <td>{{lot.WAFER_QTY}}</td>
+                                                    <td><span className={{`badge ${{getCategoryBadge(lot.CATEGORY)}}`}}>{{lot.CATEGORY}}</span></td>
+                                                </tr>
+                                            ))}}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            )}}
+                            </div>
+                        </div>
+                        
+                        <div className={{`tab-content ${{activeTab === 'all' ? 'active' : ''}}`}}>
+                            <div className="section">
+                                <h2 className="section-title">📊 All Static Lots - Searchable & Filterable</h2>
+                                
+                                <input
+                                    type="text"
+                                    className="search-box"
+                                    placeholder="🔍 Search by Lot ID, Product, CEID, or Area..."
+                                    value={{searchTerm}}
+                                    onChange={{(e) => setSearchTerm(e.target.value)}}
+                                />
+                                
+                                <div className="filters">
+                                    <button className={{`filter-btn ${{filterCategory === 'ALL' ? 'active' : ''}}`}} onClick={{() => setFilterCategory('ALL')}}>
+                                        All ({{lotsData.length}})
+                                    </button>
+                                    <button className={{`filter-btn ${{filterCategory === 'CRITICAL' ? 'active' : ''}}`}} onClick={{() => setFilterCategory('CRITICAL')}}>
+                                        🔴 Critical
+                                    </button>
+                                    <button className={{`filter-btn ${{filterCategory === 'HIGH RISK' ? 'active' : ''}}`}} onClick={{() => setFilterCategory('HIGH RISK')}}>
+                                        🟠 High Risk
+                                    </button>
+                                    <button className={{`filter-btn ${{filterCategory === 'AT RISK' ? 'active' : ''}}`}} onClick={{() => setFilterCategory('AT RISK')}}>
+                                        🟡 At Risk
+                                    </button>
+                                </div>
+                                
+                                <div style={{{{{{overflowX: 'auto'}}}}}}>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th onClick={{() => handleSort('RISK_SCORE')}}>Risk Score ⇅</th>
+                                                <th onClick={{() => handleSort('LOT')}}>Lot ID ⇅</th>
+                                                <th onClick={{() => handleSort('PRODUCT')}}>Product ⇅</th>
+                                                <th onClick={{() => handleSort('CEID')}}>CEID ⇅</th>
+                                                <th onClick={{() => handleSort('AREA')}}>Area ⇅</th>
+                                                <th onClick={{() => handleSort('HAO')}}>HAO ⇅</th>
+                                                <th onClick={{() => handleSort('XETA_LOT_AHEAD_BEHIND')}}>Days Behind ⇅</th>
+                                                <th onClick={{() => handleSort('WAFER_QTY')}}>Wafers ⇅</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{filteredLots.map((lot, idx) => (
+                                                <tr key={{idx}} className={{getRowClass(lot.CATEGORY)}}>
+                                                    <td><strong>{{lot.RISK_SCORE}}</strong></td>
+                                                    <td><strong>{{lot.LOT}}</strong></td>
+                                                    <td>{{lot.PRODUCT}}</td>
+                                                    <td><strong>{{lot.CEID}}</strong></td>
+                                                    <td>{{lot.AREA}}</td>
+                                                    <td>{{lot.HAO?.toFixed(1)}}h</td>
+                                                    <td style={{{{{{color: lot.XETA_LOT_AHEAD_BEHIND < 0 ? 'red' : 'green'}}}}}}>
+                                                        {{{{lot.XETA_LOT_AHEAD_BEHIND?.toFixed(2)}}}} days
+                                                    </td>
+                                                    <td>{{lot.WAFER_QTY}}</td>
+                                                    <td><span className={{`badge ${{getCategoryBadge(lot.CATEGORY)}}`}}>{{lot.CATEGORY}}</span></td>
+                                                </tr>
+                                            ))}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <p style={{{{{{textAlign: 'center', marginTop: '20px', color: '#6c757d'}}}}}}>
+                                    Showing {{{{filteredLots.length}}}} of {{{{lotsData.length}}}} lots
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className={{`tab-content ${{activeTab === 'product' ? 'active' : ''}}`}}>
+                            <div className="section">
+                                <h2 className="section-title">🔧 Static Lots by Product</h2>
+                                <div style={{{{{{overflowX: 'auto'}}}}}}>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Product</th>
+                                                <th>Total Lots</th>
+                                                <th>Avg Risk Score</th>
+                                                <th>Max Risk</th>
+                                                <th>Avg HAO</th>
+                                                <th>Avg Days Behind</th>
+                                                <th>Total Wafers</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{productMetrics.map((prod, idx) => (
+                                                <tr key={{idx}}>
+                                                    <td><strong>{{prod.PRODUCT}}</strong></td>
+                                                    <td>{{prod.Total_Lots}}</td>
+                                                    <td><strong>{{prod.Avg_Risk?.toFixed(1)}}</strong></td>
+                                                    <td>{{prod.Max_Risk}}</td>
+                                                    <td>{{prod.Avg_HAO?.toFixed(1)}}h</td>
+                                                    <td style={{{{{{color: prod.Avg_Behind < 0 ? 'red' : 'green'}}}}}}>
+                                                        {{{{prod.Avg_Behind?.toFixed(2)}}}} days
+                                                    </td>
+                                                    <td>{{prod.Total_Wafers}}</td>
+                                                </tr>
+                                            ))}}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className={{`tab-content ${{activeTab === 'chronic' ? 'active' : ''}}`}}>
+                            <div className="section">
+                                <h2 className="section-title">⏳ Chronic Static Lots - Been Stuck 48+ Hours</h2>
+                                {{chronicLotsData.length > 0 ? (
+                                    <div style={{{{{{overflowX: 'auto'}}}}}}>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Lot ID</th>
+                                                    <th>Product</th>
+                                                    <th>CEID</th>
+                                                    <th>Hours Static</th>
+                                                    <th>Current HAO</th>
+                                                    <th>Current Risk</th>
+                                                    <th>Days Behind</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{chronicLotsData.map((lot, idx) => (
+                                                    <tr key={{idx}} className="critical-row">
+                                                        <td><strong>{{lot.LOT}}</strong></td>
+                                                        <td>{{lot.PRODUCT}}</td>
+                                                        <td><strong>{{lot.CEID}}</strong></td>
+                                                        <td style={{{{{{color: 'red', fontWeight: 'bold'}}}}}}>{{{{lot.HOURS_STATIC}}}} hours</td>
+                                                        <td>{{lot.CURRENT_HAO?.toFixed(1)}}h</td>
+                                                        <td><strong>{{lot.CURRENT_RISK}}</strong></td>
+                                                        <td>{{lot.BEHIND?.toFixed(2)}} days</td>
+                                                        <td><span className="badge badge-critical">🚨 CHRONIC</span></td>
+                                                    </tr>
+                                                ))}}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="no-data">
+                                        ✅ No chronic static lots (48+ hours). Great job keeping lots moving!
+                                    </div>
+                                )}}
+                            </div>
                         </div>
                     </div>
+                );
+            }}
+            
+            console.log('🎯 Rendering React application...');
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+            console.log('✅ Static Lots Accountability Dashboard loaded successfully!');
+            
+        }} catch (error) {{
+            console.error('❌ Error in React app:', error);
+            document.getElementById('root').innerHTML = `
+                <div style="padding: 40px; text-align: center; color: red; background: #fff5f5; border: 2px solid #fed7d7; border-radius: 10px; margin: 20px;">
+                    <h2>⚠️ Dashboard Loading Error</h2>
+                    <p><strong>JavaScript Error:</strong> ${{error.message}}</p>
+                    <p>Please check the browser console (F12) for more details.</p>
+                    <p>Contact IT support if this issue persists.</p>
                 </div>
-            );
+            `;
         }}
-        
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
     </script>
 </body>
 </html>
@@ -1103,91 +1293,114 @@ def ensure_directory_exists(file_path):
 def main():
     """Main execution function"""
     print("=" * 80)
-    print("STATIC LOTS ACCOUNTABILITY REPORT")
+    print("🏭 STATIC LOTS ACCOUNTABILITY REPORT")
     print("=" * 80)
     print(f"Report Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     
-    # Load data
-    print("Loading lots data...")
-    df = load_lots_data()
-    print(f"Found {len(df)} static lots")
-    
-    # Process data
-    print("Processing and scoring lots...")
-    df = process_lots_data(df)
-    
-    # Load and update history
-    print("Updating historical tracking...")
-    history = load_history()
-    history = update_history(df, history)
-    save_history(history)
-    
-    # Calculate trends
-    print("Calculating trends...")
-    trends = calculate_trends(history)
-    
-    # Generate accountability metrics
-    print("Generating accountability metrics...")
-    metrics = generate_accountability_report(df)
-    
-    # Identify chronic lots
-    print("Identifying chronic static lots...")
-    chronic_lots = identify_chronic_lots(df, history)
-    
-    # Generate HTML report
-    print("Generating HTML report...")
-    html = generate_html_report(df, metrics, trends, chronic_lots)
-    
-    # Ensure directory exists and save report
-    print("Saving HTML report...")
-    if ensure_directory_exists(OUTPUT_PATH):
-        try:
-            with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
-                f.write(html)
-            print(f"Report saved successfully to: {OUTPUT_PATH}")
-        except Exception as e:
-            print(f"Error saving report: {e}")
+    try:
+        # Load data
+        print("📊 Loading lots data...")
+        df = load_lots_data()
+        print(f"✅ Found {len(df)} static lots")
+        
+        # Process data
+        print("⚙️ Processing and scoring lots...")
+        df = process_lots_data(df)
+        
+        # Load and update history
+        print("📈 Updating historical tracking...")
+        history = load_history()
+        history = update_history(df, history)
+        save_history(history)
+        
+        # Calculate trends
+        print("📊 Calculating trends...")
+        trends = calculate_trends(history)
+        
+        # Generate accountability metrics
+        print("👤 Generating accountability metrics...")
+        metrics = generate_accountability_report(df)
+        
+        # Identify chronic lots
+        print("⏳ Identifying chronic static lots...")
+        chronic_lots = identify_chronic_lots(df, history)
+        
+        # Generate HTML report
+        print("🎨 Generating HTML report...")
+        html = generate_html_report(df, metrics, trends, chronic_lots)
+        
+        # Ensure directory exists and save report
+        print("💾 Saving HTML report...")
+        if ensure_directory_exists(OUTPUT_PATH):
+            try:
+                with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
+                    f.write(html)
+                print(f"✅ Report saved successfully to: {OUTPUT_PATH}")
+            except Exception as e:
+                print(f"❌ Error saving report: {e}")
+                # Fallback to local directory
+                local_path = "static_lots_report.html"
+                with open(local_path, 'w', encoding='utf-8') as f:
+                    f.write(html)
+                print(f"💾 Report saved to local directory: {local_path}")
+        else:
             # Fallback to local directory
             local_path = "static_lots_report.html"
             with open(local_path, 'w', encoding='utf-8') as f:
                 f.write(html)
-            print(f"Report saved to local directory: {local_path}")
-    else:
-        # Fallback to local directory
-        local_path = "static_lots_report.html"
-        with open(local_path, 'w', encoding='utf-8') as f:
-            f.write(html)
-        print(f"Could not access network path. Report saved locally: {local_path}")
-    
-    # Save report
-    with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
-        f.write(html)
-    
-    print()
-    print("=" * 80)
-    print("REPORT SUMMARY")
-    print("=" * 80)
-    print(f"Total Static Lots: {len(df)}")
-    print(f"Critical Lots: {len(df[df['CATEGORY'].str.contains('CRITICAL')])}")
-    print(f"High Risk Lots: {len(df[df['CATEGORY'].str.contains('HIGH RISK')])}")
-    print(f"Trend (24h): {trends.get('trend', 'N/A')}")
-    print(f"Change: {trends.get('change_24h', 0):+d} lots")
-    print(f"Total Wafers: {int(df['WAFER_QTY'].sum())}")
-    print()
-    print(f"Report saved to: {OUTPUT_PATH}")
-    print("=" * 80)
-    
-    # Print top 5 worst CEIDs
-    print()
-    print("TOP 5 CEIDS NEEDING ATTENTION:")
-    print("-" * 80)
-    top_ceids = metrics['by_ceid'].head(5)
-    for idx, (ceid, row) in enumerate(top_ceids.iterrows(), 1):
-        print(f"{idx}. CEID {ceid}: {int(row['Total_Lots'])} lots, "
-              f"Risk Score: {row['Avg_Risk']:.1f}, "
-              f"{int(row['Critical_Lots'])} critical")
-    print("=" * 80)
+            print(f"💾 Could not access network path. Report saved locally: {local_path}")
+        
+        print()
+        print("=" * 80)
+        print("📋 REPORT SUMMARY")
+        print("=" * 80)
+        print(f"📊 Total Static Lots: {len(df)}")
+        print(f"🔴 Critical Lots: {len(df[df['CATEGORY'].str.contains('CRITICAL')])}")
+        print(f"🟠 High Risk Lots: {len(df[df['CATEGORY'].str.contains('HIGH RISK')])}")
+        print(f"🟡 At Risk Lots: {len(df[df['CATEGORY'].str.contains('AT RISK')])}")
+        print(f"📈 Trend (24h): {trends.get('trend', 'N/A')}")
+        print(f"📊 Change: {trends.get('change_24h', 0):+d} lots")
+        print(f"💎 Total Wafers: {int(df['WAFER_QTY'].sum())}")
+        print(f"⏳ Chronic Lots (48h+): {len(chronic_lots)}")
+        
+        # Show immediate attention lots
+        immediate_attention_lots = df[(df['HAO'] >= 24) | (df['XETA_LOT_AHEAD_BEHIND'] < -1)].nlargest(5, 'RISK_SCORE')
+        print(f"🚨 Lots Needing Immediate Attention: {len(immediate_attention_lots)}")
+        
+        print()
+        print("=" * 80)
+        print("👤 TOP 5 CEIDS NEEDING ATTENTION:")
+        print("-" * 80)
+        top_ceids = metrics['by_ceid'].head(5)
+        for idx, (ceid, row) in enumerate(top_ceids.iterrows(), 1):
+            print(f"{idx}. CEID {ceid}: {int(row['Total_Lots'])} lots, "
+                  f"Risk Score: {row['Avg_Risk']:.1f}, "
+                  f"{int(row['Critical_Lots'])} critical")
+        
+        # Print immediate attention lots
+        if len(immediate_attention_lots) > 0:
+            print()
+            print("🚨 TOP 5 LOTS NEEDING IMMEDIATE ATTENTION:")
+            print("-" * 80)
+            for idx, (_, lot) in enumerate(immediate_attention_lots.iterrows(), 1):
+                action = ("CRITICAL - MOVE NOW" if lot['HAO'] >= 48 else 
+                         "HIGH - MOVE TODAY" if lot['HAO'] >= 24 else 
+                         "VERY LATE" if lot['XETA_LOT_AHEAD_BEHIND'] < -2 else 
+                         "MONITOR CLOSELY")
+                print(f"{idx}. Lot {lot['LOT']} (CEID: {lot['CEID']}): "
+                      f"Risk {lot['RISK_SCORE']}, HAO {lot['HAO']:.1f}h, "
+                      f"Behind {lot['XETA_LOT_AHEAD_BEHIND']:.1f} days - {action}")
+        
+        print("=" * 80)
+        print("✅ REPORT GENERATION COMPLETED SUCCESSFULLY!")
+        print("🌐 Open the HTML file in a web browser to view the interactive dashboard.")
+        print("=" * 80)
+        
+    except Exception as e:
+        print(f"❌ ERROR: {str(e)}")
+        print("Please check the data paths and try again.")
+        raise
 
 if __name__ == "__main__":
     main()
