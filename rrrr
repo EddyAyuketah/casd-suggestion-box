@@ -18,12 +18,14 @@ statics = (df_lots
 
 however, its so limited because
 we need  something that will print out COMMENTS on the lots that are impacting us. 
+all lots have a XETA_COMMIT_WW which is the workweek this lot is due to be out the fab eg 202607 and a XETA_LOT_AHEAD_BEHIND which is the number of days ahead or behind so it can be 3.72 or -1.02 
+now if we are able to compile this data and sort by CEID and even PRODUCT. 
+This way we show the lots that are at the greatest risk, those that have been neglected and every other metric that one will need to know to complete clear statics in the line 
+by identifying who exactly is slacking, ignorant etc. i hope you get the idea. 
+We need to make something that will make people take accountability for their actions so 
+telling the entire factory what lots are late, need to move every 24 hours, need investigation, 
+and giving us a way to tell if our statics are reducing or increasing, what CEID is holding the most statics so we can really watch them 
+and be able to drill down on their progress daily. 
+This way people will work because they dont want to be called out on the report. 
+Make it a react report so i can use a job scheduler that will run every hour. answer any unasked questions with this report and make sure it is very impressive and useful to the department.  
 
-
-[ERROR] name 'dynamic_ct_target' is not defined
-Traceback (most recent call last):
-  File "c:\Temp\CERT_LOT\generate_dashboard20_html.py", line 2401, in main
-    html = generate_html_dashboard(data, ceid_analysis, quarterly_ct, progress_data, weekly_trends, commit_data, shift_24h, blame_analysis)
-  File "c:\Temp\CERT_LOT\generate_dashboard20_html.py", line 1158, in generate_html_dashboard
-    • Focus on <strong>high impact operations</strong> within the {dynamic_ct_target * 2:.1f}h lookahead window<br>
-NameError: name 'dynamic_ct_target' is not defined
