@@ -1,81 +1,2639 @@
-Heres what i think so tell me if i am wrong or not so we can agree on the fixes needed for this script. 
-Looking at this updated script, I can see you've fixed several of the major issues I identified, but there are still some calculation problems:
-1. Intel Work Week Calculation Issue
-The calculate_weeks_between_ww function has a fundamental flaw:
-PYTHON
-def calculate_weeks_between_ww(start_ww: int, end_ww: int) -> int:
-    # ...
-    weeks_in_start_year = 52  # Approximation - THIS IS WRONG
+Looking at our script, i think the target by 6am tomorrow section is wrong, lets make sure it is actually goaling the required dynamic cycle time hours needed so our estimated day by day estimates  are correct. right now i think it is off by about 5 to  8 hours, as compared to where we would need to be. 
+
+Also, round up/down the calendar days remaining so 44.2 will be 44 and 44.5 will be 45. 
+
+Also, the script should work in a way that in the background it always subtracts a 300 wafer bump from the math in the script which affects everything the script does but still maintains what our initial quarter goal is. this way values associated with things like Quarter  goal, Quarter to date ships, wafers remaining,  weekly average required will not change in the front end output still including the 300 bump but in the back ground, its working on the  Quarter_Goal - 300. 
+reassess the entire script and make sure we are completely accurate. 
+also sum up the total number of INV_PROD to be shipped  from the PP at 6am to the target by tomorrow so the team is more aware of everything in the factory.
+
+do not ask me if i want you to continue if you have not completely written the code from start to finish. just do it
+
+make sure the target by 6 am tomorrow is accurately using the dynamic CT to goal an accurate possition for 6am the next day. 
+
+we use our dynamic ct calculations which tells us how many ct hours we should complete in 24 hours and if we say we need to run 27.7 
+hours every day, per ther script, then, if you add  CT from where we are at 6am and where we are supposed to be in 24 hours, it should amount to 27.7 
+ct hours. does that make sense? and we should be telling the users the amount of INV_PROD that exists in that range, that will need to move by 6am tomorrow
+
+import math
+import json
+import numpy as np
+import pandas as pd
+from datetime import datetime, timedelta
+from pathlib import Path
+
+# =============================================================================
+# CONFIGURATION - Backend Only (Edit JSON File Directly)
+# =============================================================================
+CONFIG_FILE = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\MfgEng\COS_DB\dashboard_config.json"
+
+DEFAULT_CONFIG = {
+    "outs_goal": 7800,
+    "quarter_goal": 92943,
+    "deadline": "2026-03-07T18:00:00",
+    "quarter_start": "2025-12-10T02:00:00",
+    "commit_ww": 202610,
+    "segment_day_end": 104,
+    "commit_segment_day": 50,
+    "lookahead_hours": 0,
+    "be_lsb_operation": 9812,
+    "commit_lsb_operation": 175084,
+    "weekly_trend_start_ww": 202550
+}
+
+def load_user_config():
+    """Load configuration from NAZ - Backend managed only"""
+    try:
+        if Path(CONFIG_FILE).exists():
+            with open(CONFIG_FILE, 'r') as f:
+                user_config = json.load(f)
+                print(f"[OK] Loaded configuration from {CONFIG_FILE}")
+                return user_config
+    except Exception as e:
+        print(f"[WARNING] Could not load config: {e}")
     
-    weeks_remaining_start_year = weeks_in_start_year - start_week
-    years_between = end_year - start_year - 1
-    weeks_in_end_year = end_week
+    print(f"[INFO] Using default configuration")
+    return DEFAULT_CONFIG
+
+CONFIG = load_user_config()
+
+# Apply configuration
+OUTS_GOAL = CONFIG["outs_goal"]
+QUARTER_GOAL = CONFIG["quarter_goal"]
+DEADLINE = datetime.fromisoformat(CONFIG["deadline"])
+QUARTER_START = datetime.fromisoformat(CONFIG["quarter_start"])
+COMMIT_WW = CONFIG["commit_ww"]
+BE_LSB_OPERATION = CONFIG["be_lsb_operation"]
+COMMIT_LSB_OPERATION = CONFIG.get("commit_lsb_operation", 175084)
+SEGMENT_DAY_END = CONFIG["segment_day_end"]
+COMMIT_SEGMENT_DAY = CONFIG.get("commit_segment_day", 50)
+LOOKAHEAD_HOURS = CONFIG["lookahead_hours"]
+WEEKLY_TREND_START_WW = CONFIG.get("weekly_trend_start_ww", 202550)
+
+OUTPUT_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\MfgEng\COS_DB\dashboard.html"
+OUTPUT_URL = "https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html"
+BASELINE_STORAGE_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\MfgEng\COS_DB\shift_baseline.json"
+
+SHIFT_START_HOURS = [6, 18]
+HOURS_PER_SHIFT = 12
+SHIFTS_PER_WEEK = 14
+DAYS_PER_WEEK = 7
+EXCLUDED_OPERATIONS = [204]
+
+LINEVIEW_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\LineView.TXT"
+CEID_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\CEID.TXT"
+LOTS_PATH = r"\\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\AZFSM_Production\COS_DB\Combined\Lots.TXT"
+
+LIMITER_HAO_MULTIPLIER = 2.5
+LIMITER_INV_MULTIPLIER = 2.0
+LIMITER_INV_MIN_THRESHOLD = 300
+LIMITER_CT_MIN_THRESHOLD = 1.0
+LIMITER_MAX_DISPLAY = 10
+LAYER_COUNT_THRESHOLD = 0.30
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+def get_intel_work_week(date: datetime) -> int:
+    """Calculate Intel work week (YYYYWW format) for a given date"""
+    if date.weekday() == 4:
+        friday_of_week = date
+    else:
+        days_until_friday = (4 - date.weekday()) % 7
+        if days_until_friday == 0:
+            days_until_friday = 7
+        friday_of_week = date + timedelta(days=days_until_friday)
     
-    total_weeks = weeks_remaining_start_year + (years_between * 52) + weeks_in_end_year
-Problems:
-Intel work weeks don't always have exactly 52 weeks per year (can be 52 or 53)
-The calculation assumes all years have 52 weeks
-This will cause incorrect forecasting when crossing year boundaries
-Fix:
-PYTHON
+    ww_year = friday_of_week.year
+    jan_1 = datetime(ww_year, 1, 1)
+    days_to_first_friday = (4 - jan_1.weekday()) % 7
+    if days_to_first_friday == 0 and jan_1.weekday() != 4:
+        days_to_first_friday = 7
+    first_friday = jan_1 + timedelta(days=days_to_first_friday)
+    
+    week_num = ((friday_of_week - first_friday).days // 7) + 1
+    
+    if week_num <= 0:
+        return get_intel_work_week(datetime(ww_year - 1, 12, 31))
+    
+    return ww_year * 100 + week_num
+
 def calculate_weeks_between_ww(start_ww: int, end_ww: int) -> int:
-    """Calculate weeks between Intel work weeks by converting to dates"""
-    # Convert work weeks to actual dates and calculate difference
-    start_date = ww_to_date(start_ww)  # You'd need to implement this
-    end_date = ww_to_date(end_ww)
-    return (end_date - start_date).days // 7
-2. Dynamic CT Target Boundary Logic
-PYTHON
-# STILL PROBLEMATIC - Hard caps may not reflect reality
-daily_ct_target = max(24.0, min(daily_ct_target, 50.0))
-If you truly need 60+ hours/day to catch up, capping at 50 hours gives false confidence. Consider:
-PYTHON
-# More realistic bounds
-daily_ct_target = max(18.0, daily_ct_target)  # Only prevent impossibly low values
-if daily_ct_target > 48.0:
-    print(f"[WARNING] Extremely high CT target required: {daily_ct_target:.1f}h/day")
-3. Segment Inventory Calculation Still Unclear
-PYTHON
-# This adds bump to ALL non-zero segments
-segment_pp_remaining = base + (base != 0) * bump_inv
-The comment says "cumulative" but the logic suggests you want to add bump inventory to each segment. If it's truly cumulative, you should only add to the final total:
-PYTHON
-# If truly cumulative (total WIP that must flow through each stage)
-segment_pp_remaining = base.copy()
-if segment_pp_remaining.iloc[-1] > 0:  # Only if BE has inventory
-    segment_pp_remaining += bump_inv  # Add to all stages
-4. X-Site Inventory Display Bug
-PYTHON
-# Display adjusted inventory
-print(f"Adjusted total INV_PROD: {df_lineview['INV_PROD'].sum()}")  # WRONG - still shows original
-Should be:
-PYTHON
-print(f"Adjusted total INV_PROD: {df_q['INV_PROD'].sum()}")  # Show the modified data
-5. Progress Calculation Potential Issue
-PYTHON
-# FIXED: Calculate expected segment day based on linear time progression
-if total_calendar_days > 0:
-    time_progress_pct = calendar_days_elapsed / total_calendar_days
-    expected_segment_day = time_progress_pct * segment_day_end
-This assumes linear progress, but manufacturing rarely follows linear patterns. You might want to consider:
-Ramp-up periods at quarter start
-Different progress rates for different segments
-Historical progress curves
-6. Cumulative CT Calculation Order (Still Present)
-In the 24-hour tracking:
-PYTHON
-path_forward["CT_EFFECTIVE"] = path_forward["CT_GOAL"] * path_forward["LAYER_COUNT"]
-path_forward.loc[path_forward["LAYER_COUNT"] <= 0.02, "CT_EFFECTIVE"] = 0.0  # Should be BEFORE cumsum
-path_forward["CUMULATIVE_CT"] = path_forward["CT_EFFECTIVE"].cumsum()
-This is actually correct now - you fixed this one!
-7. Potential Division by Zero
-PYTHON
-# In segment inventory display
-FE: {(data['segment_fe'] / data['segment_be'] * 100) if data['segment_be'] > 0 else 0:.1f}%
-Good defensive programming, but if segment_be is 0, the percentages become meaningless. Consider showing "N/A" instead.
-Summary
-The most critical remaining issues are:
-Intel work week calculation - will cause wrong forecasts across year boundaries
-X-site inventory display bug - shows wrong totals in logs
-Segment inventory logic - unclear if the bump should be added to all segments or just final
-The mathematical fixes you implemented for the blame analysis and progress calculation look correct now!
+    """
+    Calculate weeks between Intel work weeks by iterating through actual calendar.
+    Handles year boundaries and 52/53 week years correctly.
+    """
+    if start_ww == end_ww:
+        return 0
+    
+    # Determine direction
+    forward = end_ww > start_ww
+    
+    # Start from approximate date
+    start_year = start_ww // 100
+    start_week = start_ww % 100
+    
+    # Approximate starting point (first day of the year)
+    current_date = datetime(start_year, 1, 1)
+    
+    # Find a date that falls in the start_ww
+    attempts = 0
+    while get_intel_work_week(current_date) != start_ww and attempts < 400:
+        current_date += timedelta(days=1)
+        attempts += 1
+    
+    if attempts >= 400:
+        # Fallback to simple arithmetic if we can't find the week
+        print(f"[WARNING] Could not find start WW{start_ww}, using arithmetic approximation")
+        start_year_ww = start_ww // 100
+        end_year_ww = end_ww // 100
+        if start_year_ww == end_year_ww:
+            return abs((end_ww % 100) - (start_ww % 100))
+        else:
+            # Rough approximation across years
+            return abs(end_ww - start_ww)
+    
+    # Count weeks until we reach end_ww
+    weeks_count = 0
+    current_ww = start_ww
+    safety_limit = 0
+    
+    while current_ww != end_ww and safety_limit < 60:
+        if forward:
+            current_date += timedelta(days=7)
+        else:
+            current_date -= timedelta(days=7)
+        
+        new_ww = get_intel_work_week(current_date)
+        if new_ww != current_ww:
+            weeks_count += 1
+            current_ww = new_ww
+        
+        safety_limit += 1
+    
+    if safety_limit >= 60:
+        print(f"[WARNING] Week calculation exceeded safety limit, using approximation")
+        return abs(end_ww - start_ww)
+    
+    return weeks_count
+
+def get_current_shift_info(now: datetime):
+    """Determine current shift and time into shift"""
+    current_hour = now.hour
+    
+    if current_hour >= SHIFT_START_HOURS[0] and current_hour < SHIFT_START_HOURS[1]:
+        shift_start = now.replace(hour=SHIFT_START_HOURS[0], minute=0, second=0, microsecond=0)
+        shift_name = "Day"
+    else:
+        if current_hour >= SHIFT_START_HOURS[1]:
+            shift_start = now.replace(hour=SHIFT_START_HOURS[1], minute=0, second=0, microsecond=0)
+        else:
+            shift_start = (now - timedelta(days=1)).replace(hour=SHIFT_START_HOURS[1], minute=0, second=0, microsecond=0)
+        shift_name = "Night"
+    
+    hours_into_shift = (now - shift_start).total_seconds() / 3600.0
+    return shift_start, shift_name, hours_into_shift
+
+def safe_num(value, default=np.nan):
+    """Convert to float safely"""
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+def read_shift_baseline():
+    """Read the stored 6am baseline from file"""
+    try:
+        if Path(BASELINE_STORAGE_PATH).exists():
+            with open(BASELINE_STORAGE_PATH, 'r') as f:
+                baseline = json.load(f)
+                print(f"[OK] Loaded baseline from {baseline['date']} at {baseline['shift_start']}")
+                return baseline
+    except Exception as e:
+        print(f"[WARNING] Could not read baseline: {e}")
+    return None
+
+def write_shift_baseline(date_str, shift_start_time, segment_day, ceid, operation, full_loop_seq, 
+                         target_sd=None, target_ceid=None, target_operation=None, 
+                         previous_day_performance=None, blame_analysis=None):
+    """Write the 6am baseline to file - FIXED: Now stores target_operation"""
+    try:
+        baseline = {
+            "date": date_str,
+            "shift_start": shift_start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "baseline_sd": float(segment_day),
+            "baseline_ceid": str(ceid),
+            "baseline_operation": int(operation) if operation != "N/A" else "N/A",
+            "baseline_fls": float(full_loop_seq),
+            "target_sd": float(target_sd) if target_sd is not None else None,
+            "target_ceid": str(target_ceid) if target_ceid is not None else None,
+            "target_operation": int(target_operation) if target_operation is not None and target_operation != "N/A" else "N/A",
+            "previous_day_performance": previous_day_performance,
+            "blame_analysis": blame_analysis,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        with open(BASELINE_STORAGE_PATH, 'w') as f:
+            json.dump(baseline, f, indent=2)
+        print(f"[OK] Stored baseline: SD{segment_day} at {shift_start_time:%Y-%m-%d %H:%M:%S}")
+        if target_sd:
+            print(f"    Target for tomorrow 6am: SD{target_sd} | {target_ceid} | Op {target_operation}")
+        if previous_day_performance:
+            print(f"    Stored yesterday's performance: {previous_day_performance['status']}")
+        if blame_analysis:
+            print(f"    Stored blame analysis: {len(blame_analysis['gap_drivers'])} operations identified")
+        return baseline
+    except Exception as e:
+        print(f"[ERROR] Could not write baseline: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def should_update_baseline(now, existing_baseline):
+    """Determine if we should update the baseline"""
+    in_update_window = (now.hour == 5 and now.minute >= 45) or (now.hour == 6 and now.minute <= 15)
+    
+    if not in_update_window:
+        return False
+    
+    if not existing_baseline:
+        return True
+    
+    try:
+        baseline_date = datetime.strptime(existing_baseline['date'], "%Y-%m-%d").date()
+        today = now.date()
+        
+        if baseline_date < today:
+            return True
+    except Exception:
+        return True
+    
+    return False
+
+def load_tsv(path: str) -> pd.DataFrame:
+    """Load TSV file"""
+    p = Path(path)
+    if not p.exists():
+        raise FileNotFoundError(f"Missing data file: {path}")
+    return pd.read_csv(p, sep="\t", low_memory=False)
+
+def get_week_number(date: datetime) -> int:
+    """Get week number since quarter start"""
+    return ((date - QUARTER_START).days // 7) + 1
+
+def calc_segment_pp_remaining(df_lineview: pd.DataFrame,
+                              pp_operation: int,
+                              bump_inv: float) -> pd.Series:
+    """
+    Calculate remaining inventory per segment after a given operation.
+    Returns CUMULATIVE inventory (total WIP that must flow through each segment to ship).
+    Bump inventory is added uniformly to all segments.
+    """
+    # Cache lookups to avoid repeated boolean indexing
+    fe_cut = df_lineview.loc[df_lineview["OPERATION"] == 175084, "FULL_LOOP_SEQ"].iloc[0]
+    ssafi_cut = df_lineview.loc[df_lineview["OPERATION"] == 185006, "FULL_LOOP_SEQ"].iloc[0]
+    pp_fls = df_lineview.loc[df_lineview["OPERATION"] == pp_operation, "FULL_LOOP_SEQ"].iloc[0]
+
+    # Assign segment tags
+    df_lineview = df_lineview.copy()
+    df_lineview["SEGMENT_TAG"] = pd.cut(
+        df_lineview["FULL_LOOP_SEQ"],
+        bins=[0, fe_cut, ssafi_cut, np.inf],
+        labels=["FE", "SSAFI", "BE"],
+        right=True,          
+        include_lowest=True  
+    )
+
+    # Aggregate and ensure fixed segment order with 0 for missing segments
+    # CUMULATIVE: FE = all WIP, SSAFI = SSAFI+BE, BE = just BE
+    base = (
+        df_lineview.loc[df_lineview["FULL_LOOP_SEQ"] > pp_fls]
+        .groupby("SEGMENT_TAG", observed=True)["INV_PROD"]
+        .sum()
+        .reindex(["FE", "SSAFI", "BE"], fill_value=0)
+        .cumsum()
+    )
+
+    # Add bump uniformly to all segments (WIP bump flows through all stages)
+    segment_pp_remaining = base + bump_inv
+
+    return segment_pp_remaining
+
+def find_lost_time_pp(df_lineview, yesterday_operation, today_operation, day_ct_goal):
+    """
+    Calculate the gap vs. daily CT goal and identify operations driving lost time.
+    
+    Returns
+    -------
+    actual_ct_progress_gap : float
+        Difference between actual cumulative normalized CT and the day CT goal.
+    gap_driver : pandas.DataFrame
+        Operations with LOST_TIME showing where time was lost.
+    """
+    try:
+        def get_full_loop_seq(operation):
+            """Return FULL_LOOP_SEQ value for a given operation."""
+            matches = df_lineview.loc[df_lineview["OPERATION"] == operation, "FULL_LOOP_SEQ"]
+            if matches.empty:
+                raise ValueError(f"Operation {operation} not found in lineview")
+            return matches.values[0]
+        
+        # Get sequence boundaries
+        seq_yesterday = get_full_loop_seq(yesterday_operation)
+        seq_today = get_full_loop_seq(today_operation)
+        
+        print(f"[DEBUG] Blame analysis: Yesterday Op {yesterday_operation} (FLS {seq_yesterday}) -> Today Op {today_operation} (FLS {seq_today})")
+        
+        # Calculate actual CT progress between yesterday and today
+        range_df = df_lineview.query(
+            f"FULL_LOOP_SEQ >= {seq_yesterday} and FULL_LOOP_SEQ < {seq_today} and OPERATION not in {EXCLUDED_OPERATIONS}"
+        ).copy()
+        
+        if range_df.empty:
+            print(f"[WARNING] No operations found in range for blame analysis")
+            return 0.0, pd.DataFrame()
+        
+        # Normalize numeric columns
+        range_df["CT_GOAL"] = pd.to_numeric(range_df.get("CT_GOAL", 0), errors="coerce").fillna(0.0)
+        range_df["LAYER_COUNT"] = pd.to_numeric(range_df.get("LAYER_COUNT", 0), errors="coerce").fillna(0.0)
+        range_df["PS_CT"] = pd.to_numeric(range_df.get("PS_CT", 0), errors="coerce").fillna(0.0)
+        
+        # Calculate normalized CT goal (what we should have achieved)
+        range_df["NORM_CT_GOAL"] = range_df["CT_GOAL"] * range_df["LAYER_COUNT"]
+        
+        # Calculate actual normalized CT (what we did achieve)
+        range_df["NORM_CT_ACTUAL"] = range_df["PS_CT"] * range_df["LAYER_COUNT"]
+        
+        # Lost time = actual - goal (positive means we LOST time here - operation was SLOWER than goal)
+        range_df["LOST_TIME"] = range_df["NORM_CT_ACTUAL"] - range_df["NORM_CT_GOAL"]
+        
+        # Sum ACTUAL CT (not GOAL CT)
+        total_actual_ct = range_df["NORM_CT_ACTUAL"].sum()
+        actual_ct_progress_gap = total_actual_ct - day_ct_goal
+        
+        print(f"[DEBUG] Actual CT: {total_actual_ct:.1f}h vs Goal: {day_ct_goal:.1f}h, Gap: {actual_ct_progress_gap:.1f}h")
+        
+        # Find top operations with POSITIVE lost time (operations that were SLOWER than goal)
+        gap_driver = (
+            range_df[range_df["LOST_TIME"] > 0.1]
+            .sort_values("LOST_TIME", ascending=False)
+            .head(10)
+            [["OPERATION", "OPER_SHORT_DESC", "CEID", "LOST_TIME", "CT_GOAL", "PS_CT", "LAYER_COUNT"]]
+        )
+        
+        print(f"[OK] Found {len(gap_driver)} operations with lost time (slower than goal)")
+        
+        return actual_ct_progress_gap, gap_driver
+        
+    except Exception as e:
+        print(f"[ERROR] Blame analysis failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0.0, pd.DataFrame()
+
+# =============================================================================
+# DATABASE CONNECTOR
+# =============================================================================
+try:
+    import PyUber
+    def get_db():
+        return PyUber.connect("F32_PROD_XEUS")
+except Exception:
+    def get_db():
+        raise RuntimeError("[ERROR] PyUber unavailable")
+
+# =============================================================================
+# QUARTERLY CT IMPACT ANALYSIS - PROD LOTS ONLY
+# =============================================================================
+def analyze_quarterly_ct_impact(db, df_lineview, df_lots, pp_operation):
+    """Analyze quarterly CT impact across PROD lots only (active + shipped)"""
+    
+    try:
+        pp_fls = float(df_lineview.loc[df_lineview["OPERATION"] == pp_operation, "FULL_LOOP_SEQ"].values[0])
+        
+        lots_pp = (
+            df_lots
+            .loc[df_lots["FULL_LOOP_SEQ"] >= pp_fls]
+            .loc[(df_lots["LOT_STATE"] == "Active") | (df_lots["LOT_STATE"] == "StoresMerge")]
+            .loc[df_lots["LOT_TYPE"] == "PROD"]
+            .loc[(df_lots["PROCESS"] == 1274) | (df_lots["PROCESS"] == 1275)]
+            .filter(items=["LOT"])
+        )
+        
+        ct_goal = df_lineview.filter(items=["OPERATION", "CEID", "CT_GOAL", "OPER_SHORT_DESC"]).copy()
+        ct_goal["CEID"] = ct_goal["CEID"].apply(lambda x: str(x) if pd.notna(x) else "N/A")
+        ct_goal["OPER_SHORT_DESC"] = ct_goal["OPER_SHORT_DESC"].apply(lambda x: str(x) if pd.notna(x) else "N/A")
+        
+        quarter_ww = get_intel_work_week(QUARTER_START)
+        
+        shipped_lots_sql = f'''
+        SELECT LOT
+        FROM F_LOT_FABOUT_SUMMARY
+        WHERE 
+          LOT_TYPE = 'PROD'
+          AND FABOUT_ROUTE LIKE ('FL%')
+          AND LOT_PROCESS IN ('1274','1275')
+          AND FABOUT_WW >= {quarter_ww}
+        '''
+        
+        shipped_lots = pd.read_sql(shipped_lots_sql, db)
+        all_lots = list(lots_pp["LOT"].astype(str)) + list(shipped_lots["LOT"].astype(str))
+        
+        if not all_lots:
+            print(f"[WARNING] No PROD lots found for quarterly CT analysis")
+            return None
+        
+        print(f"[INFO] Analyzing CT impact across {len(all_lots)} PROD lots (active + shipped)")
+        
+        lot_ct_sql = f"""
+        SELECT 
+          OPERATION, 
+          AVG(DECIMAL(TIMESTAMPDIFF(2, CHAR(OUT_DATE - PREVOUT_DATE)) / 3600.0, 10, 2)) AS AVG_CT_HOURS
+        FROM F_LOT_RUN_CARD
+        WHERE  
+          LOT IN ({', '.join([f"'{lot}'" for lot in all_lots])})
+          AND OPERATION NOT IN ({', '.join([str(op) for op in EXCLUDED_OPERATIONS])})
+        GROUP BY OPERATION
+        """
+        
+        lot_ct = pd.read_sql(lot_ct_sql, db)
+        lot_ct['OPERATION'] = lot_ct['OPERATION'].astype(int)
+        lot_ct['AVG_CT_HOURS'] = pd.to_numeric(lot_ct['AVG_CT_HOURS'], errors='coerce').fillna(0.0)
+        
+        df_ct_merged = pd.merge(lot_ct, ct_goal, on="OPERATION", how="left")
+        df_ct_merged["CT_GOAL"] = pd.to_numeric(df_ct_merged["CT_GOAL"], errors="coerce").fillna(0.0)
+        df_ct_merged["OVER_CT"] = df_ct_merged["AVG_CT_HOURS"] - df_ct_merged["CT_GOAL"]
+        
+        final = (
+            df_ct_merged
+            .loc[df_ct_merged["OVER_CT"] > 0]
+            .sort_values(by="OVER_CT", ascending=False)
+            .head(20)
+        )
+        
+        total_lots_analyzed = len(all_lots)
+        active_lots_count = len(lots_pp)
+        shipped_lots_count = len(shipped_lots)
+        
+        result_data = []
+        for _, row in final.iterrows():
+            ceid_value = str(row["CEID"]) if pd.notna(row["CEID"]) else "N/A"
+            
+            if ceid_value == "N/A":
+                continue
+            
+            result_data.append({
+                "OPERATION": int(row["OPERATION"]),
+                "CEID": ceid_value,
+                "OPER_SHORT_DESC": str(row["OPER_SHORT_DESC"]) if pd.notna(row["OPER_SHORT_DESC"]) else "N/A",
+                "CT_GOAL": float(row["CT_GOAL"]),
+                "AVG_CT_HOURS": float(row["AVG_CT_HOURS"]),
+                "OVER_CT": float(row["OVER_CT"])
+            })
+        
+        result = {
+            "data": result_data,
+            "total_lots": total_lots_analyzed,
+            "active_lots": active_lots_count,
+            "shipped_lots": shipped_lots_count
+        }
+        
+        print(f"[OK] Found {len(result['data'])} operations over CT goal")
+        return result
+        
+    except Exception as e:
+        print(f"[ERROR] Quarterly CT analysis failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+# =============================================================================
+# WEEKLY TREND ANALYSIS - BY FABOUT_WW
+# =============================================================================
+def analyze_weekly_trends(db, now):
+    """Analyze week-by-week shipments using FABOUT_WW from F_LOT_FABOUT_SUMMARY - PROD ONLY"""
+    
+    current_ww = get_intel_work_week(now)
+    
+    weekly_sql = f"""
+    SELECT
+        FABOUT_WW, 
+        SUM(FABOUT_WAFER_QTY) as TOTAL_SHIPS
+    FROM 
+        F_LOT_FABOUT_SUMMARY
+    WHERE 
+        LOT_TYPE = 'PROD'
+        AND FABOUT_ROUTE LIKE ('FL%')
+        AND LOT_PROCESS IN ('1274','1275')
+        AND FABOUT_WW >= {WEEKLY_TREND_START_WW}
+        AND FABOUT_WW <= {current_ww}
+    GROUP BY 
+        FABOUT_WW
+    ORDER BY
+        FABOUT_WW
+    """
+    
+    try:
+        weeks_df = pd.read_sql(weekly_sql, db)
+        
+        if weeks_df.empty:
+            print(f"[WARNING] No weekly data found from WW{WEEKLY_TREND_START_WW}")
+            return None
+        
+        weeks_data = []
+        cumulative = 0
+        
+        for _, row in weeks_df.iterrows():
+            intel_ww = int(row["FABOUT_WW"])
+            ships = safe_num(row["TOTAL_SHIPS"], 0)
+            cumulative += ships
+            
+            weeks_data.append({
+                "intel_ww": intel_ww,
+                "ww_short": intel_ww % 100,
+                "ships": ships,
+                "cumulative": cumulative
+            })
+            
+            print(f"[DEBUG] WW{intel_ww % 100}: {ships:,.0f} wafers")
+        
+        total_weeks = len(weeks_data)
+        total_ships = cumulative
+        avg_weekly = total_ships / total_weeks if total_weeks > 0 else 0
+        
+        print(f"[INFO] Total shipped: {total_ships:,} over {total_weeks} work weeks, avg = {avg_weekly:,.0f}/week")
+        
+        # Calculate weeks remaining properly handling year boundaries
+        deadline_ww = get_intel_work_week(DEADLINE)
+        weeks_remaining = max(1, calculate_weeks_between_ww(current_ww, deadline_ww))
+        
+        remaining_goal = max(0, QUARTER_GOAL - total_ships)
+        required_weekly = remaining_goal / weeks_remaining
+        
+        forecast = total_ships + (avg_weekly * weeks_remaining)
+        gap = forecast - QUARTER_GOAL
+        will_hit_goal = forecast >= QUARTER_GOAL
+        
+        print(f"[INFO] Weeks remaining (calculated): {weeks_remaining}")
+        print(f"[INFO] Forecast: {total_ships:,} + ({avg_weekly:,.0f} × {weeks_remaining}) = {forecast:,.0f}")
+        print(f"[INFO] Gap: {forecast:,.0f} - {QUARTER_GOAL:,} = {gap:+,.0f}")
+        
+        return {
+            "weeks_data": weeks_data,
+            "total_weeks": total_weeks,
+            "total_ships": total_ships,
+            "avg_weekly": avg_weekly,
+            "weeks_remaining": weeks_remaining,
+            "required_weekly": required_weekly,
+            "forecast": forecast,
+            "will_hit_goal": will_hit_goal,
+            "gap": gap
+        }
+        
+    except Exception as e:
+        print(f"[ERROR] Weekly trend analysis failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+# =============================================================================
+# REVERTED: SIMPLE 1:1 LINEAR PROGRESS CALCULATION
+# =============================================================================
+def calculate_progress_data(pp_segment_day, segment_day_end, quarter_start, deadline, now):
+    """
+    REVERTED: Simple 1:1 linear calculation as the factory operates.
+    Days ahead/behind = Segment days remaining - Calendar days remaining
+    NEGATIVE = behind schedule, POSITIVE = ahead of schedule
+    """
+    total_calendar_days = (deadline - quarter_start).days
+    calendar_days_elapsed = (now - quarter_start).days
+    seconds_remaining = (deadline - now).total_seconds()
+    calendar_days_remaining = round(max(0.0, seconds_remaining / 86400.0), 2)
+    
+    current_segment_day = pp_segment_day
+    segment_days_remaining = max(0, segment_day_end - current_segment_day)
+    
+    # REVERTED: Simple 1:1 linear calculation
+    # If we have 51 segment days remaining and 44.32 calendar days remaining
+    # We are 51 - 44.32 = 6.68 days behind (should display as NEGATIVE)
+    # FIXED: Flip the sign - calendar days minus segment days
+    days_ahead_behind = calendar_days_remaining - segment_days_remaining
+    days_ahead_behind = round(days_ahead_behind, 2)
+    
+    segment_day_pct = (current_segment_day / segment_day_end) * 100 if segment_day_end > 0 else 0
+    
+    # FIXED: Now positive = ahead, negative = behind
+    if days_ahead_behind >= 0:  # More calendar days than segment days = ahead
+        status = "AHEAD OF SCHEDULE"
+        status_class = "status-good"
+    else:  # Fewer calendar days than segment days = behind
+        status = "BEHIND SCHEDULE"
+        status_class = "status-warn"
+    
+    print(f"[INFO] Simple 1:1 linear: {calendar_days_remaining:.2f} cal days - {segment_days_remaining} SD remaining = {days_ahead_behind:+.2f} days")
+    
+    return {
+        "total_calendar_days": total_calendar_days,
+        "calendar_days_elapsed": calendar_days_elapsed,
+        "calendar_days_remaining": calendar_days_remaining,
+        "current_segment_day": current_segment_day,
+        "segment_day_end": segment_day_end,
+        "segment_days_remaining": segment_days_remaining,
+        "segment_day_pct": segment_day_pct,
+        "days_ahead_behind": days_ahead_behind,
+        "status": status,
+        "status_class": status_class
+    }
+# =============================================================================
+# DYNAMIC CT TARGET
+# =============================================================================
+def calculate_dynamic_ct_target(df_lineview, pp_segment_day, segment_day_end, calendar_days_remaining):
+    """
+    Calculate dynamic CT target based on actual remaining CT hours needed.
+    No hard upper cap - warns if target is extremely high.
+    """
+    try:
+        # Get operations remaining from current position to end
+        remaining_ops = df_lineview[
+            (df_lineview["SEGMENT_DAY"] > pp_segment_day) & 
+            (df_lineview["SEGMENT_DAY"] <= segment_day_end) &
+            (~df_lineview["OPERATION"].isin(EXCLUDED_OPERATIONS))
+        ].copy()
+        
+        if remaining_ops.empty:
+            print(f"[WARNING] No remaining operations found for CT target calculation")
+            return 35.0  # Default fallback
+        
+        # Normalize columns
+        remaining_ops["CT_GOAL"] = pd.to_numeric(remaining_ops.get("CT_GOAL", 0), errors="coerce").fillna(0.0)
+        remaining_ops["LAYER_COUNT"] = pd.to_numeric(remaining_ops.get("LAYER_COUNT", 0), errors="coerce").fillna(0.0)
+        
+        # Calculate total normalized CT hours needed
+        remaining_ops["CT_EFFECTIVE"] = remaining_ops["CT_GOAL"] * remaining_ops["LAYER_COUNT"]
+        total_ct_hours_needed = remaining_ops["CT_EFFECTIVE"].sum()
+        
+        print(f"[DEBUG] Total CT hours remaining: {total_ct_hours_needed:.1f}h across {len(remaining_ops)} operations")
+        
+        # Calculate daily CT target
+        if calendar_days_remaining > 0:
+            daily_ct_target = total_ct_hours_needed / calendar_days_remaining
+        else:
+            daily_ct_target = total_ct_hours_needed
+        
+        # Soft lower bound only
+        daily_ct_target = max(24.0, daily_ct_target)
+        
+        # Warning for extreme values
+        if daily_ct_target > 48.0:
+            print(f"[WARNING] Extremely high CT target required: {daily_ct_target:.1f}h/day - may be unachievable!")
+        
+        print(f"[INFO] Dynamic daily CT target: {daily_ct_target:.1f}h/day ({total_ct_hours_needed:.1f}h / {calendar_days_remaining:.1f} days)")
+        
+        return daily_ct_target
+        
+    except Exception as e:
+        print(f"[ERROR] Dynamic CT target calculation failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return 35.0
+
+# =============================================================================
+# FIXED: 24-HOUR SHIFT PROGRESS TRACKING - TARGET NO LONGER CHANGES
+# =============================================================================
+def calculate_24h_shift_progress(pp_segment_day, pp_ceid, pp_operation, pp_full_loop_seq, ssafi_lsb_fls, df_lineview, now, dynamic_ct_target):
+    """
+    FIXED: Calculate 24-hour shift progress with STABLE target.
+    Target set at 6am does NOT change throughout the day.
+    """
+    
+    today_6am = now.replace(hour=6, minute=0, second=0, microsecond=0)
+    
+    if now.hour < 6:
+        shift_baseline_time = today_6am - timedelta(days=1)
+    else:
+        shift_baseline_time = today_6am
+    
+    stored_baseline = read_shift_baseline()
+    
+    # Check if we have stored previous day performance
+    target_vs_actual = None
+    blame_analysis = None
+    
+    if stored_baseline and 'previous_day_performance' in stored_baseline and stored_baseline['previous_day_performance'] is not None:
+        target_vs_actual = stored_baseline['previous_day_performance']
+        blame_analysis = stored_baseline.get('blame_analysis', None)
+        print(f"[INFO] Using stored previous day performance: {target_vs_actual['status']}")
+    
+    should_update = should_update_baseline(now, stored_baseline)
+    
+    # If we're updating the baseline, calculate yesterday's performance NOW
+    previous_day_performance_to_store = None
+    blame_analysis_to_store = None
+    
+    if should_update and stored_baseline:
+        if 'target_sd' in stored_baseline and stored_baseline['target_sd'] is not None:
+            expected_sd_at_6am = stored_baseline['target_sd']
+            expected_ceid_at_6am = stored_baseline.get('target_ceid', 'N/A')
+            baseline_operation_yesterday = stored_baseline.get('baseline_operation', 'N/A')
+            
+            # Calculate how we did vs yesterday's target
+            gap = pp_segment_day - expected_sd_at_6am
+            previous_day_performance_to_store = {
+                "expected_sd": expected_sd_at_6am,
+                "expected_ceid": expected_ceid_at_6am,
+                "actual_sd": pp_segment_day,
+                "actual_ceid": pp_ceid,
+                "gap": gap,
+                "status": "HIT TARGET" if gap >= 0 else "MISSED TARGET",
+                "status_class": "status-good" if gap >= 0 else "status-warn",
+                "measured_at": now.strftime("%Y-%m-%d %H:%M:%S")
+            }
+            print(f"[INFO] Calculated yesterday's performance: Expected SD{expected_sd_at_6am}, Actual SD{pp_segment_day}, Gap: {gap:+.1f}")
+            
+            # If we missed the target, run blame analysis
+            if gap < 0 and baseline_operation_yesterday != "N/A":
+                print(f"[INFO] Running blame analysis (missed by {abs(gap):.1f} SD)...")
+                ct_gap, gap_drivers_df = find_lost_time_pp(
+                    df_lineview,
+                    baseline_operation_yesterday,
+                    pp_operation,
+                    dynamic_ct_target
+                )
+                
+                if not gap_drivers_df.empty:
+                    gap_drivers_list = []
+                    for _, driver in gap_drivers_df.iterrows():
+                        gap_drivers_list.append({
+                            "operation": int(driver["OPERATION"]),
+                            "desc": str(driver.get("OPER_SHORT_DESC", "N/A"))[:30],
+                            "ceid": str(driver.get("CEID", "N/A")),
+                            "lost_time": float(driver["LOST_TIME"]),
+                            "ct_goal": float(driver.get("CT_GOAL", 0)),
+                            "ps_ct": float(driver.get("PS_CT", 0)),
+                            "layer_count": float(driver.get("LAYER_COUNT", 0))
+                        })
+                    
+                    blame_analysis_to_store = {
+                        "ct_gap": float(ct_gap),
+                        "gap_drivers": gap_drivers_list,
+                        "analysis_period": f"{shift_baseline_time - timedelta(days=1):%Y-%m-%d %H:%M} to {shift_baseline_time:%Y-%m-%d %H:%M}"
+                    }
+                    print(f"[OK] Blame analysis complete: {len(gap_drivers_list)} operations identified")
+            
+            target_vs_actual = previous_day_performance_to_store
+            blame_analysis = blame_analysis_to_store
+    
+    if stored_baseline:
+        baseline_sd = stored_baseline["baseline_sd"]
+        baseline_ceid = stored_baseline["baseline_ceid"]
+        baseline_operation = stored_baseline.get("baseline_operation", "N/A")
+        baseline_fls = stored_baseline["baseline_fls"]
+        print(f"[INFO] Using stored baseline: SD{baseline_sd} from {stored_baseline['shift_start']}")
+    else:
+        baseline_sd = pp_segment_day
+        baseline_ceid = pp_ceid
+        baseline_operation = pp_operation
+        baseline_fls = pp_full_loop_seq
+        print(f"[WARNING] No baseline found, using current position as baseline")
+    
+    hours_elapsed = (now - shift_baseline_time).total_seconds() / 3600.0
+    expected_ct_progress = (hours_elapsed / 24.0) * dynamic_ct_target
+    
+    starting_sd = max(baseline_sd, pp_segment_day)
+    starting_fls = pp_full_loop_seq if pp_segment_day > baseline_sd else baseline_fls
+
+    path_forward = df_lineview.query(
+        f"FULL_LOOP_SEQ > {starting_fls} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & SEGMENT_DAY >= {starting_sd} & OPERATION not in {EXCLUDED_OPERATIONS}"
+    ).sort_values("FULL_LOOP_SEQ").copy()
+    
+    path_forward["LAYER_COUNT"] = pd.to_numeric(path_forward["LAYER_COUNT"], errors="coerce").fillna(0.0)
+    path_forward["CT_GOAL"] = pd.to_numeric(path_forward["CT_GOAL"], errors="coerce").fillna(0.0)
+    path_forward["CT_EFFECTIVE"] = path_forward["CT_GOAL"] * path_forward["LAYER_COUNT"]
+    path_forward.loc[path_forward["LAYER_COUNT"] <= 0.02, "CT_EFFECTIVE"] = 0.0
+    path_forward["CUMULATIVE_CT"] = path_forward["CT_EFFECTIVE"].cumsum()
+    
+    expected_now_ops = path_forward.query(f"CUMULATIVE_CT <= {expected_ct_progress}")
+    
+    if not expected_now_ops.empty:
+        expected_now_op = expected_now_ops.tail(1)
+        expected_sd = safe_num(expected_now_op["SEGMENT_DAY"].values[0], baseline_sd)
+        expected_ceid = expected_now_op.get("CEID", pd.Series(["N/A"])).values[0]
+        expected_op = expected_now_op["OPERATION"].values[0] if "OPERATION" in expected_now_op.columns else "N/A"
+    else:
+        expected_sd = baseline_sd
+        expected_ceid = baseline_ceid
+        expected_op = baseline_operation
+    
+    # FIXED: Use stored target if available, otherwise calculate
+    if stored_baseline and 'target_sd' in stored_baseline and stored_baseline['target_sd'] is not None:
+        # Use the STORED target that was set at 6am - this does NOT change throughout the day
+        target_sd = stored_baseline['target_sd']
+        target_ceid = stored_baseline.get('target_ceid', 'N/A')
+        target_operation = stored_baseline.get('target_operation', 'N/A')
+        
+        # Count how many ops are in the target range for display purposes
+        target_ops_display = path_forward.query(f"SEGMENT_DAY <= {target_sd}")
+        ops_in_target = len(target_ops_display)
+        
+        print(f"[INFO] Using STORED target from 6am: SD{target_sd} | {target_ceid} | Op {target_operation} (stable throughout day)")
+    else:
+        # Calculate target (only happens if no baseline exists)
+        target_ops = path_forward.query(f"CUMULATIVE_CT <= {dynamic_ct_target}")
+        
+        if not target_ops.empty:
+            target_op = target_ops.tail(1)
+            target_sd = safe_num(target_op["SEGMENT_DAY"].values[0], baseline_sd)
+            target_ceid = target_op.get("CEID", pd.Series(["N/A"])).values[0]
+            target_operation = target_op["OPERATION"].values[0] if "OPERATION" in target_op.columns else "N/A"
+            ops_in_target = len(target_ops)
+        else:
+            target_sd = baseline_sd
+            target_ceid = "N/A"
+            target_operation = "N/A"
+            ops_in_target = 0
+        
+        print(f"[INFO] Calculated NEW target: SD{target_sd} | {target_ceid} | Op {target_operation}")
+    
+    # If we're updating the baseline (at 6am), calculate NEW target for tomorrow
+    if should_update:
+        print(f"[INFO] Updating 6am baseline and calculating NEW target for next 24 hours...")
+        
+        # Calculate NEW target for tomorrow
+        future_path = df_lineview.query(
+            f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & SEGMENT_DAY >= {pp_segment_day} & OPERATION not in {EXCLUDED_OPERATIONS}"
+        ).sort_values("FULL_LOOP_SEQ").copy()
+        
+        future_path["LAYER_COUNT"] = pd.to_numeric(future_path["LAYER_COUNT"], errors="coerce").fillna(0.0)
+        future_path["CT_GOAL"] = pd.to_numeric(future_path["CT_GOAL"], errors="coerce").fillna(0.0)
+        future_path["CT_EFFECTIVE"] = future_path["CT_GOAL"] * future_path["LAYER_COUNT"]
+        future_path.loc[future_path["LAYER_COUNT"] <= 0.02, "CT_EFFECTIVE"] = 0.0
+        future_path["CUMULATIVE_CT"] = future_path["CT_EFFECTIVE"].cumsum()
+        
+        future_target_ops = future_path.query(f"CUMULATIVE_CT <= {dynamic_ct_target}")
+        
+        if not future_target_ops.empty:
+            future_target_op = future_target_ops.tail(1)
+            target_sd_to_store = safe_num(future_target_op["SEGMENT_DAY"].values[0], pp_segment_day)
+            target_ceid_to_store = future_target_op.get("CEID", pd.Series(["N/A"])).values[0]
+            target_operation_to_store = future_target_op["OPERATION"].values[0] if "OPERATION" in future_target_op.columns else "N/A"
+        else:
+            target_sd_to_store = pp_segment_day
+            target_ceid_to_store = pp_ceid
+            target_operation_to_store = pp_operation
+        
+        stored_baseline = write_shift_baseline(
+            shift_baseline_time.strftime("%Y-%m-%d"),
+            shift_baseline_time,
+            pp_segment_day,
+            pp_ceid,
+            pp_operation,
+            pp_full_loop_seq,
+            target_sd_to_store,
+            target_ceid_to_store,
+            target_operation_to_store,
+            previous_day_performance_to_store,
+            blame_analysis_to_store
+        )
+    
+    actual_progress_sd = pp_segment_day - baseline_sd
+    expected_progress_sd = expected_sd - baseline_sd
+    
+    if actual_progress_sd >= expected_progress_sd:
+        pace_status = "ON PACE (HIT)"
+        pace_class = "status-good"
+    else:
+        pace_status = "BEHIND PACE (MISS)"
+        pace_class = "status-warn"
+    
+    return {
+        "shift_baseline_time": shift_baseline_time,
+        "hours_elapsed": hours_elapsed,
+        "hours_remaining": 24.0 - hours_elapsed,
+        "expected_ct_progress": expected_ct_progress,
+        "baseline_sd": baseline_sd,
+        "baseline_ceid": baseline_ceid,
+        "baseline_fls": baseline_fls,
+        "current_sd": pp_segment_day,
+        "expected_sd": expected_sd,
+        "expected_ceid": expected_ceid,
+        "expected_op": expected_op,
+        "target_sd": target_sd,
+        "target_ceid": target_ceid,
+        "target_operation": target_operation,
+        "ops_in_target": ops_in_target,
+        "actual_progress_sd": actual_progress_sd,
+        "expected_progress_sd": expected_progress_sd,
+        "pace_status": pace_status,
+        "pace_class": pace_class,
+        "ct_target": dynamic_ct_target,
+        "using_stored_baseline": stored_baseline is not None,
+        "target_vs_actual": target_vs_actual,
+        "blame_analysis": blame_analysis
+    }
+
+# =============================================================================
+# CEID PERFORMANCE ANALYSIS
+# =============================================================================
+def analyze_ceid_performance(df_lineview, df_ceid, pp_full_loop_seq, ssafi_lsb_fls, dynamic_ct_target):
+    """
+    Deep dive into CEID performance using normalized CT (CT_GOAL * LAYER_COUNT)
+    Focuses on operations within the dynamic lookahead window that impact throughput
+    """
+    
+    critical_path = df_lineview.query(
+        f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+    ).sort_values("FULL_LOOP_SEQ").copy()
+    
+    if critical_path.empty:
+        return []
+    
+    # Normalize numeric columns
+    critical_path["CT_GOAL"] = pd.to_numeric(critical_path["CT_GOAL"], errors="coerce").fillna(0.0)
+    critical_path["LAYER_COUNT"] = pd.to_numeric(critical_path["LAYER_COUNT"], errors="coerce").fillna(0.0)
+    critical_path["AVG_HAO"] = pd.to_numeric(critical_path["AVG_HAO"], errors="coerce").fillna(0.0)
+    critical_path["PS_CT"] = pd.to_numeric(critical_path.get("PS_CT", 0), errors="coerce").fillna(0.0)
+    critical_path["INV_PROD"] = pd.to_numeric(critical_path["INV_PROD"], errors="coerce").fillna(0.0)
+    critical_path["INV_GOAL"] = pd.to_numeric(critical_path["INV_GOAL"], errors="coerce").fillna(0.0)
+    
+    # Calculate normalized CT
+    critical_path["CT_EFFECTIVE"] = critical_path["CT_GOAL"] * critical_path["LAYER_COUNT"]
+    
+    # Filter to layer count threshold
+    critical_path = critical_path[critical_path["LAYER_COUNT"] >= LAYER_COUNT_THRESHOLD].copy()
+    
+    # Set CT_EFFECTIVE to 0 for very low layer counts
+    critical_path.loc[critical_path["LAYER_COUNT"] <= 0.02, "CT_EFFECTIVE"] = 0.0
+    
+    # Calculate cumulative normalized CT
+    critical_path["CUMULATIVE_CT"] = critical_path["CT_EFFECTIVE"].cumsum()
+    
+    # Focus on operations within the dynamic lookahead window
+    lookahead_window = critical_path[critical_path["CUMULATIVE_CT"] <= dynamic_ct_target * 2].copy()
+    
+    if lookahead_window.empty:
+        lookahead_window = critical_path.head(20)
+    
+    print(f"[INFO] CEID Performance analyzing {len(lookahead_window)} operations within {dynamic_ct_target * 2:.1f}h lookahead")
+    
+    ceid_analysis = []
+    
+    for _, row in lookahead_window.iterrows():
+        ceid = row.get("CEID", "N/A")
+        ct_goal = row["CT_GOAL"]
+        ct_effective = row["CT_EFFECTIVE"]
+        layer_count = row["LAYER_COUNT"]
+        avg_hao = row["AVG_HAO"]
+        ps_ct = row["PS_CT"]
+        inv_prod = row["INV_PROD"]
+        inv_goal = row["INV_GOAL"]
+        
+        # Calculate actual normalized CT vs goal
+        actual_ct_effective = ps_ct * layer_count if ps_ct > 0 else avg_hao * layer_count
+        
+        # CT Performance Impact (normalized)
+        ct_impact = 0
+        if ct_effective > 0 and actual_ct_effective > 0:
+            ct_delay_normalized = actual_ct_effective - ct_effective
+            ct_delay_pct = ((actual_ct_effective / ct_effective) - 1) * 100
+            ct_impact = max(0, ct_delay_normalized)
+        else:
+            ct_delay_normalized = 0
+            ct_delay_pct = 0
+        
+        # Better inventory status representation
+        inv_status = "Normal"
+        inv_status_class = "severity-low"
+        inv_ratio = 0
+        
+        if inv_goal > 0 and inv_prod > 0:
+            inv_ratio = inv_prod / inv_goal
+            
+            if inv_ratio >= 3.0:
+                inv_status = "CRITICAL"
+                inv_status_class = "severity-high"
+            elif inv_ratio >= 2.0:
+                inv_status = "BOTTLENECK"
+                inv_status_class = "severity-high"
+            elif inv_ratio >= 1.5:
+                inv_status = "High"
+                inv_status_class = "severity-med"
+            elif inv_ratio < 0.5:
+                inv_status = "Starved"
+                inv_status_class = "severity-med"
+            else:
+                inv_status = "Normal"
+                inv_status_class = "severity-low"
+        
+        # Inventory Impact
+        inv_impact = 0
+        if inv_goal > 0 and inv_prod > 0:
+            if inv_ratio > 2.0:
+                inv_impact = (inv_ratio - 1) * ct_effective * 0.5
+            elif inv_ratio < 0.5:
+                inv_impact = (1 - inv_ratio) * ct_effective * 0.3
+        
+        # Combined Impact Score
+        impact_score = ct_impact + inv_impact
+        
+        # Performance Score (0-100, lower is worse)
+        performance_score = 100
+        if ct_delay_pct > 0:
+            performance_score -= min(50, ct_delay_pct / 2)
+        if inv_ratio > 2.0:
+            performance_score -= min(30, (inv_ratio * 100 - 100) / 10)
+        elif inv_ratio < 0.5 and inv_ratio > 0:
+            performance_score -= min(20, (100 - inv_ratio * 100) / 5)
+        
+        performance_score = max(0, performance_score)
+        
+        ceid_analysis.append({
+            "ceid": ceid,
+            "operation": row.get("OPERATION"),
+            "desc": row.get("OPER_SHORT_DESC", "")[:30],
+            "sd": row.get("SEGMENT_DAY"),
+            "layer_count": layer_count,
+            "ct_goal": ct_goal,
+            "ct_effective": ct_effective,
+            "avg_hao": avg_hao,
+            "ps_ct": ps_ct,
+            "actual_ct_effective": actual_ct_effective,
+            "ct_delay_normalized": ct_delay_normalized,
+            "ct_delay_pct": ct_delay_pct,
+            "inv_prod": inv_prod,
+            "inv_goal": inv_goal,
+            "inv_ratio": inv_ratio,
+            "inv_status": inv_status,
+            "inv_status_class": inv_status_class,
+            "impact_score": impact_score,
+            "performance_score": performance_score
+        })
+    
+    return sorted(ceid_analysis, key=lambda x: x["impact_score"], reverse=True)[:15]
+
+# =============================================================================
+# COMMIT SECTION SHIPMENTS TRACKER
+# =============================================================================
+def get_commit_section_ships(db, shift_start, now, commit_lsb_operation):
+    """Track wafer shipments from commit section"""
+    
+    try:
+        commit_shift_sql = f"""
+        SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_RUN_CARD
+        WHERE OUT_DATE >= TO_DATE('{shift_start:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND OUT_DATE <= SYSDATE
+            AND LOT_TYPE = 'PROD'
+            AND (LOT LIKE 'L%' OR LOT LIKE 'N%')
+            AND LOT NOT LIKE 'L9%'
+            AND OPERATION = {commit_lsb_operation}
+            AND WAFER_QTY > 0
+        """
+        commit_shift_df = pd.read_sql(commit_shift_sql, db)
+        commit_shift_ships = safe_num(commit_shift_df["TOTAL_WAFERS"].iloc[0], 0)
+        
+        yesterday = now - timedelta(hours=24)
+        commit_24h_sql = f"""
+        SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_RUN_CARD
+        WHERE OUT_DATE >= TO_DATE('{yesterday:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND OUT_DATE <= SYSDATE
+            AND LOT_TYPE = 'PROD'
+            AND (LOT LIKE 'L%' OR LOT LIKE 'N%')
+            AND LOT NOT LIKE 'L9%'
+            AND OPERATION = {commit_lsb_operation}
+            AND WAFER_QTY > 0
+        """
+        commit_24h_df = pd.read_sql(commit_24h_sql, db)
+        commit_24h_ships = safe_num(commit_24h_df["TOTAL_WAFERS"].iloc[0], 0)
+        
+        commit_quarter_sql = f"""
+        SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_RUN_CARD
+        WHERE OUT_DATE >= TO_DATE('{QUARTER_START:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND OUT_DATE <= SYSDATE
+            AND LOT_TYPE = 'PROD'
+            AND (LOT LIKE 'L%' OR LOT LIKE 'N%')
+            AND LOT NOT LIKE 'L9%'
+            AND OPERATION = {commit_lsb_operation}
+            AND WAFER_QTY > 0
+        """
+        commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
+        commit_quarter_ships = safe_num(commit_quarter_df["TOTAL_WAFERS"].iloc[0], 0)
+        
+        print(f"[OK] Commit section (Op {commit_lsb_operation}): Shift={commit_shift_ships:,}, 24h={commit_24h_ships:,}, Quarter={commit_quarter_ships:,}")
+        
+        return {
+            "shift_ships": commit_shift_ships,
+            "last_24h_ships": commit_24h_ships,
+            "quarter_ships": commit_quarter_ships
+        }
+        
+    except Exception as e:
+        print(f"[ERROR] Commit section tracking failed: {e}")
+        return {
+            "shift_ships": 0,
+            "last_24h_ships": 0,
+            "quarter_ships": 0
+        }
+
+# =============================================================================
+# HTML HELPER FUNCTIONS
+# =============================================================================
+def format_percentage(numerator, denominator):
+    """Format percentage or return N/A if denominator is zero"""
+    if denominator > 0:
+        return f"{(numerator / denominator * 100):.1f}%"
+    else:
+        return "N/A"
+
+def generate_blame_html(blame_analysis):
+    """Generate HTML for blame analysis table"""
+    if not blame_analysis or not blame_analysis.get('gap_drivers'):
+        return ''
+    
+    rows_html = ''
+    for driver in blame_analysis['gap_drivers'][:5]:
+        lost_time = driver['lost_time']
+        ct_goal = driver.get('ct_goal', 0)
+        ps_ct = driver.get('ps_ct', 0)
+        
+        severity_bg = '#fee2e2' if lost_time > 3 else '#fef3c7'
+        severity_color = '#991b1b' if lost_time > 3 else '#92400e'
+        
+        rows_html += f'''
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 6px; font-weight: 600;">Op {driver["operation"]}</td>
+            <td style="padding: 6px;">{driver["ceid"]}</td>
+            <td style="padding: 6px; color: #666;">{driver["desc"]}</td>
+            <td style="padding: 6px; text-align: right;">{ct_goal:.1f}h</td>
+            <td style="padding: 6px; text-align: right;">{ps_ct:.1f}h</td>
+            <td style="padding: 6px; text-align: right;">
+                <span style="background: {severity_bg}; padding: 2px 8px; border-radius: 4px; font-weight: 600; color: {severity_color};">
+                    {lost_time:.1f}h
+                </span>
+            </td>
+        </tr>
+        '''
+    
+    return f'''
+    <div style="margin-top: 15px; padding: 15px; background: #fee2e2; border: 2px solid #dc2626; border-radius: 8px;">
+        <h4 style="color: #991b1b; margin-bottom: 10px; font-size: 0.95em;">⚠️ Operations Responsible for Miss</h4>
+        <div style="font-size: 0.85em; color: #333;">
+            <strong>Lost Time Analysis:</strong>
+            <div style="margin-top: 10px; max-height: 250px; overflow-y: auto;">
+                <table style="width: 100%; font-size: 0.85em; border-collapse: collapse;">
+                    <thead style="background: #f8f9fa; position: sticky; top: 0;">
+                        <tr>
+                            <th style="padding: 6px; text-align: left; border-bottom: 2px solid #dee2e6;">Operation</th>
+                            <th style="padding: 6px; text-align: left; border-bottom: 2px solid #dee2e6;">CEID</th>
+                            <th style="padding: 6px; text-align: left; border-bottom: 2px solid #dee2e6;">Description</th>
+                            <th style="padding: 6px; text-align: right; border-bottom: 2px solid #dee2e6;">CT Goal</th>
+                            <th style="padding: 6px; text-align: right; border-bottom: 2px solid #dee2e6;">Actual CT</th>
+                            <th style="padding: 6px; text-align: right; border-bottom: 2px solid #dee2e6;">Lost Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows_html}
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 10px; padding: 8px; background: white; border-radius: 4px; font-size: 0.8em; color: #666;">
+                <strong>Analysis Period:</strong> {blame_analysis['analysis_period']}<br>
+                <strong>Total CT Gap:</strong> {blame_analysis['ct_gap']:.1f} hours behind target
+            </div>
+        </div>
+    </div>
+    '''
+
+def generate_yesterday_performance(shift_24h, blame_analysis):
+    """Generate yesterday's 24h performance HTML"""
+    tv_actual = shift_24h.get('target_vs_actual', {})
+    
+    status_class = tv_actual.get('status_class', 'status-good')
+    is_good = status_class == 'status-good'
+    gap = tv_actual.get('gap', 0)
+    
+    bg_color = '#dcfce7' if is_good else '#fee2e2'
+    border_color = '#16a34a' if is_good else '#dc2626'
+    text_color = '#16a34a' if gap >= 0 else '#dc2626'
+    status_text_color = '#166534' if is_good else '#991b1b'
+    
+    html = f'''
+    <div style="padding: 20px; background: {bg_color}; border-radius: 8px; border: 3px solid {border_color}; height: 280px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="text-align: center;">
+            <div style="font-size: 2.8em; font-weight: bold; color: {text_color}; line-height: 1;">
+                {gap:+.1f}
+            </div>
+            <div style="font-size: 0.9em; color: #666; margin-top: 3px;">segment days</div>
+            <div style="font-size: 1.1em; font-weight: 600; color: {status_text_color}; margin-top: 8px;">
+                {tv_actual.get('status', 'N/A')}
+            </div>
+        </div>
+        
+        <div style="background: white; padding: 12px; border-radius: 6px; font-size: 0.85em;">
+            <div style="margin-bottom: 8px;">
+                <div style="color: #666; font-size: 0.8em;">Expected at 6am:</div>
+                <div style="font-weight: 600; color: #333;">SD{tv_actual.get('expected_sd', 0):.0f} | {tv_actual.get('expected_ceid', 'N/A')}</div>
+            </div>
+            <div>
+                <div style="color: #666; font-size: 0.8em;">Actual at 6am:</div>
+                <div style="font-weight: 600; color: #333;">SD{tv_actual.get('actual_sd', 0):.0f} | {tv_actual.get('actual_ceid', 'N/A')}</div>
+            </div>
+        </div>
+    </div>
+    '''
+    
+    if blame_analysis and gap < 0:
+        html += generate_blame_html(blame_analysis)
+    
+    return html
+
+def generate_no_data_yet():
+    """Generate 'no data yet' placeholder"""
+    return '''
+    <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border: 2px dashed #ccc; height: 280px; display: flex; align-items: center; justify-content: center; text-align: center; color: #666;">
+        <div>
+            <div style="font-size: 1.5em; margin-bottom: 10px;">⏳</div>
+            <div style="font-weight: 600; margin-bottom: 5px;">No baseline data yet</div>
+            <small>First 24h measurement will be available after 6am tomorrow</small>
+        </div>
+    </div>
+    '''
+
+def generate_today_progress(shift_24h, data):
+    """Generate today's progress HTML"""
+    pace_class = shift_24h.get('pace_class', 'status-good')
+    is_good = pace_class == 'status-good'
+    
+    bg_color = '#dcfce7' if is_good else '#fee2e2'
+    pace_color = '#166534' if is_good else '#991b1b'
+    
+    return f'''
+    <div style="padding: 20px; background: {bg_color}; border-radius: 8px; border: 3px solid #0071c5; height: 280px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="text-align: center;">
+            <div style="font-size: 1.3em; font-weight: bold; color: {pace_color};">
+                {shift_24h.get('pace_status', 'N/A')}
+            </div>
+            <div style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                {shift_24h.get('hours_elapsed', 0):.1f} hrs elapsed of 24 hrs
+            </div>
+        </div>
+        
+        <div style="background: white; padding: 12px; border-radius: 6px; font-size: 0.85em;">
+            <div style="margin-bottom: 8px;">
+                <div style="color: #666; font-size: 0.8em;">Baseline (6am today):</div>
+                <div style="font-weight: 600; color: #333;">SD{shift_24h.get('baseline_sd', 0):.0f} | {shift_24h.get('baseline_ceid', 'N/A')}</div>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <div style="color: #666; font-size: 0.8em;">Current Position:</div>
+                <div style="font-weight: 600; color: #0071c5; font-size: 1.1em;">SD{shift_24h.get('current_sd', 0):.0f} | {data['pp_ceid']}</div>
+            </div>
+            <div>
+                <div style="color: #666; font-size: 0.8em;">Expected Now:</div>
+                <div style="font-weight: 600; color: #333;">SD{shift_24h.get('expected_sd', 0):.0f} | {shift_24h.get('expected_ceid', 'N/A')}</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; font-size: 0.9em; color: #555;">
+            Progress: <strong>{shift_24h.get('actual_progress_sd', 0):.1f}</strong> vs <strong>{shift_24h.get('expected_progress_sd', 0):.1f}</strong> SD expected
+        </div>
+    </div>
+    '''
+
+def generate_tomorrow_target(shift_24h, progress_data):
+    """Generate tomorrow's target HTML - FIXED: Shows stable target"""
+    target_op = shift_24h.get('target_operation', 'N/A')
+    
+    return f'''
+    <div style="padding: 20px; background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius: 8px; border: 3px solid #3b82f6; height: 280px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="text-align: center;">
+            <div style="font-size: 2.8em; font-weight: bold; color: #1e40af; line-height: 1;">
+                SD{shift_24h.get('target_sd', 0):.0f}
+            </div>
+            <div style="font-size: 0.9em; color: #1e40af; margin-top: 5px; font-weight: 600;">
+                {shift_24h.get('target_ceid', 'N/A')}
+            </div>
+            <div style="font-size: 0.8em; color: #666; margin-top: 3px;">
+                Op {target_op}
+            </div>
+        </div>
+        
+        <div style="background: white; padding: 12px; border-radius: 6px; font-size: 0.85em;">
+            <div style="margin-bottom: 8px;">
+                <div style="color: #666; font-size: 0.8em;">CT Hours Required:</div>
+                <div style="font-weight: 600; color: #333;">{shift_24h.get('ct_target', 0):.1f} hours</div>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <div style="color: #666; font-size: 0.8em;">Operations to Target:</div>
+                <div style="font-weight: 600; color: #333;">{shift_24h.get('ops_in_target', 0)} operations</div>
+            </div>
+            <div>
+                <div style="color: #666; font-size: 0.8em;">Movement Needed:</div>
+                <div style="font-weight: 600; color: #1e40af; font-size: 1.1em;">{shift_24h.get('target_sd', 0) - shift_24h.get('current_sd', 0):.1f} SD</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; font-size: 0.8em; color: #555; padding: 8px; background: rgba(255,255,255,0.7); border-radius: 4px;">
+            <strong>Fixed Target</strong><br>
+            Set at 6am - Stable all day
+        </div>
+    </div>
+    '''
+
+# =============================================================================
+# HTML GENERATION
+# =============================================================================
+def generate_html_dashboard(data, ceid_analysis, quarterly_ct, progress_data, weekly_trends, commit_data, shift_24h, blame_analysis=None):
+    """Generate complete HTML dashboard - FIXED: Deadline shows work week"""
+
+    if not shift_24h:
+        shift_24h = {}
+    
+    # Get deadline work week
+    deadline_ww = get_intel_work_week(DEADLINE)
+    
+    # TAB 1: Current CEID Performance - MINIMIZED BY DEFAULT
+    if ceid_analysis:
+        ceid_current_html = f'''
+<details style="margin-bottom: 15px;">
+    <summary style="cursor: pointer; padding: 12px; background: #f8f9fa; border-radius: 6px; font-weight: 600; user-select: none;">
+        ℹ️ How to Read This Data (Click to expand)
+    </summary>
+    <div style="padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 0.9em; margin-top: 5px;">
+        <strong>How to Read This Data:</strong><br>
+        • <strong>Impact Score:</strong> Normalized hours of throughput loss (CT delay × layer count + inventory impact)<br>
+        • <strong>Norm CT:</strong> CT Goal × Layer Count = actual time impact on the line<br>
+        • <strong>Performance:</strong> 100 = perfect, 0 = critical issues<br>
+        • <strong>INV Status:</strong> Normal (healthy), High (building up), Bottleneck (critical backup), CRITICAL (severe), Starved (running low)<br>
+        <strong>Why This Matters:</strong><br>
+        • Operations with high normalized CT have more impact on throughput<br>
+        • A 1-hour delay on a 10-layer operation = 10 hours of normalized delay<br>
+        • This aligns with the 24h target calculation methodology
+    </div>
+</details>
+<table class="limiter-table"><thead><tr>'''
+        ceid_current_html += '<th>Impact</th><th>Score</th><th>CEID</th><th>Oper</th><th>Description</th><th>SD</th><th>Layers</th>'
+        ceid_current_html += '<th>CT Goal</th><th>Norm CT</th><th>Actual Norm CT</th><th>CT Delay</th><th>INV Status</th></tr></thead><tbody>'
+        
+        for ceid in ceid_analysis:
+            impact_class = "severity-high" if ceid["impact_score"] > 5 else ("severity-med" if ceid["impact_score"] > 2 else "severity-low")
+            score_class = "severity-high" if ceid["performance_score"] < 50 else ("severity-med" if ceid["performance_score"] < 75 else "severity-low")
+            
+            inv_status = ceid["inv_status"]
+            inv_class = ceid["inv_status_class"]
+            inv_ratio = ceid["inv_ratio"]
+            
+            if inv_ratio > 0:
+                inv_text = f'{inv_status} ({inv_ratio:.1f}x)'
+            else:
+                inv_text = 'N/A'
+            
+            ct_delay_class = "status-warn" if ceid["ct_delay_normalized"] > 0 else "status-good"
+            
+            ceid_current_html += f'<tr>'
+            ceid_current_html += f'<td><span class="{impact_class}"><strong>{ceid["impact_score"]:.1f}h</strong></span></td>'
+            ceid_current_html += f'<td><span class="{score_class}">{ceid["performance_score"]:.0f}</span></td>'
+            ceid_current_html += f'<td><strong>{ceid["ceid"]}</strong></td>'
+            ceid_current_html += f'<td>{ceid["operation"]}</td>'
+            ceid_current_html += f'<td>{ceid["desc"]}</td>'
+            ceid_current_html += f'<td>SD{ceid["sd"]:.0f}</td>'
+            ceid_current_html += f'<td>{ceid["layer_count"]:.2f}</td>'
+            ceid_current_html += f'<td>{ceid["ct_goal"]:.1f}h</td>'
+            ceid_current_html += f'<td><strong>{ceid["ct_effective"]:.1f}h</strong></td>'
+            ceid_current_html += f'<td>{ceid["actual_ct_effective"]:.1f}h</td>'
+            ceid_current_html += f'<td class="{ct_delay_class}">{"+" if ceid["ct_delay_normalized"] >= 0 else ""}{ceid["ct_delay_normalized"]:.1f}h ({ceid["ct_delay_pct"]:+.0f}%)</td>'
+            ceid_current_html += f'<td><span class="{inv_class}">{inv_text}</span></td>'
+            ceid_current_html += f'</tr>'
+        
+        ceid_current_html += '</tbody></table>'
+    else:
+        ceid_current_html = '<p style="color: #22c55e;">All CEIDs performing within targets</p>'
+    
+    # TAB 2: Quarterly CT Impact
+    if quarterly_ct and quarterly_ct["data"]:
+        quarterly_html = f'''
+<details style="margin-bottom: 15px;">
+    <summary style="cursor: pointer; padding: 12px; background: #f8f9fa; border-radius: 6px; font-weight: 600; user-select: none;">
+        ℹ️ About This Analysis (Click to expand)
+    </summary>
+    <div style="padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 0.9em; margin-top: 5px;">
+        <strong>Quarterly Volume Analysis (PROD Lots Only):</strong><br>
+        • Analysis based on <strong>{quarterly_ct["total_lots"]} PROD lots</strong> ({quarterly_ct["active_lots"]} active + {quarterly_ct["shipped_lots"]} shipped)<br>
+        • Shows average CT across ALL PROD lots processed this quarter<br>
+        • <strong>"Over CT"</strong> = How many hours on average lots sit at each CEID beyond the CT goal
+    </div>
+</details>
+<table class="limiter-table"><thead><tr>'''
+        quarterly_html += '<th>Rank</th><th>CEID</th><th>Operation</th><th>Description</th><th>CT Goal</th><th>Avg Actual CT</th><th>Over CT</th><th>Impact %</th></tr></thead><tbody>'
+        
+        for idx, item in enumerate(quarterly_ct["data"], 1):
+            over_ct_pct = ((item["AVG_CT_HOURS"] / item["CT_GOAL"]) - 1) * 100 if item["CT_GOAL"] > 0 else 0
+            severity_class = "severity-high" if item["OVER_CT"] >= 5 else ("severity-med" if item["OVER_CT"] >= 2 else "severity-low")
+            
+            oper_desc = str(item.get("OPER_SHORT_DESC", "N/A"))[:30]
+            ceid_value = str(item.get("CEID", "N/A"))
+            
+            quarterly_html += f'<tr>'
+            quarterly_html += f'<td><strong>#{idx}</strong></td>'
+            quarterly_html += f'<td>{ceid_value}</td>'
+            quarterly_html += f'<td>{item["OPERATION"]}</td>'
+            quarterly_html += f'<td>{oper_desc}</td>'
+            quarterly_html += f'<td>{item["CT_GOAL"]:.1f}h</td>'
+            quarterly_html += f'<td>{item["AVG_CT_HOURS"]:.1f}h</td>'
+            quarterly_html += f'<td><span class="{severity_class}">+{item["OVER_CT"]:.1f}h</span></td>'
+            quarterly_html += f'<td>{over_ct_pct:+.0f}%</td>'
+            quarterly_html += f'</tr>'
+        
+        quarterly_html += '</tbody></table>'
+    else:
+        quarterly_html = '<p style="color: #22c55e;">Quarterly CT analysis unavailable</p>'
+    
+    # Weekly trends
+    if weekly_trends:
+        weeks_html = '<div style="margin: 20px 0;">'
+        max_ships = max([w["ships"] for w in weekly_trends["weeks_data"]] + [weekly_trends["required_weekly"]])
+        
+        weeks_html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 10px; margin-bottom: 20px;">'
+        for week in weekly_trends["weeks_data"]:
+            pct = (week["ships"] / max_ships) * 100 if max_ships > 0 else 0
+            color = "#22c55e" if week["ships"] >= OUTS_GOAL else "#f59e0b"
+            weeks_html += f'''
+            <div style="text-align: center;">
+                <div style="font-size: 0.75em; color: #666; margin-bottom: 4px;">WW{week["ww_short"]}</div>
+                <div style="height: 100px; background: #f0f0f0; border-radius: 4px; display: flex; flex-direction: column-reverse; overflow: hidden;">
+                    <div style="width: 100%; height: {pct}%; background: {color}; transition: height 0.3s;"></div>
+                </div>
+                <div style="font-size: 0.8em; font-weight: 600; margin-top: 4px;">{week["ships"]:,.0f}</div>
+            </div>
+            '''
+        weeks_html += '</div>'
+        weeks_html += '</div>'
+    else:
+        weeks_html = '<p>Weekly trend data unavailable</p>'
+    
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qtr Production Dashboard - WW{COMMIT_WW}</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }}
+        
+        .container {{ max-width: 1600px; margin: 0 auto; }}
+        
+        .header {{
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }}
+        
+        .header h1 {{ color: #0071c5; font-size: 2.5em; margin-bottom: 5px; }}
+        .timestamp {{ color: #666; font-size: 0.9em; }}
+        
+        .auto-refresh {{
+            background: #22c55e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }}
+        
+        .progress-viz {{
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }}
+        
+        .progress-viz h2 {{ color: #0071c5; margin-bottom: 20px; }}
+        
+        .progress-stats {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }}
+        
+        .stat-box {{
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }}
+        
+        .stat-value {{
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #0071c5;
+        }}
+        
+        .stat-label {{
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }}
+        
+        .grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }}
+        
+        .card {{
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }}
+        
+        .card:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }}
+        
+        .card-header {{
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }}
+        
+        .metric {{
+            font-size: 3em;
+            font-weight: bold;
+            color: #0071c5;
+            margin: 10px 0;
+            line-height: 1;
+        }}
+        
+        .metric-small {{
+            font-size: 1.8em;
+            font-weight: 600;
+            margin: 8px 0;
+        }}
+        
+        .status-good {{ color: #22c55e; }}
+        .status-warn {{ color: #f59e0b; }}
+        .status-bad {{ color: #ef4444; }}
+        
+        .label {{
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }}
+        
+        .info-row {{
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }}
+        
+        .info-row:last-child {{ border-bottom: none; }}
+        
+        .info-label {{
+            color: #666;
+            font-size: 0.9em;
+        }}
+        
+        .info-value {{
+            font-weight: 600;
+            color: #333;
+        }}
+        
+        .progress-bar {{
+            width: 100%;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }}
+        
+        .progress-fill {{
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e 0%, #0071c5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: width 0.5s ease;
+        }}
+        
+        .limiter-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }}
+        
+        .limiter-table th {{
+            background: #f8f9fa;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #dee2e6;
+        }}
+        
+        .limiter-table td {{
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }}
+        
+        .limiter-table tr:hover {{ background: #f8f9fa; }}
+        
+        .severity-high {{ 
+            background: #fee2e2; 
+            color: #991b1b;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }}
+        
+        .severity-med {{ 
+            background: #fef3c7;
+            color: #92400e;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }}
+        
+        .severity-low {{ 
+            background: #dbeafe;
+            color: #1e3a8a;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }}
+        
+        .wide-card {{ grid-column: 1 / -1; }}
+        
+        .badge {{
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }}
+        
+        .badge-success {{ background: #dcfce7; color: #166534; }}
+        .badge-warning {{ background: #fef3c7; color: #92400e; }}
+        .badge-danger {{ background: #fee2e2; color: #991b1b; }}
+        
+        .tabs {{
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 20px;
+        }}
+        
+        .tab-button {{
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.2s;
+        }}
+        
+        .tab-button:hover {{
+            color: #0071c5;
+            background: #f9fafb;
+        }}
+        
+        .tab-button.active {{
+            color: #0071c5;
+            border-bottom-color: #0071c5;
+        }}
+        
+        .tab-content {{
+            display: none;
+        }}
+        
+        .tab-content.active {{
+            display: block;
+            animation: fadeIn 0.3s;
+        }}
+        
+        @keyframes fadeIn {{
+            from {{ opacity: 0; transform: translateY(10px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+        
+        details {{
+            cursor: pointer;
+        }}
+        
+        details summary {{
+            list-style: none;
+            outline: none;
+        }}
+        
+        details summary::-webkit-details-marker {{
+            display: none;
+        }}
+        
+        details summary::before {{
+            content: '▶ ';
+            display: inline-block;
+            transition: transform 0.2s;
+        }}
+        
+        details[open] summary::before {{
+            transform: rotate(90deg);
+        }}
+        
+        @media (max-width: 768px) {{
+            .grid {{ grid-template-columns: 1fr; }}
+            .header {{ flex-direction: column; text-align: center; }}
+            .header h1 {{ font-size: 1.8em; }}
+            .progress-stats {{ grid-template-columns: 1fr; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🏭 Quarterly Production Dashboard</h1>
+                <small>Powered by FIST 👥👥 | PROD Lots Only | Dynamic CT | Fixed 24h Targets | ✅ Bulletproof Math</small>
+                <p class="timestamp">
+                    Last Updated: {data['timestamp']:%Y-%m-%d %H:%M:%S} | Current: WW{get_intel_work_week(data['timestamp'])} | Deadline: {DEADLINE:%Y-%m-%d %I:%M %p} (WW{deadline_ww % 100})
+                </p>
+            </div>
+            <div class="auto-refresh">🔄 Auto-refresh: 30 min</div>
+        </div>
+
+        <!-- Wafer Shipments -->
+        <div class="progress-viz">
+            <h2>📦 Wafer Shipment Progress</h2>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {data['quarter_pct']:.1f}%">
+                    {data['quarter_pct']:.1f}% Complete
+                </div>
+            </div>
+            
+            <div class="progress-stats">
+                <div class="stat-box">
+                    <div class="stat-value">{data['quarter_goal']:,}</div>
+                    <div class="stat-label">Quarter Goal</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{data['quarter_ships']:,}</div>
+                    <div class="stat-label">Quarter to Date Ships</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{data['quarter_remaining']:,}</div>
+                    <div class="stat-label">Wafers Remaining</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value {'status-good' if (data['quarter_remaining'] / progress_data['calendar_days_remaining'] * 7) <= OUTS_GOAL else 'status-warn'}">{(data['quarter_remaining'] / progress_data['calendar_days_remaining'] * 7):,.0f}</div>
+                    <div class="stat-label">Weekly Average Required</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                <div class="progress-stats">
+                    <div class="stat-box">
+                        <div class="stat-value">SD{data['pp_segment_day']}</div>
+                        <div class="stat-label">Current Segment Day</div>
+                    </div>
+                    
+                    <div class="stat-box">
+                        <div class="stat-value">SD{progress_data['segment_day_end']}</div>
+                        <div class="stat-label">Target by Deadline</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">{progress_data['segment_days_remaining']}</div>
+                        <div class="stat-label">Segment Days Remaining</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value {progress_data['status_class']}">{progress_data['days_ahead_behind']:+.2f}</div>
+                        <div class="stat-label">Days Ahead/Behind (1:1)</div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px;">
+                    <div class="stat-box">
+                        <div class="info-row">
+                            <span class="info-label">CEID:</span>
+                            <span class="info-value">{data['pp_ceid']}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Operation:</span>
+                            <span class="info-value">{data['pp_operation']}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Description:</span>
+                            <span class="info-value">{data['pp_desc']}</span>
+                        </div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="info-row">
+                            <span class="info-label">Additional WIP Needed:</span>
+                            <span class="info-value">{data['bump_inv']:,} wfrs</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Calendar Days Remaining:</span>
+                            <span class="info-value">{progress_data['calendar_days_remaining']:.2f}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Schedule Status:</span>
+                            <span class="info-value {progress_data['status_class']}">
+                                {progress_data['status']}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                # In the HTML generation section, update the explanation:
+                <div style="margin-top: 15px; padding: 15px; background: {'#dcfce7' if progress_data['days_ahead_behind'] >= 0 else '#fee2e2'}; border-radius: 8px;">
+                    <strong style="color: {'#166534' if progress_data['days_ahead_behind'] >= 0 else '#991b1b'};">
+                        {progress_data['status']}
+                    </strong>
+                    <p style="margin-top: 10px; color: #555;">
+                        Simple 1:1 linear: {progress_data['calendar_days_remaining']:.2f} calendar days - {progress_data['segment_days_remaining']} segment days = {progress_data['days_ahead_behind']:+.2f} days.
+                        {'We have buffer time!' if progress_data['days_ahead_behind'] >= 0 else 'We need to catch up!'}
+                    </p>
+                </div>
+                
+                <h3 style="color: #0071c5; margin-bottom: 15px; margin-top: 25px;">🎯 Quarterly Pull Point Status & 24-Hour Tracking</h3>
+                
+                <!-- 3-COLUMN LAYOUT: Past | Present | Future -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                    
+                    <!-- LEFT: Yesterday's Performance -->
+                    <div>
+                        <h4 style="color: #0071c5; margin-bottom: 10px; font-size: 0.95em; text-align: center;">📅 Yesterday (6am-6am)</h4>
+                        
+                        {generate_yesterday_performance(shift_24h, blame_analysis) if shift_24h.get('target_vs_actual') else generate_no_data_yet()}
+                    </div>
+                    
+                    <!-- MIDDLE: Today's Progress -->
+                    <div>
+                        <h4 style="color: #0071c5; margin-bottom: 10px; font-size: 0.95em; text-align: center;">⚡ Today's Progress</h4>
+                        
+                        {generate_today_progress(shift_24h, data)}
+                    </div>
+                    
+                    <!-- RIGHT: Tomorrow's Target -->
+                    <div>
+                        <h4 style="color: #0071c5; margin-bottom: 10px; font-size: 0.95em; text-align: center;">🎯 Target by 6am Tomorrow</h4>
+                        
+                        {generate_tomorrow_target(shift_24h, progress_data)}
+                    </div>
+                    
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Segment Inventory Breakdown -->
+        <div class="progress-viz">
+            <h2>📊 Segment Inventory Breakdown</h2>
+            <p style="margin-bottom: 20px; color: #666;">
+                Cumulative wafers remaining in pipeline after pull point (includes {data['bump_inv']:,} wafer bump)
+            </p>
+            
+            <!-- Combined Visual + Numbers -->
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <!-- FE -->
+                <div style="flex: {data['segment_fe']}; min-width: 100px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; color: white; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.2em; font-weight: bold; line-height: 1;">{data['segment_fe']:,}</div>
+                        <div style="font-size: 1.1em; font-weight: 600; margin-top: 10px;">FE</div>
+                        <div style="font-size: 0.85em; opacity: 0.9; margin-top: 5px;">Front End</div>
+                    </div>
+                    <div style="text-align: center; font-size: 0.75em; opacity: 0.8; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
+                        Through Op 175084
+                    </div>
+                </div>
+                
+                <!-- SSAFI -->
+                <div style="flex: {data['segment_ssafi']}; min-width: 100px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; color: white; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.2em; font-weight: bold; line-height: 1;">{data['segment_ssafi']:,}</div>
+                        <div style="font-size: 1.1em; font-weight: 600; margin-top: 10px;">SSAFI</div>
+                        <div style="font-size: 0.85em; opacity: 0.9; margin-top: 5px;">Middle Section</div>
+                    </div>
+                    <div style="text-align: center; font-size: 0.75em; opacity: 0.8; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
+                        Op 175084 → 185006
+                    </div>
+                </div>
+                
+                <!-- BE -->
+                <div style="flex: {data['segment_be']}; min-width: 100px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; color: white; box-shadow: 0 4px 6px rgba(34, 197, 94, 0.3);">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.2em; font-weight: bold; line-height: 1;">{data['segment_be']:,}</div>
+                        <div style="font-size: 1.1em; font-weight: 600; margin-top: 10px;">BE</div>
+                        <div style="font-size: 0.85em; opacity: 0.9; margin-top: 5px;">Back End</div>
+                    </div>
+                    <div style="text-align: center; font-size: 0.75em; opacity: 0.8; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">
+                        From Op 185006+
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Summary -->
+            <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #f8f9fa, #e5e7eb); border-radius: 12px; border: 2px solid #0071c5;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Total WIP to Ship (Cumulative Through BE)</div>
+                        <div style="font-size: 2em; font-weight: bold; color: #0071c5;">
+                            {data['segment_be']:,} wafers
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.85em; color: #666;">Distribution:</div>
+                        <div style="font-size: 0.9em; font-weight: 600; color: #333; margin-top: 5px;">
+                            FE: {format_percentage(data['segment_fe'], data['segment_be'])} | 
+                            SSAFI: {format_percentage(data['segment_ssafi'], data['segment_be'])} | 
+                            BE: 100%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Weekly Trend -->
+        <div class="card wide-card">
+            <div class="card-header">
+                <h2>🛰️ Weekly Ships Trend</h2>
+            </div>
+            <p style="margin-bottom: 15px; color: #666;">
+                <strong>Data Source:</strong> F_LOT_FABOUT_SUMMARY by FABOUT_WW (starting WW{WEEKLY_TREND_START_WW % 100}). Auto-updates weekly.
+            </p>
+            {weeks_html}
+        </div>
+        
+        <!-- Dashboard Cards -->
+        <div class="grid">
+            <!-- Current Shift BE -->
+            <div class="card">
+                <div class="card-header">🕐 Current Shift: {data['shift_name']} (BE LSB)</div>
+                <div class="metric {'status-good' if data['shift_status'] == 'ON PACE' else 'status-warn'}">{data['current_shift_ships']:,}</div>
+                <div class="label">wafers shipped (PROD)</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {min(100, data['current_shift_ships']/data['target_per_shift']*100):.1f}%">
+                        {data['current_shift_ships']/data['target_per_shift']*100:.1f}% of target
+                    </div>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Target:</span>
+                    <span class="info-value">{data['target_per_shift']:,.0f} wafers</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Hours into shift:</span>
+                    <span class="info-value">{data['hours_into_shift']:.1f} / {HOURS_PER_SHIFT} hrs</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Pace rate:</span>
+                    <span class="info-value">{data['shift_pace_rate']:.1f} wfrs/hr</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Projected end:</span>
+                    <span class="info-value {'status-good' if data['projected_shift_end'] >= data['target_per_shift'] else 'status-warn'}">
+                        {data['projected_shift_end']:,.0f} wafers
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Current Shift Commit -->
+            <div class="card">
+                <div class="card-header">🎯 Current Shift: Commit Section</div>
+                <div class="metric-small">{commit_data['shift_ships']:,}</div>
+                <div class="label">wafers shipped from SD50 area (PROD)</div>
+                <div class="info-row">
+                    <span class="info-label">Operation:</span>
+                    <span class="info-value">{COMMIT_LSB_OPERATION}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">24h Ships:</span>
+                    <span class="info-value">{commit_data['last_24h_ships']:,}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Quarter Ships:</span>
+                    <span class="info-value">{commit_data['quarter_ships']:,}</span>
+                </div>
+            </div>
+            
+            <!-- Last Week -->
+            <div class="card">
+                <div class="card-header">📅 Last Week</div>
+                <div style="font-size: 0.75em; color: #666; margin-top: 5px;">
+                    Data Source: LineView PW_OUTS_PROD
+                </div>
+                <div class="metric-small {'status-good' if data['last_week_ships'] >= OUTS_GOAL else 'status-warn'}">{data['last_week_ships']:,}</div>
+                <div class="label">wafers shipped (PROD)</div>
+                <div class="info-row">
+                    <span class="info-label">Weekly goal:</span>
+                    <span class="info-value">{OUTS_GOAL:,}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Delta (Gap):</span>
+                    <span class="info-value {'status-good' if data['last_week_ships'] >= OUTS_GOAL else 'status-warn'}">
+                        {data['last_week_ships'] - OUTS_GOAL:+,} ({(data['last_week_ships']/OUTS_GOAL - 1)*100:+.1f}%)
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Last 24 Hours -->
+            <div class="card">
+                <div class="card-header">
+                    🕒 Last 24 Hours in BE
+                    <span class="badge {'badge-success' if data['last_24h_status'] == 'HIT' else 'badge-danger'}">{data['last_24h_status']}</span>
+                </div>
+                <div class="metric-small">{data['last_24h_ships']:,}</div>
+                <div class="label">wafers shipped (9812)</div>
+
+                <div class="info-row">
+                    <span class="info-label">Target (2 shifts):</span>
+                    <span class="info-value">{data['target_per_shift'] * 2:,.0f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Delta (Gap):</span>
+                    <span class="info-value {'status-good' if data['last_24h_status'] == 'HIT' else 'status-warn'}">
+                        {data['last_24h_ships'] - (data['target_per_shift'] * 2):+,.0f}
+                    </span>
+                </div>
+            </div>
+
+            <!-- This Week -->
+            <div class="card">
+                <div class="card-header">🎯 This Week Target (WW{COMMIT_WW})</div>
+                <div class="metric-small">{data['this_week_required']:,.0f}</div>
+                <div class="label">wafers required (PROD)</div>
+                <div class="info-row">
+                    <span class="info-label">Shipped so far:</span>
+                    <span class="info-value">{data['current_week_outs']:,.0f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Remaining:</span>
+                    <span class="info-value">{data['outs_remaining_this_week']:,.0f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Days left:</span>
+                    <span class="info-value">{data['days_left']:.2f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Need per shift:</span>
+                    <span class="info-value">{data['need_per_shift']:,.0f} wfrs</span>
+                </div>
+            </div>
+            
+            <!-- Pull Point -->
+            <div class="card">
+                <div class="card-header">🎯 Quarterly Pull Point</div>
+                <div class="info-row">
+                    <span class="info-label">Current Segment Day:</span>
+                    <span class="info-value">SD{data['pp_segment_day']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">CEID:</span>
+                    <span class="info-value">{data['pp_ceid']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Operation:</span>
+                    <span class="info-value">{data['pp_operation']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Description:</span>
+                    <span class="info-value">{data['pp_desc']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Additional WIP Needed:</span>
+                    <span class="info-value">{data['bump_inv']:,} wfrs</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Target by Deadline:</span>
+                    <span class="info-value">SD{progress_data['segment_day_end']}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Schedule Status:</span>
+                    <span class="info-value {progress_data['status_class']}">
+                        {progress_data['days_ahead_behind']:+.2f} days
+                    </span>
+                </div>
+            </div>
+            
+            <!-- 24h Shift Tracking -->
+            <div class="card">
+                <div class="card-header">⏱️ Next 24-Hour Target (6am - 6am)</div>
+                
+                <div style="margin-bottom: 15px; padding: 10px; background: {'#dcfce7' if shift_24h.get('pace_class') == 'status-good' else '#fee2e2'}; border-radius: 6px;">
+                    <strong style="color: {"#0D841C" if shift_24h.get('pace_class') == 'status-good' else "#f11717"}; font-size: 1.2em;">
+                        {shift_24h.get('pace_status', 'N/A')}
+                    </strong>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Shift Started:</span>
+                    <span class="info-value">{shift_24h.get('shift_baseline_time', datetime.now()):%I:%M %p}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Time Elapsed:</span>
+                    <span class="info-value">{shift_24h.get('hours_elapsed', 0):.1f} hrs / 24 hrs</span>
+                </div>
+                
+                <hr style="margin: 12px 0; border: none; border-top: 1px solid #e5e7eb;">
+                
+                <div class="info-row">
+                    <span class="info-label">Baseline (6am):</span>
+                    <span class="info-value">SD{shift_24h.get('baseline_sd', 0):.0f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Current Position:</span>
+                    <span class="info-value">SD{shift_24h.get('current_sd', 0):.0f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Expected Position:</span>
+                    <span class="info-value {shift_24h.get('pace_class', '')}">SD{shift_24h.get('expected_sd', 0):.0f} | {shift_24h.get('expected_ceid', 'N/A')}</span>
+                </div>
+                
+                <hr style="margin: 12px 0; border: none; border-top: 1px solid #e5e7eb;">
+                
+                <div class="info-row">
+                    <span class="info-label">Target by 6am Tomorrow:</span>
+                    <span class="info-value">SD{shift_24h.get('target_sd', 0):.0f} | {shift_24h.get('target_ceid', 'N/A')}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Target Operation:</span>
+                    <span class="info-value">{shift_24h.get('target_operation', 'N/A')}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">CT Hours to Target:</span>
+                    <span class="info-value">{shift_24h.get('ct_target', 0):.1f} hrs</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Operations:</span>
+                    <span class="info-value">{shift_24h.get('ops_in_target', 0)}</span>
+                </div>
+                
+                <div style="margin-top: 12px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 0.85em; color: #666;">
+                    <strong>Progress:</strong> {shift_24h.get('actual_progress_sd', 0):.1f} SD moved vs {shift_24h.get('expected_progress_sd', 0):.1f} SD expected<br>
+                    <strong>Target:</strong> FIXED at 6am - stable all day
+                </div>
+            </div>
+        </div>
+        
+        <!-- CEID Performance - MINIMIZED BY DEFAULT -->
+        <div class="card wide-card">
+            <details>
+                <summary style="cursor: pointer; font-size: 1.2em; font-weight: 600; color: #0071c5; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                    🔍 CEID Performance Deep Dive (Click to expand)
+                </summary>
+                <div style="margin-top: 20px;">
+                    <div class="tabs">
+                        <button class="tab-button active" onclick="switchTab(event, 'tab-current')">
+                            📍 Current Performance (Pull Point → Finish)
+                        </button>
+                        <button class="tab-button" onclick="switchTab(event, 'tab-quarterly')">
+                            📊 Quarterly CT Impact (PROD Lots Only)
+                        </button>
+                    </div>
+                    <div id="tab-current" class="tab-content active">
+                        <p style="margin-bottom: 15px; color: #666;">
+                            Analysis of CEID performance from pull point to finish operation. Lower scores indicate delays or inventory issues.
+                        </p>
+                        {ceid_current_html}
+                    </div>
+                    <div id="tab-quarterly" class="tab-content">
+                        <p style="margin-bottom: 15px; color: #666;">
+                            Shows which CEIDs have been the biggest time sinks across ALL PROD lots processed this quarter.
+                        </p>
+                        {quarterly_html}
+                    </div>
+                </div>
+            </details>
+        </div>
+        
+        <!-- Limiters -->
+        <div class="card wide-card">
+            <div class="card-header">⚠️ Critical Limiters ({data['limiter_display_hours']:.1f}h Look-Ahead{' - Dynamic' if data['limiter_is_dynamic'] else ''})</div>
+            {data['limiters_html']}
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(event, tabId) {{
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }}
+        setTimeout(() => location.reload(), 1800000);
+    </script>
+</body>
+</html>
+"""
+    
+    return html
+
+# =============================================================================
+# MAIN EXECUTION
+# =============================================================================
+def main():
+    """Main execution - BULLETPROOF VERSION"""
+    
+    print(f"\n{'='*80}")
+    print(f"Q1 PRODUCTION DASHBOARD - BULLETPROOF VERSION By Eddy ofcourse")
+    print(f"✅ Fixed: 1:1 linear days ahead/behind")
+    print(f"✅ Fixed: 24h target stability (set at 6am)")
+    print(f"✅ Fixed: Deadline shows work week")
+    print(f"{'='*80}\n")
+    
+    try:
+        now = datetime.now()
+        print(f"[INFO] Current: {now:%Y-%m-%d %H:%M:%S} (WW{get_intel_work_week(now)})")
+        print(f"[INFO] Deadline: {DEADLINE:%Y-%m-%d %I:%M %p} (WW{get_intel_work_week(DEADLINE) % 100})")
+        print(f"[INFO] Loading data...")
+        
+        df_lineview = load_tsv(LINEVIEW_PATH)
+        df_ceid = load_tsv(CEID_PATH) if Path(CEID_PATH).exists() else pd.DataFrame()
+        df_lots = load_tsv(LOTS_PATH) if Path(LOTS_PATH).exists() else pd.DataFrame()
+        db = get_db()
+        
+        df_lineview["FULL_LOOP_SEQ"] = pd.to_numeric(df_lineview.get("FULL_LOOP_SEQ", 0), errors="coerce").fillna(0)
+        df_lineview["INV_PROD"] = pd.to_numeric(df_lineview.get("INV_PROD", 0), errors="coerce").fillna(0)
+        df_lineview["INV_MERGE"] = pd.to_numeric(df_lineview.get("INV_MERGE", 0), errors="coerce").fillna(0)
+        if "SEGMENT_DAY" not in df_lineview.columns:
+            df_lineview["SEGMENT_DAY"] = 0
+        
+        if not df_lots.empty and "FULL_LOOP_SEQ" in df_lots.columns:
+            df_lots["FULL_LOOP_SEQ"] = pd.to_numeric(df_lots["FULL_LOOP_SEQ"], errors="coerce").fillna(0)
+        
+        print(f"[OK] Loaded {len(df_lineview)} lineview, {len(df_lots)} lots")
+        print(f"[INFO] BE LSB: {BE_LSB_OPERATION}, Commit LSB: {COMMIT_LSB_OPERATION}")
+        
+        shift_start, shift_name, hours_into_shift = get_current_shift_info(now)
+        hours_remaining_shift = HOURS_PER_SHIFT - hours_into_shift
+        
+        print(f"\n[INFO] Querying database...")
+        
+        # Current shift
+        current_shift_sql = f"""
+        SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_RUN_CARD
+        WHERE OUT_DATE >= TO_DATE('{shift_start:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND OUT_DATE <= SYSDATE
+            AND LOT_TYPE = 'PROD'
+            AND (LOT LIKE 'L%' OR LOT LIKE 'N%') AND LOT NOT LIKE 'L9%'
+            AND OPERATION = {BE_LSB_OPERATION} AND WAFER_QTY > 0
+        """
+        shift_df = pd.read_sql(current_shift_sql, db)
+        current_shift_ships = safe_num(shift_df["TOTAL_WAFERS"].iloc[0], 0)
+        
+        # Quarterly
+        quarter_sql = f"""
+        SELECT
+            COUNT(LOT) AS LOT_COUNT,
+            MAX(FABOUT_TIME) AS LAST_SHIP_DATE,
+            MIN(FABOUT_TIME) AS FIRST_SHIP_DATE,
+            SUM(FABOUT_WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_FABOUT_SUMMARY
+        WHERE LOT_TYPE = 'PROD'
+            AND FABOUT_ROUTE LIKE 'FL%'
+            AND LOT_PROCESS IN ('1274','1275')
+            AND FABOUT_TIME >= TO_DATE('{QUARTER_START:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+        """
+        qdf = pd.read_sql(quarter_sql, db)
+        quarter_ships = safe_num(qdf["TOTAL_WAFERS"].iloc[0], 0)
+        lot_count = int(qdf["LOT_COUNT"].iloc[0] or 0)
+        first_ship = pd.to_datetime(qdf["FIRST_SHIP_DATE"].iloc[0])
+        last_ship = pd.to_datetime(qdf["LAST_SHIP_DATE"].iloc[0])
+        days_elapsed = max(1, (last_ship.normalize() - first_ship.normalize()).days + 1)
+        actual_daily_rate = quarter_ships / days_elapsed
+        
+        # Last week
+        ssafi_row = df_lineview[df_lineview["OPERATION"] == BE_LSB_OPERATION]
+        if not ssafi_row.empty and "PW_OUTS_PROD" in ssafi_row.columns:
+            last_week_ships = safe_num(ssafi_row["PW_OUTS_PROD"].values[0], 0)
+        else:
+            last_week_ships = 0
+        
+        # Last 24h
+        yesterday = now - timedelta(hours=24)
+        last_24h_sql = f"""
+        SELECT SUM(WAFER_QTY) AS TOTAL_WAFERS
+        FROM F_LOT_RUN_CARD
+        WHERE OUT_DATE >= TO_DATE('{yesterday:%m/%d/%Y %H:%M}', 'MM/DD/YYYY HH24:MI')
+            AND OUT_DATE <= SYSDATE
+            AND LOT_TYPE = 'PROD'
+            AND (LOT LIKE 'L%' OR LOT LIKE 'N%') AND LOT NOT LIKE 'L9%'
+            AND OPERATION = {BE_LSB_OPERATION} AND WAFER_QTY > 0
+        """
+        last_24h_df = pd.read_sql(last_24h_sql, db)
+        last_24h_ships = safe_num(last_24h_df["TOTAL_WAFERS"].iloc[0], 0)
+        
+        # Commit section
+        print(f"[INFO] Tracking commit section...")
+        commit_data = get_commit_section_ships(db, shift_start, now, COMMIT_LSB_OPERATION)
+        
+        # Weekly trends
+        print(f"[INFO] Analyzing weekly trends...")
+        weekly_trends = analyze_weekly_trends(db, now)
+        
+        print(f"[OK] Database queries complete")
+        
+        # Metrics
+        target_per_shift = OUTS_GOAL / SHIFTS_PER_WEEK
+        shift_pace_rate = current_shift_ships / hours_into_shift if hours_into_shift > 0 else 0
+        projected_shift_end = current_shift_ships + (shift_pace_rate * hours_remaining_shift)
+        shift_status = "ON PACE" if projected_shift_end >= target_per_shift else "BEHIND PACE"
+        
+        quarter_remaining = max(0, QUARTER_GOAL - quarter_ships)
+        quarter_pct = (quarter_ships / QUARTER_GOAL) * 100
+        
+        # Weekly
+        if "CW_OUTS_PROD" in df_lineview.columns and not ssafi_row.empty:
+            current_week_outs = float(ssafi_row["CW_OUTS_PROD"].values[0])
+        else:
+            current_week_outs = 0
+        
+        weeks_left = max(1, math.ceil((DEADLINE - now).days / 7))
+        total_shortfall = max(0, OUTS_GOAL - last_week_ships)
+        catchup_per_week = total_shortfall / weeks_left
+        this_week_required = OUTS_GOAL + catchup_per_week
+        outs_remaining_this_week = max(0, this_week_required - current_week_outs)
+        
+        cur_monday = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+        hours_left_week = max(0, ((cur_monday + timedelta(days=7)) - now).total_seconds() / 3600)
+        days_left = max(1.0, hours_left_week / 24.0)
+        need_per_shift = (outs_remaining_this_week / days_left) / 2
+        
+        last_24h_target = target_per_shift * 2
+        last_24h_status = "HIT" if last_24h_ships >= last_24h_target else "MISS"
+        
+        # Pull Point
+        ssafi_lsb_fls = float(df_lineview.loc[df_lineview["OPERATION"] == BE_LSB_OPERATION, "FULL_LOOP_SEQ"].values[0])
+        
+        df_q = df_lineview.query(f"FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}").copy()
+        df_q["INV_PROD"] = df_lineview["INV_PROD"] + df_lineview["INV_MERGE"]
+        
+        # X-site lots exclusion
+        x_site_lot_titles = ['PRUFE_X-4419', 'PRUFE_X-4423']
+        x_site_wafers_by_operation = (
+            df_lots
+            .query("LOT_TITLE in @x_site_lot_titles")
+            .groupby("OPERATION")["WAFER_QTY"]
+            .sum()
+        )
+
+        print(f"Original total INV_PROD: {df_lineview['INV_PROD'].sum():.0f}")
+
+        df_q = (
+            df_q
+            .merge(x_site_wafers_by_operation, on="OPERATION", how="left", suffixes=("", "_XSITE"))
+            .assign(INV_PROD=lambda x: x["INV_PROD"] - x["WAFER_QTY"].fillna(0))
+            .drop(columns=["WAFER_QTY"])
+        )
+
+        print(f"Adjusted total INV_PROD: {df_q['INV_PROD'].sum():.0f}")
+        print(f"X-site wafers removed: {x_site_wafers_by_operation.sum():.0f}")
+        
+        df_q["PP_INV"] = df_q["INV_PROD"].iloc[::-1].cumsum()[::-1]
+        df_q["PP_W"] = df_q["PP_INV"].apply(lambda x: x // quarter_remaining if quarter_remaining > 0 else np.nan)
+        df_q["PP_mod"] = df_q["PP_INV"].apply(lambda x: x % quarter_remaining if quarter_remaining > 0 else np.nan)
+        
+        quarter_pp = df_q.query("PP_W == 1").tail(1)
+        if quarter_pp.empty:
+            quarter_pp = df_q.tail(1)
+        
+        pp_segment_day = int(quarter_pp["SEGMENT_DAY"].values[0])
+        pp_full_loop_seq = float(quarter_pp["FULL_LOOP_SEQ"].values[0])
+        pp_ceid = quarter_pp.get("CEID", pd.Series(["N/A"])).values[0]
+        pp_operation = quarter_pp["OPERATION"].values[0] if "OPERATION" in quarter_pp.columns else "N/A"
+        pp_desc = quarter_pp.get("OPER_SHORT_DESC", pd.Series(["N/A"])).values[0]
+        
+        if quarter_remaining > 0 and not df_q.query("PP_W == 0").empty:
+            quarter_bump_inv = quarter_remaining - df_q.query("PP_W == 0").head(1)["PP_mod"].values[0]
+        else:
+            quarter_bump_inv = 0
+        
+        # REVERTED: Simple 1:1 progress calculation
+        progress_data = calculate_progress_data(pp_segment_day, SEGMENT_DAY_END, QUARTER_START, DEADLINE, now)
+        
+        # Dynamic CT target
+        dynamic_ct_target = calculate_dynamic_ct_target(
+            df_lineview, 
+            pp_segment_day, 
+            SEGMENT_DAY_END, 
+            progress_data['calendar_days_remaining']
+        )
+        
+        # Calculate segment inventory
+        print(f"[INFO] Calculating segment inventory...")
+        segment_inventory = calc_segment_pp_remaining(df_lineview, pp_operation, quarter_bump_inv)
+        
+        # Quarterly CT
+        print(f"[INFO] Analyzing quarterly CT...")
+        quarterly_ct = analyze_quarterly_ct_impact(db, df_lineview, df_lots, pp_operation)
+        
+        print(f"\n[INFO] Pull Point:")
+        print(f"   SD{progress_data['current_segment_day']}")
+        print(f"   Target: SD{progress_data['segment_day_end']}")
+        print(f"   Segment Days Remaining: {progress_data['segment_days_remaining']}")
+        print(f"   Calendar Days Remaining: {progress_data['calendar_days_remaining']:.2f}")
+        print(f"   Status: {progress_data['days_ahead_behind']:+.2f} days {progress_data['status']}")
+        
+        # CEID analysis
+        print(f"[INFO] Analyzing CEIDs...")
+        ceid_analysis = analyze_ceid_performance(df_lineview, df_ceid, pp_full_loop_seq, ssafi_lsb_fls, dynamic_ct_target)
+
+        # FIXED: 24-hour shift tracking with stable target
+        print(f"[INFO] Calculating 24h shift progress...")
+        shift_24h = calculate_24h_shift_progress(pp_segment_day, pp_ceid, pp_operation, pp_full_loop_seq, ssafi_lsb_fls, df_lineview, now, dynamic_ct_target)
+
+        blame_analysis = shift_24h.get('blame_analysis', None)
+
+        # Limiters
+        print(f"[INFO] Analyzing limiters...")
+        if LOOKAHEAD_HOURS == 0:
+            limiter_lookahead = dynamic_ct_target
+            limiter_is_dynamic = True
+        else:
+            limiter_lookahead = LOOKAHEAD_HOURS
+            limiter_is_dynamic = False
+        
+        lookahead_ops = df_lineview.query(
+            f"FULL_LOOP_SEQ > {pp_full_loop_seq} & FULL_LOOP_SEQ <= {ssafi_lsb_fls} & OPERATION not in {EXCLUDED_OPERATIONS}"
+        ).copy()
+        
+        if "LAYER_COUNT" in lookahead_ops.columns:
+            lookahead_ops = lookahead_ops.query(f"LAYER_COUNT >= {LAYER_COUNT_THRESHOLD}")
+        
+        lookahead_ops = lookahead_ops.sort_values("FULL_LOOP_SEQ").copy()
+        lookahead_ops["LAYER_COUNT"] = pd.to_numeric(lookahead_ops["LAYER_COUNT"], errors="coerce").fillna(0.0)
+        lookahead_ops["CT_GOAL"] = pd.to_numeric(lookahead_ops["CT_GOAL"], errors="coerce").fillna(0.0)
+        lookahead_ops["CT_EFFECTIVE"] = lookahead_ops["CT_GOAL"] * lookahead_ops["LAYER_COUNT"]
+        lookahead_ops.loc[lookahead_ops["LAYER_COUNT"] <= 0.02, "CT_EFFECTIVE"] = 0.0
+        lookahead_ops["CUMULATIVE_CT"] = lookahead_ops["CT_EFFECTIVE"].cumsum()
+        lookahead_window = lookahead_ops.query(f"CUMULATIVE_CT <= {limiter_lookahead}").copy()
+        lookahead_window = lookahead_window.query(f"CT_GOAL >= {LIMITER_CT_MIN_THRESHOLD}").copy()
+        
+        limiters = []
+        for _, row in lookahead_window.iterrows():
+            reasons = []
+            severity = 0
+            ceid = row.get("CEID", "N/A")
+            ct_goal = safe_num(row.get("CT_GOAL", 0))
+            avg_hao = safe_num(row.get("AVG_HAO", np.nan))
+            inv_prod = safe_num(row.get("INV_PROD", np.nan))
+            inv_goal = safe_num(row.get("INV_GOAL", np.nan))
+            
+            if not math.isnan(avg_hao) and ct_goal > 0 and avg_hao >= (ct_goal * LIMITER_HAO_MULTIPLIER):
+                multiplier = avg_hao / ct_goal
+                reasons.append(f"HAO {multiplier:.1f}xCT")
+                severity += 40
+            
+            if (not math.isnan(inv_prod) and not math.isnan(inv_goal) and 
+                inv_goal > 0 and inv_prod >= (inv_goal * LIMITER_INV_MULTIPLIER) and 
+                inv_prod >= LIMITER_INV_MIN_THRESHOLD):
+                multiplier = inv_prod / inv_goal
+                reasons.append(f"INV {multiplier:.1f}xGOAL")
+                severity += 30
+            
+            if reasons:
+                limiters.append({
+                    "ceid": ceid,
+                    "operation": row.get("OPERATION"),
+                    "desc": row.get("OPER_SHORT_DESC", ""),
+                    "sd": row.get("SEGMENT_DAY"),
+                    "ct_goal": ct_goal,
+                    "avg_hao": avg_hao,
+                    "inv_prod": inv_prod,
+                    "severity": severity,
+                    "reasons": " | ".join(reasons)
+                })
+        
+        limiters = sorted(limiters, key=lambda x: x["severity"], reverse=True)[:LIMITER_MAX_DISPLAY]
+        
+        if limiters:
+            limiters_html = '<table class="limiter-table"><thead><tr>'
+            limiters_html += '<th>Severity</th><th>CEID</th><th>Operation</th><th>Description</th>'
+            limiters_html += '<th>SD</th><th>CT</th><th>HAO</th><th>INV</th><th>Issues</th></tr></thead><tbody>'
+            
+            for lim in limiters:
+                sev_class = "severity-high" if lim["severity"] >= 60 else ("severity-med" if lim["severity"] >= 30 else "severity-low")
+                limiters_html += f'<tr>'
+                limiters_html += f'<td><span class="{sev_class}">{lim["severity"]:.0f}</span></td>'
+                limiters_html += f'<td>{lim["ceid"]}</td>'
+                limiters_html += f'<td>{lim["operation"]}</td>'
+                limiters_html += f'<td>{lim["desc"][:30]}</td>'
+                limiters_html += f'<td>SD{lim["sd"]:.0f}</td>'
+                limiters_html += f'<td>{lim["ct_goal"]:.1f}</td>'
+                limiters_html += f'<td>{lim["avg_hao"]:.1f}</td>'
+                limiters_html += f'<td>{lim["inv_prod"]:.0f}</td>'
+                limiters_html += f'<td>{lim["reasons"]}</td>'
+                limiters_html += f'</tr>'
+            
+            limiters_html += '</tbody></table>'
+        else:
+            limiters_html = '<p style="color: #22c55e;">All limiters within range</p>'
+        
+        # Compile data
+        data = {
+            'timestamp': now,
+            'quarter_goal': QUARTER_GOAL,
+            'shift_name': shift_name,
+            'current_shift_ships': current_shift_ships,
+            'target_per_shift': target_per_shift,
+            'hours_into_shift': hours_into_shift,
+            'shift_pace_rate': shift_pace_rate,
+            'projected_shift_end': projected_shift_end,
+            'shift_status': shift_status,
+            'quarter_ships': quarter_ships,
+            'quarter_remaining': quarter_remaining,
+            'quarter_pct': quarter_pct,
+            'lot_count': lot_count,
+            'days_elapsed': days_elapsed,
+            'actual_daily_rate': actual_daily_rate,
+            'last_week_ships': last_week_ships,
+            'last_24h_ships': last_24h_ships,
+            'last_24h_status': last_24h_status,
+            'current_week_outs': current_week_outs,
+            'this_week_required': this_week_required,
+            'outs_remaining_this_week': outs_remaining_this_week,
+            'days_left': days_left,
+            'need_per_shift': need_per_shift,
+            'pp_segment_day': pp_segment_day,
+            'pp_ceid': pp_ceid,
+            'pp_operation': pp_operation,
+            'pp_desc': pp_desc,
+            'bump_inv': quarter_bump_inv,
+            'limiters_html': limiters_html,
+            'limiter_display_hours': limiter_lookahead,
+            'limiter_is_dynamic': limiter_is_dynamic,
+            'segment_fe': segment_inventory.get('FE', 0),
+            'segment_ssafi': segment_inventory.get('SSAFI', 0),
+            'segment_be': segment_inventory.get('BE', 0),
+            'dynamic_ct_target': dynamic_ct_target, 
+        }
+        
+        # Generate HTML
+        print(f"[INFO] Generating dashboard...")
+        html = generate_html_dashboard(data, ceid_analysis, quarterly_ct, progress_data, weekly_trends, commit_data, shift_24h, blame_analysis)
+        
+        # Save
+        with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
+            f.write(html)
+        
+        print(f"\n{'='*80}")
+        print(f"[SUCCESS] BULLETPROOF DASHBOARD DEPLOYED!")
+        print(f"{'='*80}")
+        print(f"[STATS] Pull Point: SD{pp_segment_day}")
+        print(f"[STATS] Status: {progress_data['days_ahead_behind']:+.2f} days {progress_data['status']} (1:1 linear)")
+        print(f"[STATS] Quarter: {quarter_ships:,}/{QUARTER_GOAL:,} ({quarter_pct:.1f}%)")
+        print(f"[STATS] Commit: {commit_data['quarter_ships']:,} from Op {COMMIT_LSB_OPERATION}")
+        print(f"[STATS] Dynamic CT Target: {dynamic_ct_target:.1f} hours/day")
+        print(f"[STATS] 24h Target: STABLE (set at 6am, Op {shift_24h.get('target_operation', 'N/A')})")
+        print(f"[STATS] Segment Inventory: FE={data['segment_fe']:,}, SSAFI={data['segment_ssafi']:,}, BE={data['segment_be']:,}")
+        if weekly_trends:
+            print(f"[STATS] Weeks remaining: {weekly_trends['weeks_remaining']} (calculated via actual calendar)")
+            print(f"[STATS] Forecast: {weekly_trends['forecast']:,.0f} (gap: {weekly_trends['gap']:+,.0f})")
+        if blame_analysis:
+            print(f"[STATS] Blame Analysis: {len(blame_analysis['gap_drivers'])} operations responsible")
+        print(f"[URL] {OUTPUT_URL}")
+        print(f"{'='*80}\n")
+        
+    except Exception as e:
+        print(f"\n[ERROR] {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    return True
+
+
+if __name__ == "__main__":
+    success = main()
+    if not success:
+        exit(1)
