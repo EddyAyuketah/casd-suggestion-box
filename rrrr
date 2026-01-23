@@ -12,6 +12,8 @@ we use our dynamic ct calculations which tells us how many ct hours we should co
 hours every day, per ther script, then, if you add  CT from where we are at 6am and where we are supposed to be in 24 hours, it should amount to 27.7 
 ct hours. does that make sense? and we should be telling the users the amount of INV_PROD that exists in that range, that will need to move by 6am tomorrow
 
+Take out the current performance (pull point to finish section)
+
 do not ask me if i want you to continue if you have not completely written the code from start to finish. just do it
 
 
