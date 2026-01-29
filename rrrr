@@ -1,80 +1,21 @@
-[INFO] Using default configuration
-
-================================================================================
-Q1 PRODUCTION DASHBOARD
-================================================================================
-
-[INFO] Current: 2026-01-24 10:04:14 (WW202605)
-[INFO] Deadline: 2026-03-07 06:00 PM
-[INFO] Display Quarter Goal: 92,943
-[INFO] Working Quarter Goal (internal): 92,643 (subtracting 300 bump)
-[INFO] Loading data...
-[OK] Loaded 4197 lineview, 8904 lots
-[INFO] BE LSB: 9812, Commit LSB: 175084
-
-[INFO] Querying database...
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:2207: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  shift_df = pd.read_sql(current_shift_sql, db)
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:2223: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  qdf = pd.read_sql(quarter_sql, db)
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:2249: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  last_24h_df = pd.read_sql(last_24h_sql, db)
-[INFO] Tracking commit section...
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:969: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  commit_shift_df = pd.read_sql(commit_shift_sql, db)
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:984: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  commit_24h_df = pd.read_sql(commit_24h_sql, db)
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:998: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
-[OK] Commit section (Op 175084): Shift=175.0, 24h=650.0, Quarter=44,242.0
-[INFO] Analyzing weekly trends...
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:517: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  weeks_df = pd.read_sql(weekly_sql, db)
-[DEBUG] WW50: 7,402 wafers
-[DEBUG] WW51: 7,108 wafers
-[DEBUG] WW52: 7,727 wafers
-[DEBUG] WW1: 5,807 wafers
-[DEBUG] WW2: 5,405 wafers
-[DEBUG] WW3: 7,923 wafers
-[DEBUG] WW4: 6,372 wafers
-[INFO] Total shipped: 47,744.0 over 7 work weeks, avg = 6,821/week
-[INFO] Forecast: 47,744.0 + (6,821 × 6) = 88,667
-[INFO] Gap (vs working goal): 88,667 - 92,643 = -3,976
-[OK] Database queries complete
-Original total INV_PROD: 123213
-Adjusted total INV_PROD: 123213
-X-site wafers removed: 1021
-[INFO] Dynamic 24h CT target: 28.00 hours (based on 49 SD / 42 days)
-[INFO] Calculating segment inventory...
-[INFO] Analyzing quarterly CT...
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:419: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  shipped_lots = pd.read_sql(shipped_lots_sql, db)
-[INFO] Analyzing CT impact across 4210 PROD lots (active + shipped)
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:439: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  lot_ct = pd.read_sql(lot_ct_sql, db)
-[OK] Found 13 operations over CT goal
-
-[INFO] Pull Point:
-   SD55 to SD104
-   Segment Days Remaining: 49
-   Calendar Days Remaining: 42 (rounded)
-   Status: -7 days BEHIND SCHEDULE
-[INFO] Calculating 24h shift progress...
-[OK] Loaded baseline from 2026-01-23 at 2026-01-23 06:00:00
-[INFO] Using stored previous day performance: HIT TARGET
-[INFO] Using stored baseline: SD55.0 from 2026-01-23 06:00:00
-[DEBUG] Target at SD56.0: Cumulative CT = 27.93h (goal: 28.00h)
-[INFO] INV_PROD from current (FLS 11230000.0) to target (FLS 11600000): 1,061 wafers
-[INFO] CT remaining to target: 26.39h
-[INFO] Analyzing limiters...
-[INFO] Using dynamic limiter lookahead: 28.0 hours
-[INFO] Generating dashboard...
-
-[ERROR] unhashable type: 'dict'
-Traceback (most recent call last):
-  File "c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py", line 2528, in main
-    html = generate_html_dashboard(data, quarterly_ct, progress_data, weekly_trends, commit_data, shift_24h, blame_analysis)
-  File "c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py", line 1835, in generate_html_dashboard
-    {generate_position_history_html(shift_24h.get('position_history', {{"entries": []}}))}
-TypeError: unhashable type: 'dict'
-PS Microsoft.PowerShell.Core\FileSystem::\\azshfs.intel.com\AZAnalysis$\1274_MAODATA\Config\FIST> 
+{
+  "date": "2026-01-28",
+  "shift_start": "2026-01-28 06:00:00",
+  "baseline_sd": 58.0,
+  "baseline_ceid": "GTOtmstg",
+  "baseline_operation": 137263,
+  "baseline_fls": 12430000.0,
+  "target_sd": 59.0,
+  "target_ceid": "RIOtn",
+  "target_operation": 123099,
+  "target_inv_prod_sum": 947.0,
+  "previous_day_performance": {
+    "baseline_sd": 58.0,
+    "baseline_ceid": "GTAbe",
+    "baseline_operation": 149455,
+    "expected_sd": 59.0,
+    "expected_ceid": "HINdl",
+    "expected_operation": 219400,
+    "actual_sd": 58,
+    "actual_ceid": "GTOtmstg",
+    "actual_operation": 
