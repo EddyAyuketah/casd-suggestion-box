@@ -1,1 +1,124 @@
 
+PS Microsoft.PowerShell.Core\FileSystem::\\azshfs.intel.com\AZAnalysis$\1274_MAODATA\Config\FIST> & "C:/Users/eddyayuk/My Programs/SQLPathFinder3/Python3/python.exe" "c:/Users/eddyayuk/OneDrive - Intel Corporation/Desktop/Projects/CERT_LOT/generate_dashboard20_html.py"
+[INFO] Using default configuration
+
+================================================================================
+Q1 PRODUCTION DASHBOARD
+================================================================================
+
+[INFO] Current: 2026-01-29 13:40:11 (WW202605)
+[INFO] Deadline: 2026-03-07 06:00 PM
+[INFO] Display Quarter Goal: 92,943
+[INFO] Working Quarter Goal (internal): 92,643 (subtracting 300 bump)
+[INFO] Loading data...
+[OK] Loaded 4149 lineview, 8786 lots
+[INFO] BE LSB: 9812, Commit LSB: 175084
+
+[INFO] Querying database...
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:2394: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shift_df = pd.read_sql(current_shift_sql, db)
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:2410: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  qdf = pd.read_sql(quarter_sql, db)
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:2436: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  last_24h_df = pd.read_sql(last_24h_sql, db)
+[INFO] Tracking commit section...
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:1077: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_shift_df = pd.read_sql(commit_shift_sql, db)
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:1092: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_24h_df = pd.read_sql(commit_24h_sql, db)
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:1106: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
+[OK] Commit section (Op 175084): Shift=349.0, 24h=774.0, Quarter=48,309.0
+[INFO] Analyzing weekly trends...
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:545: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  weeks_df = pd.read_sql(weekly_sql, db)
+[DEBUG] WW50: 7,402 wafers
+[DEBUG] WW51: 7,108 wafers
+[DEBUG] WW52: 7,727 wafers
+[DEBUG] WW1: 5,807 wafers
+[DEBUG] WW2: 5,405 wafers
+[DEBUG] WW3: 7,923 wafers
+[DEBUG] WW4: 6,560 wafers
+[DEBUG] WW5: 3,563 wafers
+[INFO] Total shipped: 51,495.0 over 8 work weeks, avg = 6,437/week
+[INFO] Forecast: 51,495.0 + (6,437 × 6) = 90,116
+[INFO] Gap (vs working goal): 90,116 - 92,643 = -2,527
+[OK] Database queries complete
+Original total INV_PROD: 123383
+Adjusted total INV_PROD: 123383
+X-site wafers removed: 448
+[INFO] Dynamic 24h CT target: 29.84 hours (based on 46 SD / 37 days)
+[INFO] Calculating segment inventory...
+[INFO] Analyzing quarterly CT...
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:447: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  shipped_lots = pd.read_sql(shipped_lots_sql, db)
+[INFO] Analyzing CT impact across 4139 PROD lots (active + shipped)
+c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:467: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  lot_ct = pd.read_sql(lot_ct_sql, db)
+[OK] Found 12 operations over CT goal
+
+[INFO] Pull Point:
+   SD58 to SD104
+   Segment Days Remaining: 46
+   Calendar Days Remaining: 37 (rounded)
+   Status: -9 days BEHIND SCHEDULE
+[INFO] Calculating 24h shift progress...
+[OK] Loaded baseline from 2026-01-28 at 2026-01-28 06:00:00
+[INFO] Using stored previous day performance: MISSED TARGET
+       Baseline: SD58.0 | GTAbe
+       Target: SD59.0 | HINdl
+       Actual: SD58 | GTOtmstg
+[INFO] Using stored baseline: SD58.0 from 2026-01-28 06:00:00
+[DEBUG] ========== CT CALCULATION DEBUG ==========
+[DEBUG] Path from baseline: 2274 operations
+[DEBUG] Baseline SD: 58.0, Baseline FLS: 12430000.0
+[DEBUG] Total CT_EFFECTIVE sum: 1004.42h
+[DEBUG] Total INV_PROD sum: 42947 wafers
+[DEBUG] CT_GOAL stats: min=0.0000, max=22.3060, mean=1.1157
+[DEBUG] LAYER_COUNT stats: min=0.0008, max=1.0072, mean=0.4067
+[DEBUG] CT_EFFECTIVE stats: min=0.0000, max=11.8265, mean=0.4417
+[DEBUG] Dynamic CT target: 29.84h
+[DEBUG] First 5 operations in path:
+       Op 137913 | SD58 | CT_GOAL=3.5440 | LC=1.0000 | CT_EFF=3.5440 | CUM_CT=3.54
+       Op 132650 | SD59 | CT_GOAL=0.5230 | LC=0.8881 | CT_EFF=0.4645 | CUM_CT=4.01
+       Op 208263 | SD59 | CT_GOAL=0.9080 | LC=0.1119 | CT_EFF=0.1017 | CUM_CT=4.11
+       Op 137911 | SD59 | CT_GOAL=0.0800 | LC=0.1666 | CT_EFF=0.0133 | CUM_CT=4.12
+       Op 237154 | SD59 | CT_GOAL=0.0800 | LC=0.0927 | CT_EFF=0.0074 | CUM_CT=4.13
+[DEBUG] Last 5 operations in path:
+       Op 164940 | SD104 | CT_GOAL=0.5350 | LC=0.0085 | CT_EFF=0.0000 | CUM_CT=1002.26
+       Op 114207 | SD104 | CT_GOAL=0.2280 | LC=0.3256 | CT_EFF=0.0742 | CUM_CT=1002.34
+       Op 208466 | SD104 | CT_GOAL=0.4940 | LC=0.0085 | CT_EFF=0.0000 | CUM_CT=1002.34
+       Op 262712 | SD104 | CT_GOAL=0.0000 | LC=0.9994 | CT_EFF=0.0000 | CUM_CT=1002.34
+       Op 9812 | SD104 | CT_GOAL=2.0780 | LC=0.9996 | CT_EFF=2.0771 | CUM_CT=1004.42
+[DEBUG] ===========================================
+[DEBUG] ========== TARGET CALCULATION DEBUG ==========
+[DEBUG] Operations within 29.84h CT: 34
+[DEBUG] Target position: Op 195760 | SD60.0 | FLS 12730000
+[DEBUG] Target cumulative CT: 29.80h (goal: 29.84h)
+[DEBUG] SD movement: Baseline SD58.0 -> Target SD60.0 = 2.0 SD
+[DEBUG] INV_PROD in target range: 1149 wafers
+[DEBUG] ===========================================
+[DEBUG] Target at SD60.0: Cumulative CT = 29.80h (goal: 29.84h)
+[INFO] INV_PROD from current (FLS 12430000.0) to target (FLS 12730000): 1,149 wafers
+[INFO] CT remaining to target: 29.84h
+[WARNING] Could not read position history: Expecting value: line 70 column 27 (char 1861)
+[INFO] Analyzing limiters...
+[INFO] Using dynamic limiter lookahead: 29.8 hours
+[INFO] Generating dashboard...
+
+================================================================================
+[SUCCESS] DEPLOYED!
+================================================================================
+[STATS] Pull Point: SD58 (-9 days)
+[STATS] Quarter: 47,294.0/92,943 (50.9%)
+[STATS] Working Goal (internal): 92,643 (-300 bump)
+[STATS] Commit: 48,309.0 from Op 175084
+[STATS] Dynamic CT Target: 29.84 hours/day
+[STATS] Calendar Days Remaining: 37 (rounded)
+[STATS] INV_PROD to Target: 1,149 wafers
+[STATS] Segment Inventory: FE=0.0, SSAFI=11,580.0, BE=44,772.0
+[STATS] Forecast: 90,116 (gap: -2,527)
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
+================================================================================
+
+PS Microsoft.PowerShell.Core\FileSystem::\\azshfs.intel.com\AZAnalysis$\1274_MAODATA\Config\FIST> 
