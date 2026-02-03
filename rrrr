@@ -1,1 +1,430 @@
 
+Rember how we made the limiter dashboard that tracks our pull point and where we will be in the next 24 hours right? 
+
+
+
+i want you to create a tool report that uses the CEID path, Lineview path 
+
+and also a tool_status_path. https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/Combined/ToolQualMatrix.txt
+
+i have a report that compares WSE and inventory and the script is below so i want to build a way better one. 
+# %% [markdown]
+# # WSE Analysis
+
+# %%
+import numpy as np
+import pandas as pd
+import PyUber
+from sqlalchemy import create_engine
+import matplotlib.pyplot as plt
+import os
+import glob
+# import pyodbc
+# print(pyodbc.drivers())
+
+# %% [markdown]
+# ## Import Data
+
+# %%
+# Historical CEID data from POTS for WSE analysis
+# SQL Server Connection String: 'mssql+pyodbc://username:password@server/database?driver=ODBC+Driver+17+for+SQL+Server'
+with open(r'\\f32p-nas-me_reports-office.f32prod.mfg.intel.com\ME_Reports\ME_Metrics\WSE_Analysis\PotsConnectionString.txt', 'r') as file:
+    connection_string = file.read().strip()
+
+# Run query and save to dataframe
+query = """
+WITH DateRange AS (
+    -- Generate the last 14 days
+    SELECT CAST(DATEADD(day, -13, CAST(GETDATE() AS DATE)) AS DATE) AS DateValue
+    UNION ALL
+    SELECT CAST(DATEADD(day, 1, DateValue) AS DATE)
+    FROM DateRange
+    WHERE DateValue < CAST(GETDATE() AS DATE)
+)
+
+, SHIFT_START as (
+SELECT
+    DATEADD(hour, 6, CAST(DateValue AS DATETIME2)) AS SHIFT_START
+FROM DateRange
+UNION ALL
+SELECT
+    DATEADD(hour, 18, CAST(DateValue AS DATETIME2)) AS SHIFT_START
+FROM DateRange
+--OPTION (MAXRECURSION 14)
+)
+
+, SHIFT_START_END as (
+select SHIFT_START, DATEADD(second, -1, DATEADD(hour, 12, SHIFT_START)) as SHIFT_END
+  from SHIFT_START s
+ WHERE 1=1
+   AND SHIFT_START < current_timestamp
+)
+
+, COMBINED as (
+select *, VALID_FROM_UTC,
+       rank() over (partition by PROCESS_NODE, CEID, SHIFT_START order by VALID_FROM_UTC desc) as RANKING
+  FROM [POTS].[F32].[CEID]
+  FOR SYSTEM_TIME ALL
+  left join SHIFT_START_END s on dateadd(hour, -7, VALID_FROM_UTC) between s.SHIFT_START and s.SHIFT_END
+ WHERE 1=1
+   --AND CEID = 'VFAdi'
+   AND PROCESS_NODE = 1274
+   AND UPDATE_DATE > CURRENT_TIMESTAMP - 14
+)
+
+select PROCESS_NODE,
+       AREA,
+       CEID,
+       INV,
+       INV_IP,
+       CS_OUTS,
+       PS_OUTS,
+       CW_OUTS,
+       PW_OUTS,
+       WSE_GOAL,
+       LAYER_COUNT,
+       WSE_GOAL * LAYER_COUNT as OUTS_GOAL,
+       WSE_GOAL * LAYER_COUNT / 14 as OUTS_GOAL_SHIFT,
+       SHIFT_START,
+       UPDATE_DATE,
+       VALID_FROM_UTC,
+       dateadd(hour, -7, VALID_FROM_UTC) as VALID_FROM,
+       RANKING
+  from COMBINED c
+ where 1=1
+   and RANKING = 1
+ order by SHIFT_START, UPDATE_DATE
+ """
+
+try:
+    engine = create_engine(connection_string)
+
+    with engine.connect() as connection:
+        print("Connection successful!")
+        ceid_df = pd.read_sql(query, connection)
+
+except Exception as e:
+    print(f"Connection failed: {e}")
+
+del file, connection_string, engine, query
+
+# Convert date columns to datetime
+ceid_df['SHIFT_START'] = pd.to_datetime(ceid_df['SHIFT_START'])
+ceid_df['UPDATE_DATE'] = pd.to_datetime(ceid_df['UPDATE_DATE'])
+ceid_df['VALID_FROM_UTC'] = pd.to_datetime(ceid_df['VALID_FROM_UTC'])
+ceid_df['VALID_FROM'] = pd.to_datetime(ceid_df['VALID_FROM'])
+
+ceid_df
+
+# %%
+# PyUberData class for handling data operations with PyUber
+class PyUberData:
+    # This class is designed to connect to the PyUber database and execute SQL queries
+    def __init__(self,
+                 name: str = "PyUberData",
+                 database: str = "F32_PROD_XEUS",
+                 data: pd.DataFrame = pd.DataFrame()):
+        self.name = name
+        self.database = database
+        self.data = data
+
+    def __repr__(self):
+        return f"PyUber(name={self.name}, data_shape={self.data.shape})"
+
+    def __str__(self):
+        return f"PyUber object with name: {self.name} and data shape: {self.data.shape}"
+
+    def get_data(self, sql: str = "select * from F_Lot where rownum <= 10") -> pd.DataFrame:
+        conn = PyUber.connect(self.database)
+
+        # Query XUES database
+        results = conn.execute(sql)
+        rows = results.fetchall()
+        # Check if results.description is not None
+        if results.description:
+            column_names = [x[0] for x in results.description]
+            # Convert query result into Pandas DataFrame
+            self.data = pd.DataFrame(rows, columns=column_names)
+        else:
+            # Handle the case where no rows are returned
+            self.data = pd.DataFrame()  # Return an empty DataFrame
+       
+        return self.data
+   
+pyuber = PyUberData()
+
+# %%
+cal_df = pyuber.get_data("""
+select c.START_DATE, c.END_DATE,c.WW, c.PERIOD_VALUE, c.DOW
+  from F_CALENDAR c
+  join F_CALENDAR c1 on c.WW = c1.WW
+                    and current_timestamp - 7 between c1.START_DATE and c1.END_DATE
+ where 1=1
+""")
+
+cal_df
+
+# %% [markdown]
+# ## Combine Data - Details
+
+# %%
+# Define the folder path to save output files
+folder_path = r'\\azshfs.intel.com\azanalysis$\1274_MAODATA\MfgEng\POTS_Data_Feeds\WSAandINV'
+
+# %%
+# CEID data merged with calendar data
+main_df = pd.merge(ceid_df, cal_df, left_on='SHIFT_START', right_on='START_DATE', how='inner')
+
+# Calcualted columns
+main_df['OUTS_PLUS_INV'] = main_df['CS_OUTS'] + main_df['INV']
+main_df['SHIFT_INV_SCORE'] = (main_df['OUTS_PLUS_INV'] >= main_df['OUTS_GOAL_SHIFT']).astype(int)
+
+# Sort and Reset
+main_df = main_df.sort_values(by=['PROCESS_NODE', 'CEID', 'START_DATE'])
+main_df.reset_index(drop=True, inplace=True)
+
+# Save WW-Shift Dataframe
+file_name = f"{main_df['WW'][0].astype(int)}_WSE_Details.csv"
+file = rf'{folder_path}\{file_name}'
+
+main_df[['PROCESS_NODE', 'AREA', 'CEID', 'WW', 'START_DATE', 'DOW', 'VALID_FROM', 'CS_OUTS', 'CW_OUTS', 'INV', 'OUTS_GOAL', 'WSE_GOAL', 'OUTS_GOAL_SHIFT', 'SHIFT_INV_SCORE', 'LAYER_COUNT']].to_csv(file, index=False)
+
+del file_name, file
+
+main_df
+
+# %%
+# Get all WW CSV files in the folder
+csv_files = glob.glob(os.path.join(folder_path, '*.csv'))
+
+# Read and append all CSV files
+all_data = []
+for file in csv_files:
+    # Skip the combined file if it exists in the list
+    if file.endswith(r'\WSE_Details.csv'):
+        continue
+    elif file.endswith(r'WSE_Details.csv'):
+        df_temp = pd.read_csv(file)
+        all_data.append(df_temp)
+
+# Concatenate all dataframes & save file
+combined_df = pd.concat(all_data, ignore_index=True)
+
+file = rf'{folder_path}\WSE_Details.csv'
+combined_df.to_csv(file, index=False, mode='w')
+
+del all_data, df_temp, file, csv_files
+
+combined_df
+
+# %% [markdown]
+# ## Combine Data - Summary
+
+# %%
+# Aggregate to main summary dataframe
+main_summary_df = combined_df.groupby(['PROCESS_NODE', 'CEID', 'WW']).agg(
+                                       AREA = ('AREA', 'max'),
+                                       INV_SCORE = ('SHIFT_INV_SCORE', 'sum'),
+                                       TOTAL_SHIFTS = ('SHIFT_INV_SCORE', 'count'),
+                                       CW_OUTS = ('CW_OUTS', 'max'),
+                                       OUTS_GOAL = ('OUTS_GOAL', 'max'),
+                                       WSE_GOAL = ('WSE_GOAL', 'max'),
+                                       LAYER_COUNT = ('LAYER_COUNT', 'max')).reset_index()
+
+# DataTypes and Calculated Columns
+main_summary_df['WW'] = main_summary_df['WW'].astype(int)
+main_summary_df['CW_OUTS'] = main_summary_df['CW_OUTS'].fillna(0).astype(int)
+main_summary_df['OUTS_GOAL'] = main_summary_df['OUTS_GOAL'].fillna(0).astype(int)
+main_summary_df['WSE_GOAL'] = main_summary_df['WSE_GOAL'].fillna(0).astype(int)
+main_summary_df['LAYER_COUNT'] = main_summary_df['LAYER_COUNT'].fillna(0.01).astype(float)
+main_summary_df['WSE'] = round(main_summary_df['CW_OUTS'] / main_summary_df['LAYER_COUNT'], 0)
+main_summary_df['INV_SCORE_PCT'] = (main_summary_df['INV_SCORE'] / main_summary_df['TOTAL_SHIFTS']).round(2)
+main_summary_df['MOVES_MISSED'] = (main_summary_df['OUTS_GOAL'] - main_summary_df['CW_OUTS']).fillna(0).astype(int)
+main_summary_df['OUTS_SCORE_PCT'] = (main_summary_df['CW_OUTS'] / main_summary_df['OUTS_GOAL']).round(2)
+
+# Rank by latest WW
+main_summary_df['WW_RANK'] = main_summary_df['WW'].rank(method='dense', ascending=False).astype(int)
+
+# Filter out low layer counts & No Area
+main_summary_df = main_summary_df[main_summary_df['LAYER_COUNT'] >= 0.9]
+main_summary_df = main_summary_df[main_summary_df['AREA'].notna()]
+
+# Scoring Variables
+inv_score_percent_threshold = 0.9
+outs_score_percent_threshold = 1.0
+
+# Function to score the WW based on INV and OUTS scores
+main_summary_df['WW_SCORE'] = np.where((main_summary_df['INV_SCORE_PCT'] > inv_score_percent_threshold) & (main_summary_df['OUTS_SCORE_PCT'] < outs_score_percent_threshold), 1, 0)
+
+# Calculate sum of WW_SCORE for last 4 weeks (WW_RANK 1-4) for each CEID
+main_summary_df['WW_SCORE_LAST_4'] = 0
+
+for idx, ceid in enumerate(main_summary_df['CEID'].unique()):
+    ceid_data = main_summary_df[main_summary_df['CEID'] == ceid]
+   
+    # Calculate sum of WW_SCORE for WW_RANK 1-4
+    score_sum = ceid_data[ceid_data['WW_RANK'] <= 4]['WW_SCORE'].sum()
+   
+    # Assign to WW_RANK = 1 row for this CEID
+    main_summary_df.loc[(main_summary_df['CEID'] == ceid), 'WW_SCORE_LAST_4'] = score_sum
+
+# Function to find consecutive weeks where CEIDs meet criteria (INV_SCORE_PCT > 0.9 and OUTS_SCORE_PCT < 1.0)
+def calculate_consecutive_weeks(df):
+
+    df['CONSECUTIVE_WW_MISS'] = 0
+   
+    # Get max WW_RANK for recursion limit
+    max_rank = df['WW_RANK'].max()
+   
+    # Group by CEID to process each one
+    for ceid in df['CEID'].unique():
+        ceid_data = df[df['CEID'] == ceid].sort_values('WW_RANK')
+       
+        consecutive_count = 0
+        # Start from WW_RANK = 1 and go through consecutive ranks
+        for rank in range(1, max_rank + 1):
+            rank_data = ceid_data[ceid_data['WW_RANK'] == rank]
+           
+            if not rank_data.empty:
+                inv_pct = rank_data['INV_SCORE_PCT'].iloc[0]
+                outs_pct = rank_data['OUTS_SCORE_PCT'].iloc[0]
+               
+                # Check if criteria met
+                if inv_pct > inv_score_percent_threshold and outs_pct < outs_score_percent_threshold:
+                    consecutive_count += 1
+                else:
+                    # Break consecutive streak
+                    break
+            else:
+                # No data for this rank, break streak
+                break
+       
+        # Assign consecutive count for the CEID
+        # df.loc[(df['CEID'] == ceid) & (df['WW_RANK'] == 1), 'CONSECUTIVE_WW_MISS'] = consecutive_count
+        df.loc[(df['CEID'] == ceid), 'CONSECUTIVE_WW_MISS'] = consecutive_count
+   
+    return df
+
+main_summary_df = calculate_consecutive_weeks(main_summary_df)
+
+# Sort and Reset index after filtering
+main_summary_df.sort_values(by=['CEID', 'WW'], ascending=[True, True], inplace=True)
+main_summary_df.reset_index(drop=True, inplace=True)
+
+main_summary_df[main_summary_df['CEID'] == 'SPAdi']
+
+# %%
+# Save Summary Files
+main_summary_df = main_summary_df[['PROCESS_NODE', 'AREA', 'CEID', 'WW', 'INV_SCORE', 'TOTAL_SHIFTS', 'INV_SCORE_PCT', 'CW_OUTS', 'OUTS_GOAL', 'MOVES_MISSED', 'OUTS_SCORE_PCT', 'WSE', 'WSE_GOAL', 'WW_SCORE', 'LAYER_COUNT', 'WW_RANK', 'CONSECUTIVE_WW_MISS', 'WW_SCORE_LAST_4']]
+
+main_summary_df.to_csv(rf'{folder_path}\WSE_INV_Summary.csv', index=False)
+main_summary_df.to_csv(rf'{folder_path}\WSE_INV_Summary.txt', index=False, sep='\t')
+main_summary_df.to_json(rf'{folder_path}\WSE_INV_Summary.json', orient='records', indent=2)
+
+# main_summary_df[main_summary_df['CEID'] == 'VFAdi']
+main_summary_df
+
+# %% [markdown]
+# ## Charts
+
+# %%
+chart_df = main_df[main_df['CEID'] == 'STVdi']
+
+# %%
+plt.figure(figsize=(12, 6))
+
+plt.bar(chart_df['VALID_FROM'], chart_df['OUTS_PLUS_INV'], alpha=0.3, label='OUTS_PLUS_INV', zorder=1, width=0.1)
+plt.bar(chart_df['VALID_FROM'], chart_df['CS_OUTS'], alpha=0.3, label='CS_OUTS', zorder=2, width=0.1)
+plt.plot(chart_df['VALID_FROM'], chart_df['OUTS_GOAL_SHIFT'], linestyle=':', linewidth=1, label='OUTS_GOAL_SHIFT', zorder=1)
+
+plt.xlabel('Date')
+plt.ylabel('OUTS')
+plt.legend()
+plt.title('CS_OUTS by Date')
+plt.xticks(rotation=45)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# %%
+plt.figure(figsize=(12, 6))
+plt.plot(chart_df['VALID_FROM'], chart_df['CW_OUTS'], marker='o', linestyle='-', linewidth=2, label='CW_OUTS')
+# plt.plot(chart_df['VALID_FROM'], chart_df['CUMSUM_OUTS_GOAL_SHIFT'], marker='x', linestyle='--', linewidth=2, label='CUMSUM_OUTS_GOAL_SHIFT')
+plt.plot(chart_df['VALID_FROM'], chart_df['INV'], linestyle='-', linewidth=2, label='INV')
+# plt.bar(chart_df['VALID_FROM'], chart_df['DELTA_OUTS'], linestyle='-', linewidth=2, label='DELTA_OUTS', width=0.1)
+
+# plt.bar(chart_df['VALID_FROM'] + pd.Timedelta(hours=2.5), chart_df['DELTA_OUTS_PLUS_INV'], linestyle='-', linewidth=2, label='DELTA_OUTS_PLUS_INV', width=0.1)
+# plt.bar(chart_df['VALID_FROM'], chart_df['OUTS_PLUS_INV'], alpha=0.3, label='OUTS_PLUS_INV', zorder=1, width=0.1)
+# plt.bar(chart_df['VALID_FROM'], chart_df['CS_OUTS'], alpha=0.3, label='CS_OUTS', zorder=2, width=0.1)
+# plt.plot(chart_df['VALID_FROM'], chart_df['OUTS_GOAL_SHIFT'], linestyle=':', linewidth=1, label='OUTS_GOAL_SHIFT', zorder=1)
+
+plt.xlabel('Date')
+plt.ylabel('CW_OUTS')
+plt.axhline(y=chart_df['OUTS_GOAL'].iloc[0], color='red', linestyle='--', linewidth=2, label='OUTS_GOAL')
+plt.legend()
+plt.title('CW_OUTS by Date')
+plt.xticks(rotation=45)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ### MORE SQL
+#
+# ```sql
+# select s.CONFIG_LEVEL_3 as CEID,
+#        s.START_DATE,
+#        sum(s.QTY_INV_BOH) as INV_BOH
+#   from F_SD_WIP_SHIFTLY s
+#  where 1=1
+#    and s.PROCESS in ('1274','1275')
+#    and s.CONFIG_LEVEL_3 = 'VFAdi'
+#    and s.OWNER in ('PROD','ENG')
+#    and s.WW = 202550
+#    and s.DOW = 1
+#    and s.SHIFT % 2 = 0
+#  group by s.CONFIG_LEVEL_3, s.START_DATE
+# ```
+#
+# ```sql
+# select c.CONFIG_LEVEL_3 as CEID,
+#        l.LOT,
+#        cal.WW as IN_WW,
+#        l.PREVOUT_DATE,
+#        l.OUT_DATE,
+#        l.OUT_WW,
+#        l.OUT_TXN,
+#        l.MOVEDOUT,
+#        l.LAST_PASS,
+#        l.IN_WAFER_QTY,
+#        l.OUT_WAFER_QTY,
+#        l.REWORK      
+#   from F_LOT_RUN_CARD l
+#   join F_UDF_CONFIG_OPER c on l.OPERATION = c.OPERATION
+#                           and c.CONFIG_LEVEL_3 = 'VFAdi'
+#   join F_CALENDAR cal on l.PREVOUT_DATE between cal.START_DATE and cal.END_DATE
+#  where 1=1
+#    and (l.OUT_DATE is null
+#      or l.PREVOUT_DATE > current_timestamp - 14)
+#    
+#    and l.LOT_TYPE in ('PROD','ENG')
+#    and cal.WW = 202550
+#  order by l.PREVOUT_DATE
+# ```
+
+
+Now what i need the report to do is this. 
+We use a goal of 8700, which the capacity we want our tools to be. 
+report should go the CEID_PATH and and if CW_WSPW_PACE is <= 8700, show the CEID, OPERATIOn, [in line view path UTP(basically how many chambers they have up vs down eg 50/60)
+Qualified (howmany chambers are qualified to run that operation, 49/62)] after that it should do our tool_pull_function which is basically going to the tool_status_path and look at the 
+CEID, the operation, and in the ENTITY_UTP if 0, print ENTITY and print STATE. with a text box that allows the user to put comments
+about the status of each entity. allowing the user to be up to date with the stutus of each entity. 
+
+also another condition to consider is in the CEID_PATH, if ROADS <= our Goal we need to be at Max capacity so report will need to 
+go the the LINE_VIEW path, if INV_PROD is 10% over INV_GOAL, pull that operation, and use the tool_pull_function here. also add a section here that says Need Down Time Planning so  the user can be up to date to those who are really criticcal to our performance. 
+
+Also another condition to consider is if ROADS in CEID_PATH, if ROADS, > 8700, we need max capacity from that tool so report should consider the CW_WSPW_PACE and if it is < 95% of ROADS, run or tool_pull_function
+make sure that at the top of the report, if the user filters
+
+a report like this does not exist and maybe there is more i can do witht the data i am pulling so add 3 more very useful things i can pull to help this report trully bullet proof and best in class since you have previouse knowledge on what data is in all thses paths. 
+
