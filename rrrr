@@ -1,33 +1,43 @@
-================================================================================
-INTEL TOOL STATUS REPORT - FIST PRODUCTION CONTROL
-================================================================================
+This is what the script pulls. Also, lets be allowed to filter every column, by ascending, descending >, >=, <. <=, etc 
+comments can be stored in a jsonfile so the report will always pull and we can see comments written by others in the report.  
+UTP and QUALIFIED are still denoted as "-" which means it is not pulling the information from LineView path, in that 
+path, columns are names as UTP and Qualified.  also it seems the contents of everything fist is text aligned to the right. 
+please fix this 
 
-[INFO] Capacity Goal: 8,700 WSPW
-[INFO] Timestamp: 2026-02-03 11:22:11
+============================================================
+INTEL TOOL STATUS REPORT v4.0
+============================================================
+[CONFIG] Goal: 8,700
+[TIME] 2026-02-03 13:46:16
 
-[STEP 1] Loading data files...
-[OK] LineView loaded: 4091 rows, updated 0.0h ago
-[OK] CEID loaded: 295 rows, updated 0.0h ago
-[OK] ToolQualMatrix loaded: 161332 rows, updated 0.0h ago
+[1/5] Loading data...
+[OK] LineView: 4088 rows (0.1h old)
+[OK] CEID: 294 rows (0.1h old)
+[OK] ToolQualMatrix: 161332 rows (0.1h old)
 
-[STEP 2] Processing CEID data...
-  - Capacity Constrained: 226 CEIDs
-  - Need Max Capacity: 131 CEIDs
-  - Performance Gap: 115 CEIDs
+[2/5] Building lookups...
+  LineView columns: ['CQT_TEXT', 'FIST', 'SEGMENT_DAY', 'PP_TWO', 'PP_ONE', 'CEID', 'OPERATION', 'OPER_SHORT_DESC', 'ACTIVITY', 'AREA', 'MODULE', 'FULL_LOOP_SEQ', 'SEGMENT_WEEK', 'DP_LIST', 'PROD_LIST', 'ROUTE', 'QNR_SAFE', 'MAX_Hrs', 'RISK_COMMENT', 'Purge_Stocker']
+  Chamber lookup samples: [('GENstg', {'utp': 0, 'tot': 0, 'qual': 0, 'fist': 'FIN_FIN', 'operation': '204', 'desc': 'Z EBMSTRT'}), ('PC-PS-STG', {'utp': 0, 'tot': 0, 'qual': 0, 'fist': 'FIN_FIN', 'operation': '262711', 'desc': 'Z FABENTER'}), ('UDCdx', {'utp': 0, 'tot': 0, 'qual': 0, 'fist': 'FIN_FIN', 'operation': '110838', 'desc': 'M-4INCSi S'})]
+  Chamber lookup: 294 CEIDs
+  FIST lookup: 294 CEIDs
 
-[STEP 3] Processing LineView data...
-Traceback (most recent call last):
-  File "c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\toolstatusreport.py", line 845, in <module>
-    main()
-  File "c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\toolstatusreport.py", line 796, in main
-    inv_alerts, chamber_data = process_lineview_data(
-  File "c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\toolstatusreport.py", line 181, in process_lineview_data
-    chamber_data = df_lineview[['CEID', 'OPERATION', 'OPER_SHORT_DESC', 'UTP', 'QUALIFIED', 
-  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\pandas\core\frame.py", line 3813, in __getitem__
-    indexer = self.columns._get_indexer_strict(key, "columns")[1]
-  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\pandas\core\indexes\base.py", line 6070, in _get_indexer_strict
-    self._raise_if_missing(keyarr, indexer, axis_name)
-  File "C:\Users\eddyayuk\My Programs\SQLPathFinder3\Python3\lib\site-packages\pandas\core\indexes\base.py", line 6133, in _raise_if_missing
-    raise KeyError(f"{not_found} not in index")
-KeyError: "['TOT_CHMB', 'QUAL_CHMB'] not in index"
+[3/5] Processing conditions...
+  After FIST filter: 243 CEIDs
+  Capacity Constrained: 218
+  Performance Gap: 110
+  Inventory Alerts: 308
+
+[4/5] Processing down entities...
+  Down Entities: 26381
+  Predictive Alerts: 12
+
+[5/5] Generating HTML...
+
+[SUCCESS] Saved: \\azshfs.intel.com\azanalysistop\AZAnalysis\1274_MAODATA\MfgEng\COS_DB\ToolStatusReport.html
+[URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/ToolStatusReport.html
+
+============================================================
+COMPLETE
+============================================================
+
 PS C:\Users\eddyayuk> 
