@@ -424,7 +424,7 @@ also another condition to consider is in the CEID_PATH, if ROADS <= our Goal we 
 go the the LINE_VIEW path, if INV_PROD is 10% over INV_GOAL, pull that operation, and use the tool_pull_function here. also add a section here that says Need Down Time Planning so  the user can be up to date to those who are really criticcal to our performance. 
 
 Also another condition to consider is if ROADS in CEID_PATH, if ROADS, > 8700, we need max capacity from that tool so report should consider the CW_WSPW_PACE and if it is < 95% of ROADS, run or tool_pull_function
-make sure that at the top of the report, if the user filters
-
+make sure that at the top of the report, if the user can do a multi filter select by any of these ☐ (Select All) ☑ BE-IL_M2 ☑ BE-IL_M3 ☑ BE-IL_M4 ☑ BE-IL_M5 ☐ BE-UL_CE ☐ BE-UL_M10 ☐ BE-UL_M11 ☐ BE-UL_M12 ☐ BE-UL_M13 ☐ BE-UL_M14 ☐ BE-UL_M6 ☐ BE-UL_M7 ☐ BE-UL_M8 ☐ BE-UL_M9 ☐ BE-UL_TM0 ☐ CON_CON1 ☐ CON_CON2 ☐ CON_PSD-NSD ☐ FIN_DCB-STR ☐ FIN_DNx ☐ FIN_FIN ☐ FIN_POLY ☐ FIN_WELLS ☐ GATE_DMG ☐ GATE_GATE ☐ GATE_MGD ☐ NN74 ☐ PCT_FTI ☐ PCT_ILD ☐ PCT_PCT ☐ PCT_PLUG ☐ PCT_PVRM ☐ PLY-ESD_NESD ☐ PLY-ESD_PESD ☐ PLY-ESD_PLY ☐ PLY-ESD_SPCR ☐ RW74 ☐ SSAFI-M0_M0 R ☐ SSAFI-M0_M0 S ☐ SSAFI-M1_M1 R ☐ SSAFI-M1_M1 S
+which basically goes to the LineView path and in the FIST column, filters only CEIDS that full in the selection by the user and the entire report will on consider the CEIDSs in that selection range. 
 a report like this does not exist and maybe there is more i can do witht the data i am pulling so add 3 more very useful things i can pull to help this report trully bullet proof and best in class since you have previouse knowledge on what data is in all thses paths. 
 
