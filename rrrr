@@ -103,3 +103,40 @@ Name: CEID, dtype: int64
 ================================================================================
 
 PS C:\Users\eddyayuk>
+
+{
+  "date": "2026-02-16",
+  "shift_start": "2026-02-16 06:00:00",
+  "baseline_sd": 74.0,
+  "baseline_ceid": "TBEbc",
+  "baseline_operation": 163500,
+  "baseline_fls": 17340000.0,
+  "target_sd": 76.0,
+  "target_ceid": "TBEbc",
+  "target_operation": 177772,
+  "target_fls": 17870500.0,
+  "target_inv_prod_sum": 1151.0,
+  "previous_day_performance": {
+    "baseline_sd": 74.0,
+    "baseline_ceid": "REGbe",
+    "baseline_operation": 204280,
+    "baseline_fls": 17390000.0,
+    "expected_sd": 76.0,
+    "expected_ceid": "REGbe",
+    "expected_operation": 205717,
+    "expected_fls": 17911000.0,
+    "actual_sd": 74,
+    "actual_ceid": "TBEbc",
+    "actual_operation": 163500,
+    "actual_fls": 17340000.0,
+    "gap": -2.0,
+    "fls_gap": -571000.0,
+    "status": "MISSED TARGET",
+    "status_class": "status-warn",
+    "measured_at": "2026-02-16 06:07:08"
+  },
+  "blame_analysis": null,
+  "timestamp": "2026-02-16 06:15:44",
+  "data_complete": true,
+  "baseline_data_valid": true
+}
