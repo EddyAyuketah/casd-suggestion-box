@@ -1,132 +1,105 @@
-PS C:\Users\eddyayuk> & "C:/Users/eddyayuk/My Programs/SQLPathFinder3/Python3/python.exe" "c:/Users/eddyayuk/OneDrive - Intel Corporation/Desktop/Projects/CERT_LOT/generate_dashboard20_html.py"
+This is my out put i ran this morning 
+
+
+PS C:\Users\eddyayuk> & "C:/Users/eddyayuk/My Programs/SQLPathFinder3/Python3/python.exe" //shuser-prod.intel.com/SHProdUser$/eddyayuk/generate_dashboard20_html.py
 [INFO] Using default configuration
 
 ================================================================================
 Q1 PRODUCTION DASHBOARD - REWRITTEN VERSION WITH SEGMENT GRAPH
 ================================================================================
 
-[INFO] Current: 2026-02-14 10:36:13 (WW202608)
+[INFO] Current: 2026-02-16 11:02:30 (WW202608)
 [INFO] Deadline: 2026-03-07 06:00 PM
 [INFO] Display Quarter Goal: 89,675
 [INFO] Working Quarter Goal (internal): 89,375 (subtracting 300 bump)
 [INFO] Loading data...
-[OK] Loaded 4265 rows from LineView.TXT
-[OK] Loaded 312 rows from CEID.TXT
-[OK] Loaded 9016 rows from Lots.TXT
-[OK] Loaded 4265 lineview, 9016 lots
+[OK] Loaded 4114 rows from LineView.TXT
+[OK] Loaded 309 rows from CEID.TXT
+[OK] Loaded 8829 rows from Lots.TXT
+[OK] Loaded 4114 lineview, 8829 lots
 [INFO] BE LSB: 9812, Commit LSB: 191586
 
 [INFO] Querying database...
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:2768: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:2768: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   shift_df = pd.read_sql(current_shift_sql, db)
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:2784: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:2784: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   qdf = pd.read_sql(quarter_sql, db)
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:2815: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:2815: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   last_24h_df = pd.read_sql(last_24h_sql, db)
 [INFO] Tracking commit section...
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:1598: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1598: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   commit_shift_df = pd.read_sql(commit_shift_sql, db)
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:1613: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1613: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   commit_24h_df = pd.read_sql(commit_24h_sql, db)
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:1627: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1627: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   commit_quarter_df = pd.read_sql(commit_quarter_sql, db)
 [INFO] Analyzing weekly trends...
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:1531: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1531: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   weeks_df = pd.read_sql(weekly_sql, db)
 [OK] Database queries complete
-[INFO] Original total INV_PROD: 125,712
-[INFO] Adjusted total INV_PROD: 125,712
+[INFO] Original total INV_PROD: 125,834
+[INFO] Adjusted total INV_PROD: 125,834
 [INFO] X-site wafers removed: 0
 [INFO] Pull Point Calculation (Reference Method):
-       Working Quarter Remaining: 26,726.0
-       Constraint Point Remainder: 26,672.0
-       Additional WIP Needed: 54.0
-[INFO] Dynamic 24h CT target: 35.43 hours (based on 31 SD / 21 days)
+       Working Quarter Remaining: 24,236.0
+       Constraint Point Remainder: 24,221.0
+       Additional WIP Needed: 15.0
+[INFO] Dynamic 24h CT target: 37.89 hours (based on 30 SD / 19 days)
 [INFO] Calculating segment inventory...
-[OK] Segment inventory calculated: FE=0, SSAFI=0, BE=27,963
+[OK] Segment inventory calculated: FE=0, SSAFI=0, BE=24,608
 [INFO] Preparing segment graph data...
 [DEBUG] Segment lots columns: ['LOT', 'LOT7', 'OPERATION', 'OPER_SHORT_DESC', 'WAFER_QTY', 'LOT_PRIORITY', 'MDT_FINAL', 'MDT1', 'MDT2', 'MDT3', 'MDT4', 'HAO', 'HRS_IP', 'LOT_STATE', 'CEID', 'SEGMENT_DAY', 'LAYER_NAME', 'MODULE', 'AREA', 'FE_BE', 'LOC', 'CURRENT_LOCATION', 'COMMENTS', 'LOT_PROCESS_RESTRICTION', 'STOP_FLAG', 'REWORK_FLAG', 'SIF_FLAG', 'INSTRUCTION_FLAG', 'SPLIT_FLAG', 'MERGE_FLAG', 'NONGATING_MERGE_FLAG', 'IN_CQT_WINDOW_FLAG', 'CQT_NESTED_FLAG', 'COMMENT_FLAG', 'IFS_FLAG', 'SIF_IFSFLAG', 'DISPO_FLAG', 'HOLD_FLAG', 'HOLD_HRS', 'ISSUE', 'SBMR_LOT', 'PRODUCT', 'DPML', 'WT', 'XETA_COMMIT_DATE', 'XETA_COMMIT_WW', 'XETA_LOT_AHEAD_BEHIND', 'XETA_WT_REQ', 'DEFAULT_XETA_LOT_AHEAD_BEHIND', 'DEFAULT_XETA_WT_REQ', 'XETA_PRODUCT_PRIO', 'FULL_LOOP_SEQ', 'SEGMENT_WEEK', 'LOT_TITLE', 'ROUTE', 'LOT_TYPE', 'METRO_TYPE', 'DOTPROCESS', 'PROCESS', 'LOT_OWNER', 'LOT_GROUP', 'PREV_OPER_OUT_DATE', 'MOVEIN_DATE', 'CURRENT_STEPPER_25', 'CRIT_STEPPER_ATR_21', 'TRANS_STEPPER_ATR_22', 'NSR_STEPPER_ATR_23', 'NONFIRSTCRITICALSTEPPER_21', 'CURRENT_STEPPER_ATR_25', 'NSRSTEPPER', 'LOT_SELECTION', 'LOT_REASON', 'LOT_COMMENT', 'OPERATION_SELECTION', 'OPERATION_REASON', 'OPERATION_COMMENT', 'PRODUCT_SELECTION', 'PRODUCT_REASON', 'PRODUCT_COMMENT', 'ROUTE_SELECTION', 'ROUTE_REASON', 'ROUTE_COMMENT', 'DAYS_IN_FAB', 'START_WW', 'FACILITY', 'PROCESS_NODE', 'LOT_UPDATE_DATE', 'UPDATE_DATE', 'FILE_UPDATE_DATE']
-[DEBUG] Sample CEID values: REXck       109
-SNUck        72
-GTAcsstg     68
-REXckstg     49
-REXch        35
+[DEBUG] Sample CEID values: SNUck       78
+REXck       75
+REGbe       44
+GTAcsstg    42
+TBEbc       41
 Name: CEID, dtype: int64
-[OK] Prepared segment graph data: 32 segment days, 5 segment weeks
+[OK] Prepared segment graph data: 31 segment days, 5 segment weeks
 [INFO] Analyzing quarterly CT...
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:1444: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1444: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   shipped_lots = pd.read_sql(shipped_lots_sql, db)
-[INFO] Analyzing CT impact across 4050 PROD lots
-c:\Users\eddyayuk\OneDrive - Intel Corporation\Desktop\Projects\CERT_LOT\generate_dashboard20_html.py:1464: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+[INFO] Analyzing CT impact across 3963 PROD lots
+\\shuser-prod.intel.com\SHProdUser$\eddyayuk\generate_dashboard20_html.py:1464: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
   lot_ct = pd.read_sql(lot_ct_sql, db)
 
 [INFO] Pull Point Status:
-   SD73 to SD104
-   Segment Days Remaining: 31
-   Calendar Days Remaining: 21 (rounded)
-   Status: -10 days BEHIND SCHEDULE
+   SD74 to SD104
+   Segment Days Remaining: 30
+   Calendar Days Remaining: 19 (rounded)
+   Status: -11 days BEHIND SCHEDULE
 [INFO] Calculating 24h shift progress...
-[OK] Loaded baseline from 2026-02-13 at 2026-02-13 06:00:00
-[DEBUG] Read baseline file: date=2026-02-13, SD=71.0, FLS=16260000.0
-[DEBUG] Baseline target: SD=71.0, FLS=16390000.0
-[INFO] Using stored previous day performance: HIT TARGET
+[OK] Loaded baseline from 2026-02-16 at 2026-02-16 06:00:00
+[DEBUG] Read baseline file: date=2026-02-16, SD=74.0, FLS=17340000.0
+[DEBUG] Baseline target: SD=76.0, FLS=17870500.0
+[INFO] Using stored previous day performance: MISSED TARGET
 [DEBUG] should_update_baseline check:
-        now.hour=10, now.minute=36
+        now.hour=11, now.minute=2
         in_update_window=False
-[WARNING] Baseline is STALE: 2026-02-13 < expected 2026-02-14
-[WARNING] Forcing baseline update even outside normal window!
-[DEBUG] should_update_baseline result: True (now=10:36, baseline_date=2026-02-13)
-[DEBUG] Calculating yesterday's performance:
-        Yesterday baseline: SD71.0 FLS16260000.0
-        Yesterday target: SD71.0 FLS16390000.0
-        Current position: SD73 FLS16970000.0
-[INFO] Yesterday's performance calculation (FLS-based):
-       Baseline FLS: 16260000 | Target FLS: 16390000 | Actual FLS: 16970000
-       FLS Gap: +580000 | SD Gap: +2.0
-       Result: HIT
-[OK] Loaded position history with 12 entries
-[OK] Added position history entry for 2026-02-14
-[OK] Saved position history with 13 entries
-[INFO] UPDATING baseline to current position: SD73 FLS16970000.0
-[DEBUG] Path calculations from baseline SD73 FLS16970000.0:
-        Expected now (after 4.6h): SD73.0 FLS17030000
-        Target by 6am tomorrow (after 35.4h): SD74.0 FLS17200000
-[INFO] Writing new baseline file...
-       New baseline: SD73 | TGRcp | FLS16970000.0
-       New target for tomorrow: SD74.0 | PLMcz | FLS17200000
-[DEBUG] ========== WRITING BASELINE FILE ==========
-[DEBUG] Input validation:
-       - date_str: 2026-02-14
-       - segment_day: 73 (type: int)
-       - ceid: TGRcp (type: str)
-       - operation: 173166 (type: int)
-       - full_loop_seq: 16970000.0
-[DEBUG] Baseline data valid: True
-[DEBUG] File verified - contains 16 keys
-[DEBUG] ========== BASELINE FILE WRITTEN OK ==========
-[OK] Stored baseline: SD73 at 2026-02-14 06:00:00
-    Target for tomorrow 6am: SD74.0 | PLMcz | FLS 17200000
-    INV_PROD to move by 6am: 799 wafers
-    Stored yesterday's performance: HIT TARGET
-[OK] Loaded position history with 13 entries
+[DEBUG] should_update_baseline result: False (now=11:02, baseline_date=2026-02-16)
+[INFO] Using stored baseline from today: SD74.0 FLS17340000.0 from 2026-02-16 06:00:00
+[DEBUG] Path calculations from baseline SD74.0 FLS17340000.0:
+        Expected now (after 5.0h): SD74.0 FLS17410500
+        Target by 6am tomorrow (after 37.9h): SD76.0 FLS17870500
+[OK] Loaded position history with 15 entries
 [INFO] Analyzing limiters...
-[INFO] Using dynamic limiter lookahead: 35.4 hours
+[INFO] Using dynamic limiter lookahead: 37.9 hours
 [INFO] Generating dashboard...
 
 ================================================================================
 [SUCCESS] DASHBOARD WITH SEGMENT GRAPH DEPLOYED SUCCESSFULLY!
 ================================================================================
-[STATS] Pull Point: SD73 (-10 days)
-[STATS] Quarter: 62,649.0/89,675 (69.9%)
+[STATS] Pull Point: SD74 (-11 days)
+[STATS] Quarter: 65,139.0/89,675 (72.6%)
 [STATS] Working Goal (internal): 89,375 (-300 bump)
-[STATS] Commit: 65,354.0 from Op 191586
-[STATS] Dynamic CT Target: 35.43 hours/day
-[STATS] Calendar Days Remaining: 21 (rounded)
-[STATS] INV_PROD to Target: 799 wafers
-[STATS] Segment Inventory: FE=0.0, SSAFI=0.0, BE=27,963.0
-[STATS] Segment Graph: 32 days, 26,274 wafers, 5 weeks
-[STATS] Forecast: 87,210 (gap: -2,164)
+[STATS] Commit: 67,246.0 from Op 191586
+[STATS] Dynamic CT Target: 37.89 hours/day
+[STATS] Calendar Days Remaining: 19 (rounded)
+[STATS] INV_PROD to Target: 949 wafers
+[STATS] Segment Inventory: FE=0.0, SSAFI=0.0, BE=24,608.0
+[STATS] Segment Graph: 31 days, 24,915 wafers, 5 weeks
+[STATS] Forecast: 88,550 (gap: -825)
 [URL] https://azshweb.intel.com/azAnalysis$/1274_MAODATA/MfgEng/COS_DB/dashboard.html
 ================================================================================
 
-PS C:\Users\eddyayuk> 
+PS C:\Users\eddyayuk>
