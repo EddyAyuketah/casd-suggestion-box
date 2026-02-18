@@ -1,1 +1,125 @@
 
+{
+  "date": "2026-02-18",
+  "shift_start": "2026-02-18 06:00:00",
+  "baseline_sd": 77.0,
+  "baseline_ceid": "VFCca",
+  "baseline_operation": 146663,
+  "baseline_fls": 18190000.0,
+  "target_sd": 79.0,
+  "target_ceid": "GTOcustg",
+  "target_operation": 152569,
+  "target_fls": 18710000.0,
+  "target_inv_prod_sum": 1197.0,
+  "previous_day_performance": {
+    "baseline_sd": 77.0,
+    "baseline_ceid": "VFCca",
+    "baseline_operation": 146663,
+    "baseline_fls": 18190000.0,
+    "expected_sd": 78.0,
+    "expected_ceid": "TBEbc",
+    "expected_operation": 177750,
+    "expected_fls": 18640000.0,
+    "actual_sd": 77,
+    "actual_ceid": "VFCca",
+    "actual_operation": 146663,
+    "actual_fls": 18190000.0,
+    "gap": -1.0,
+    "fls_gap": -450000.0,
+    "status": "MISSED TARGET",
+    "status_class": "status-warn",
+    "measured_at": "2026-02-18 06:05:59"
+  },
+  "blame_analysis": null,
+  "timestamp": "2026-02-18 06:14:24",
+  "data_complete": true,
+  "baseline_data_valid": true
+}
+
+some parts in the code 
+def write_shift_baseline(date_str, shift_start_time, segment_day, ceid, operation, full_loop_seq, 
+                         target_sd=None, target_ceid=None, target_operation=None, target_fls=None, target_inv_prod_sum=None,
+                         previous_day_performance=None, blame_analysis=None):
+    """Write the 6am baseline to file with comprehensive validation - NOW INCLUDES FLS"""
+    try:
+        print(f"[DEBUG] ========== WRITING BASELINE FILE ==========")
+        print(f"[DEBUG] Input validation:")
+        print(f"       - date_str: {date_str}")
+        print(f"       - segment_day: {segment_day} (type: {type(segment_day).__name__})")
+        print(f"       - ceid: {ceid} (type: {type(ceid).__name__})")
+        print(f"       - operation: {operation} (type: {type(operation).__name__})")
+        print(f"       - full_loop_seq: {full_loop_seq}")
+        
+        # Validate required fields
+        if not date_str or segment_day is None or ceid is None or operation is None:
+            print(f"[ERROR] Missing required baseline data")
+            return None
+        
+        baseline = {
+            "date": str(date_str),
+            "shift_start": shift_start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "baseline_sd": float(segment_day),
+            "baseline_ceid": str(ceid),
+            "baseline_operation": int(operation) if operation != "N/A" else "N/A",
+            "baseline_fls": float(full_loop_seq),
+            "target_sd": float(target_sd) if target_sd is not None else None,
+            "target_ceid": str(target_ceid) if target_ceid is not None else None,
+            "target_operation": int(target_operation) if target_operation is not None and target_operation != "N/A" else None,
+            "target_fls": float(target_fls) if target_fls is not None else None,  # ADDED: Store target FLS
+            "target_inv_prod_sum": float(target_inv_prod_sum) if target_inv_prod_sum is not None else None,
+            "previous_day_performance": previous_day_performance,
+            "blame_analysis": blame_analysis,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "data_complete": True
+        }
+        
+        # Validate the baseline data completeness
+        baseline["baseline_data_valid"] = is_valid_baseline_data(
+            baseline["baseline_sd"], 
+            baseline["baseline_ceid"], 
+            baseline["baseline_operation"]
+        )
+        
+        print(f"[DEBUG] Baseline data valid: {baseline['baseline_data_valid']}")
+        
+        with open(BASELINE_STORAGE_PATH, 'w') as f:
+            json.dump(baseline, f, indent=2)
+        
+        # Verify write
+        with open(BASELINE_STORAGE_PATH, 'r') as f:
+            verify = json.load(f)
+        print(f"[DEBUG] File verified - contains {len(verify)} keys")
+        print(f"[DEBUG] ========== BASELINE FILE WRITTEN OK ==========")
+        
+        print(f"[OK] Stored baseline: SD{segment_day} at {shift_start_time:%Y-%m-%d %H:%M:%S}")
+        if target_sd:
+            print(f"    Target for tomorrow 6am: SD{target_sd} | {target_ceid} | FLS {target_fls}")
+        if target_inv_prod_sum:
+            print(f"    INV_PROD to move by 6am: {target_inv_prod_sum:,.0f} wafers")
+        if previous_day_performance:
+            print(f"    Stored yesterday's performance: {previous_day_performance['status']}")
+        if blame_analysis:
+            print(f"    Stored blame analysis: {len(blame_analysis['gap_drivers'])} operations identified")
+        
+        return baseline
+        
+    except Exception as e:
+        print(f"[ERROR] Could not write baseline: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+arround line 1082
+
+ if stored_baseline and 'previous_day_performance' in stored_baseline and stored_baseline['previous_day_performance'] is not None:
+        target_vs_actual = stored_baseline['previous_day_performance']
+        blame_analysis = stored_baseline.get('blame_analysis', None)
+        print(f"[INFO] Using stored previous day performance: {target_vs_actual['status']}")
+    
+    should_update = should_update_baseline(now, stored_baseline)
+    print(f"[DEBUG] should_update_baseline result: {should_update} (now={now:%H:%M}, baseline_date={stored_baseline.get('date') if stored_baseline else 'None'})")
+    
+    previous_day_performance_to_store = None
+    blame_analysis_to_store = None
+
+
